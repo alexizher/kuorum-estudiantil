@@ -1,5 +1,5 @@
-import type { EstadoPublicoDeSesion } from "@kuorum/contracts";
 import { contenedor } from "../../../../../../../composicion";
+import { aEstadoPublico } from "../../../../../../../http/estado-publico";
 import { respuestaDeError } from "../../../../../../../http/respuesta-de-error";
 
 export const dynamic = "force-dynamic";
@@ -27,13 +27,7 @@ export async function GET(
     if (coincide(request.headers.get("If-None-Match"), cabeceras.ETag)) {
       return new Response(null, { status: 304, headers: cabeceras });
     }
-    const cuerpo: EstadoPublicoDeSesion = {
-      sesionId: instantanea.sesionId,
-      estado: instantanea.estado,
-      version: instantanea.version,
-      actualizadaEn: instantanea.actualizadaEn.toISOString(),
-    };
-    return Response.json(cuerpo, { headers: cabeceras });
+    return Response.json(aEstadoPublico(instantanea), { headers: cabeceras });
   } catch (error) {
     return respuestaDeError(error);
   }
