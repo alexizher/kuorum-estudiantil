@@ -2,7 +2,8 @@ import type { DeployContext, Step } from "../wizard/step.js";
 
 export class DeployStep implements Step {
   readonly id = "despliegue";
-  readonly description = "Desplegando a producción (puede tardar unos minutos)";
+  readonly description =
+    "Creando el despliegue de producción del proyecto en Vercel (puede tardar unos minutos)";
 
   async run({ runner, state }: DeployContext): Promise<void> {
     const result = await runner.run("vercel", ["deploy", "--prod", "--yes"]);

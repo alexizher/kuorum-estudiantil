@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ProjectStep } from "../../src/steps/project-step.js";
-import { FakeRunner, makeContext } from "../doubles.js";
+import { FakePrompter, FakeRunner, makeContext } from "../doubles.js";
 
 let dir: string;
 beforeEach(async () => {
@@ -61,19 +61,78 @@ describe("proyecto", () => {
     expect(JSON.parse(String(init.body))).toEqual({
       rootDirectory: "apps/web",
       framework: "nextjs",
+      sourceFilesOutsideRootDirectory: true,
     });
     expect((init.headers as Record<string, string>)["Authorization"]).toBe("Bearer tok-secreto");
   });
 
-  it("tolera que el proyecto ya exista", async () => {
-    const runner = new FakeRunner((command, args) =>
+  describe("cuando el proyecto ya existe", () => {
+    const yaExiste = (command: string, args: string[]) =>
       args[0] === "project"
         ? { exitCode: 1, stderr: "Error: Project ejemplo already exists" }
-        : script(command, args),
-    );
-    const context = makeContext({ runner, fetch: okFetch() as unknown as typeof fetch, cwd: dir });
-    await new ProjectStep(token).run(context);
-    expect(context.state.projectId).toBe("prj_123");
+        : script(command, args);
+
+    it("pide confirmación nombrando el proyecto y lo reutiliza si la persona acepta", async () => {
+      const prompter = new FakePrompter([], true);
+      const runner = new FakeRunner(yaExiste);
+      const context = makeContext({
+        runner,
+        prompter,
+        fetch: okFetch() as unknown as typeof fetch,
+        cwd: dir,
+      });
+      await new ProjectStep(token).run(context);
+      expect(prompter.confirmations).toHaveLength(1);
+      expect(prompter.confirmations[0]).toContain('"ejemplo"');
+      expect(context.state.projectId).toBe("prj_123");
+    });
+
+    it("si la persona rechaza, falla sin enlazar ni tocar la API", async () => {
+      const runner = new FakeRunner(yaExiste);
+      const fetchFake = okFetch();
+      const context = makeContext({
+        runner,
+        prompter: new FakePrompter([], false),
+        fetch: fetchFake as unknown as typeof fetch,
+        cwd: dir,
+      });
+      await expect(new ProjectStep(token).run(context)).rejects.toThrow(/ejemplo/);
+      expect(runner.lines.some((l) => l.startsWith("vercel link"))).toBe(false);
+      expect(fetchFake).not.toHaveBeenCalled();
+      expect(context.state.projectId).toBeUndefined();
+    });
+
+    it("sin interacción falla y nombra reuseExistingProject", async () => {
+      const prompter = new FakePrompter();
+      const runner = new FakeRunner(yaExiste);
+      const context = makeContext({ runner, prompter, interactive: false, cwd: dir });
+      await expect(new ProjectStep(token).run(context)).rejects.toThrow(/reuseExistingProject/);
+      expect(prompter.confirmations).toEqual([]);
+      expect(runner.lines.some((l) => l.startsWith("vercel link"))).toBe(false);
+    });
+
+    it("sin interacción lo reutiliza si la configuración lo permite", async () => {
+      const context = makeContext({
+        runner: new FakeRunner(yaExiste),
+        interactive: false,
+        config: {
+          institutionName: "Universidad del Ejemplo",
+          shortName: "ejemplo",
+          reuseExistingProject: true,
+        },
+        fetch: okFetch() as unknown as typeof fetch,
+        cwd: dir,
+      });
+      await new ProjectStep(token).run(context);
+      expect(context.state.projectId).toBe("prj_123");
+    });
+  });
+
+  it("la descripción nombra el proyecto que va a crear", () => {
+    const description = new ProjectStep(token).description;
+    const texto =
+      typeof description === "function" ? description(makeContext().config) : description;
+    expect(texto).toContain('"ejemplo"');
   });
 
   it("no conecta git si no hay remoto origin de GitHub", async () => {

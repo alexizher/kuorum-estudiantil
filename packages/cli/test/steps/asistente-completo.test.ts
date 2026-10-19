@@ -33,7 +33,7 @@ describe("asistente completo con dobles", () => {
         { load: async () => config },
         new FakePrompter(),
         runner,
-        { fetch: fetchFake, sleep: async () => {}, cwd: dir },
+        { fetch: fetchFake, sleep: async () => {}, cwd: dir, interactive: true },
       );
       expect(await wizard.run()).toBe(0);
       const state = JSON.parse(await readFile(statePath, "utf8")) as {

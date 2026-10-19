@@ -179,4 +179,21 @@ describe("FuenteDeEstadoPorConsulta", () => {
     expect(alFallar).toHaveBeenNthCalledWith(1, error);
     expect(temporizador.pendientes).toHaveLength(1);
   });
+
+  it("informa por alFallar un 200 que no cumple el contrato y no notifica el cambio", async () => {
+    const fetchFalso = vi.fn().mockResolvedValue(Response.json({ version: "no-es-un-numero" }));
+    const temporizador = new TemporizadorFalso();
+    const alFallar = vi.fn();
+    const alCambiar = vi.fn();
+    new FuenteDeEstadoPorConsulta(fetchFalso, 3000, temporizador, alFallar).suscribir(
+      "s",
+      alCambiar,
+    );
+
+    await vaciar();
+
+    expect(alFallar).toHaveBeenCalledOnce();
+    expect(alCambiar).not.toHaveBeenCalled();
+    expect(temporizador.pendientes).toHaveLength(1);
+  });
 });

@@ -36,6 +36,9 @@ export class FuenteDeEstadoPorConsulta implements FuenteDeEstado {
         }
         if (activa && respuesta.status === 200) {
           const analizado = esquemaEstadoPublicoDeSesion.safeParse(await respuesta.json());
+          if (activa && !analizado.success) {
+            throw new Error("El estado recibido no cumple el contrato", { cause: analizado.error });
+          }
           if (activa && analizado.success) {
             etiqueta = respuesta.headers.get("ETag") ?? undefined;
             alCambiar(analizado.data);

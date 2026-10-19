@@ -5,6 +5,7 @@ export const SHORT_NAME_PATTERN = /^[a-z0-9-]{3,40}$/;
 export const DeployConfigSchema = z.object({
   institutionName: z.string().min(2).max(120),
   shortName: z.string().regex(SHORT_NAME_PATTERN),
+  reuseExistingProject: z.boolean().optional(),
 });
 
 export type DeployConfig = z.infer<typeof DeployConfigSchema>;

@@ -22,6 +22,7 @@ export class FakePrompter implements Prompter {
   readonly infos: string[] = [];
   readonly successes: string[] = [];
   readonly failures: string[] = [];
+  readonly confirmations: string[] = [];
   constructor(
     private readonly answers: string[] = [],
     private readonly confirmation = true,
@@ -29,7 +30,8 @@ export class FakePrompter implements Prompter {
   async text(opts: { message: string; initial?: string }): Promise<string> {
     return this.answers.shift() ?? opts.initial ?? "";
   }
-  async confirm(): Promise<boolean> {
+  async confirm(message: string): Promise<boolean> {
+    this.confirmations.push(message);
     return this.confirmation;
   }
   info(message: string): void {
@@ -62,6 +64,7 @@ export function makeContext(overrides: Partial<DeployContext> = {}): DeployConte
     fetch,
     sleep: async () => {},
     cwd: "/tmp",
+    interactive: true,
     ...overrides,
   };
 }

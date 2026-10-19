@@ -42,6 +42,11 @@ export function buildDeployWizard(options: { configPath?: string; cwd: string })
     configSource,
     prompter,
     new SpawnCommandRunner(),
-    { fetch, sleep: (ms) => delay(ms), cwd: options.cwd },
+    {
+      fetch,
+      sleep: (ms) => delay(ms),
+      cwd: options.cwd,
+      interactive: options.configPath === undefined,
+    },
   );
 }

@@ -19,7 +19,7 @@ import { FakePrompter, FakeRunner, MemoryStateStore } from "./doubles.js";
 
 const config: DeployConfig = { institutionName: "Universidad del Ejemplo", shortName: "ejemplo" };
 const fixedSource = { load: async () => config };
-const environment = { fetch, sleep: async () => {}, cwd: "/tmp" };
+const environment = { fetch, sleep: async () => {}, cwd: "/tmp", interactive: true };
 
 function stepOf(id: string, log: string[], fail?: string): Step {
   return {
@@ -246,5 +246,54 @@ describe("StateStore", () => {
     } finally {
       await rm(dir, { recursive: true });
     }
+  });
+
+  it("resuelve la descripción del paso con la configuración", async () => {
+    const step: Step = {
+      id: "x",
+      description: (c) => `Creando "${c.shortName}"`,
+      async run() {},
+    };
+    const { wizard, prompter } = build([step], new MemoryStateStore());
+    await wizard.run();
+    expect(prompter.infos).toEqual(['Creando "ejemplo"']);
+  });
+
+  describe("con --config y estado guardado", () => {
+    const noInteractive = { ...environment, interactive: false };
+    const distinta: DeployConfig = { ...config, shortName: "otro-nombre" };
+
+    it("si el archivo difiere de lo guardado falla y explica cómo empezar de nuevo", async () => {
+      const log: string[] = [];
+      const store = new MemoryStateStore({ completedSteps: [], config });
+      const prompter = new FakePrompter();
+      const wizard = new DeployWizard(
+        [stepOf("a", log)],
+        store,
+        { load: async () => distinta },
+        prompter,
+        new FakeRunner(),
+        noInteractive,
+      );
+      expect(await wizard.run()).toBe(1);
+      expect(log).toEqual([]);
+      expect(prompter.failures[0]).toContain(".kuorum/despliegue.json");
+      expect(store.state.config).toEqual(config);
+    });
+
+    it("si el archivo coincide con lo guardado continúa", async () => {
+      const log: string[] = [];
+      const store = new MemoryStateStore({ completedSteps: [], config });
+      const wizard = new DeployWizard(
+        [stepOf("a", log)],
+        store,
+        { load: async () => ({ ...config }) },
+        new FakePrompter(),
+        new FakeRunner(),
+        noInteractive,
+      );
+      expect(await wizard.run()).toBe(0);
+      expect(log).toEqual(["a"]);
+    });
   });
 });

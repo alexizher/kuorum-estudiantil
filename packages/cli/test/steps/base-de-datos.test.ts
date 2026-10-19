@@ -19,6 +19,13 @@ function afterAdd(envOutput: string, addResult: { exitCode?: number; stderr?: st
 }
 
 describe("base-de-datos", () => {
+  it("la descripción nombra el recurso de Neon que va a crear", () => {
+    const description = new DatabaseStep().description;
+    const texto =
+      typeof description === "function" ? description(makeContext().config) : description;
+    expect(texto).toContain('"ejemplo-db"');
+  });
+
   it("con state.databaseName no llama al runner", async () => {
     const runner = new FakeRunner();
     await new DatabaseStep().run(
@@ -46,6 +53,7 @@ describe("base-de-datos", () => {
       "preview",
       "--environment",
       "development",
+      "--no-env-pull",
     ]);
     expect(runner.lines).toContain("vercel env ls production");
     expect(context.state.databaseName).toBe("ejemplo-db");

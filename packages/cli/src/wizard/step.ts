@@ -18,10 +18,12 @@ export type DeployContext = {
   fetch: typeof fetch;
   sleep: (ms: number) => Promise<void>;
   cwd: string;
+  /** Falso con --config: no hay nadie para responder confirmaciones. */
+  interactive: boolean;
 };
 
 export interface Step {
   readonly id: string;
-  readonly description: string;
+  readonly description: string | ((config: DeployConfig) => string);
   run(context: DeployContext): Promise<void>;
 }

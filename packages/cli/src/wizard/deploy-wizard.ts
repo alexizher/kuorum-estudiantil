@@ -4,7 +4,7 @@ import { PromptCancelledError, type Prompter } from "../io/prompter.js";
 import type { StateRepository } from "./state-store.js";
 import type { DeployContext, DeployState, Step } from "./step.js";
 
-export type WizardEnvironment = Pick<DeployContext, "fetch" | "sleep" | "cwd">;
+export type WizardEnvironment = Pick<DeployContext, "fetch" | "sleep" | "cwd" | "interactive">;
 
 export class DeployWizard {
   constructor(
@@ -39,7 +39,9 @@ export class DeployWizard {
 
     for (const step of this.steps) {
       if (state.completedSteps.includes(step.id)) continue;
-      this.prompter.info(step.description);
+      this.prompter.info(
+        typeof step.description === "function" ? step.description(config) : step.description,
+      );
       try {
         await step.run(context);
       } catch (error) {
@@ -54,7 +56,24 @@ export class DeployWizard {
   }
 
   private async resolveConfig(state: DeployState) {
-    if (state.config) return state.config;
+    if (state.config) {
+      // Con --config no hay a quién preguntar: si el archivo cambió, se pide empezar de nuevo.
+      if (this.environment.interactive) return state.config;
+      try {
+        const given = await this.configSource.load();
+        if (JSON.stringify(sorted(given)) !== JSON.stringify(sorted(state.config))) {
+          this.prompter.fail(
+            "La configuración del archivo --config es distinta de la guardada en .kuorum/despliegue.json. " +
+              "Si quieres usar la nueva, borra .kuorum/despliegue.json (los recursos ya creados se reutilizan por nombre); si no, quita --config.",
+          );
+          return undefined;
+        }
+      } catch (error) {
+        this.report(error);
+        return undefined;
+      }
+      return state.config;
+    }
     try {
       return await this.configSource.load();
     } catch (error) {
@@ -67,4 +86,8 @@ export class DeployWizard {
     if (error instanceof PromptCancelledError) return;
     this.prompter.fail(error instanceof Error ? error.message : String(error));
   }
+}
+
+function sorted(value: object): [string, unknown][] {
+  return Object.entries(value).sort(([a], [b]) => a.localeCompare(b));
 }

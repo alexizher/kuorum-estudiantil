@@ -1,3 +1,4 @@
+import type { DeployConfig } from "../config/deploy-config.js";
 import type { CommandRunner } from "../io/command-runner.js";
 import type { DeployContext, Step } from "../wizard/step.js";
 
@@ -7,7 +8,8 @@ const REQUIRED_VARIABLES = ["DATABASE_URL", "DATABASE_URL_UNPOOLED"];
 
 export class DatabaseStep implements Step {
   readonly id = "base-de-datos";
-  readonly description = "Creando la base de datos Neon";
+  readonly description = (config: DeployConfig) =>
+    `Creando en tu cuenta el recurso de Neon "${config.shortName}-db" (plan gratuito) y conectándolo al proyecto en production, preview y development`;
 
   async run({ config, state, runner, prompter }: DeployContext): Promise<void> {
     if (state.databaseName) return;
@@ -33,6 +35,7 @@ export class DatabaseStep implements Step {
       "preview",
       "--environment",
       "development",
+      "--no-env-pull",
     ]);
     if (added.exitCode !== 0) {
       prompter.info(

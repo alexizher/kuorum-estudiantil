@@ -4,7 +4,7 @@ Esta guía instala Kuorum Estudiantil en una cuenta propia de Vercel con una bas
 
 ## Requisitos
 
-- Node 22 o superior, pnpm y git.
+- Node 22 o superior en tu máquina, pnpm y git. En Vercel el proyecto corre con Node 24 (lo fija `apps/web/package.json`).
 - Una cuenta de Vercel (plan Hobby alcanza) y acceso al marketplace de integraciones.
 - La CLI de Vercel. Si falta, el asistente ofrece instalarla con `pnpm add -g vercel@64`.
 - Una copia del repositorio en tu máquina, con `pnpm install` ya corrido.
@@ -17,11 +17,11 @@ Desde la raíz del repositorio:
 pnpm desplegar
 ```
 
-El asistente pregunta el nombre de la institución y un nombre corto (minúsculas, números y guiones, de 3 a 40 caracteres). Luego corre estos pasos en orden:
+Antes de cada paso que crea algo en tu cuenta, el asistente dice qué va a crear y con qué nombre. El asistente pregunta el nombre de la institución y un nombre corto (minúsculas, números y guiones, de 3 a 40 caracteres). Luego corre estos pasos en orden:
 
 1. `requisitos`: revisa node, pnpm, git y vercel.
 2. `sesion-vercel`: comprueba la sesión con `vercel whoami` y abre `vercel login` si hace falta.
-3. `proyecto`: crea el proyecto, lo enlaza y fija `apps/web` como directorio raíz con el framework Next.js. Si el remoto `origin` es de GitHub, conecta el repositorio.
+3. `proyecto`: crea el proyecto, lo enlaza y fija `apps/web` como directorio raíz con el framework Next.js (y activa el acceso a archivos fuera de ese directorio, que el build necesita). Si en tu cuenta ya existe un proyecto con ese nombre, pregunta antes de reutilizarlo. Si el remoto `origin` es de GitHub, conecta el repositorio.
 4. `base-de-datos`: instala la integración de Neon con el nombre `<nombre-corto>-db` y plan gratuito en production, preview y development, y comprueba que production tenga `DATABASE_URL` y `DATABASE_URL_UNPOOLED`. Si ya las tiene (por ejemplo, tras un corte a mitad del paso), no crea otra base.
 5. `variables`: carga `KUORUM_INSTITUCION_NOMBRE` en production y preview.
 6. `despliegue`: corre `vercel deploy --prod --yes` y guarda la URL.
@@ -38,7 +38,7 @@ Si la CLI no puede crear la base de Neon sin intervención, el asistente muestra
 pnpm desplegar -- --config configuracion.json
 ```
 
-El JSON lleva los dos campos y no se pregunta nada:
+El JSON lleva los dos campos y no se pregunta nada. Como nadie puede confirmar, si ya existe un proyecto con ese nombre el asistente falla, salvo que agregues `"reuseExistingProject": true`. Si ya hay avance guardado y el JSON dice otra cosa, también falla: borra `.kuorum/despliegue.json` para empezar con la nueva configuración.
 
 ```json
 { "institutionName": "Universidad del Ejemplo", "shortName": "ejemplo" }
@@ -53,7 +53,13 @@ Si falta un campo o es inválido, el asistente dice cuál y termina con código 
 - Las variables de entorno de la base de datos (las pone la integración) y `KUORUM_INSTITUCION_NOMBRE`.
 - Un despliegue de producción en `https://<proyecto>.vercel.app`.
 
+El archivo `.vercelignore` deja fuera del despliegue `.env*`, `.kuorum`, `node_modules` y los artefactos de build. La integración se instala con `--no-env-pull`, así que las credenciales de la base no se escriben en tu copia local.
+
 En tu máquina deja `.vercel/` (el enlace al proyecto) y `.kuorum/despliegue.json` (el avance del asistente, sin secretos). Ambos están en `.gitignore`.
+
+## Migraciones de base de datos
+
+El build de Vercel aplica las migraciones de Prisma solo cuando `VERCEL_ENV` es `production`. Las vistas previas (ramas y pull requests) nunca migran, así que un PR con una migración no toca la base de producción antes de fusionarse; su vista previa corre contra el esquema que ya tiene la base que le toque. El script es `scripts/migrar-si-produccion.mjs`.
 
 ## Reanudar
 

@@ -8,7 +8,7 @@ La documentación está en [`docs/`](docs/).
 
 ## Requisitos
 
-- Node 24 (ver `.nvmrc`)
+- Node 22 o superior (se recomienda 24, ver `.nvmrc`)
 - pnpm 11
 
 ## Comandos

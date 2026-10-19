@@ -1,21 +1,34 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
+import type { DeployConfig } from "../config/deploy-config.js";
 import type { DeployContext, Step } from "../wizard/step.js";
 import type { TokenReader } from "./vercel-token.js";
 
 export class ProjectStep implements Step {
   readonly id = "proyecto";
-  readonly description = "Creando y enlazando el proyecto en Vercel";
+  readonly description = (config: DeployConfig) =>
+    `Creando el proyecto "${config.shortName}" en tu cuenta de Vercel, enlazándolo a esta carpeta y, si el remoto es de GitHub, conectándolo al repositorio`;
 
   constructor(private readonly token: TokenReader) {}
 
-  async run({ config, state, runner, prompter, fetch, cwd }: DeployContext): Promise<void> {
+  async run({
+    config,
+    state,
+    runner,
+    prompter,
+    fetch,
+    cwd,
+    interactive,
+  }: DeployContext): Promise<void> {
     if (state.projectId) return;
     const name = config.shortName;
 
     const created = await runner.run("vercel", ["project", "create", name]);
-    if (created.exitCode !== 0 && !/already exists/i.test(created.stdout + created.stderr)) {
-      throw new Error(`No se pudo crear el proyecto: ${created.stderr.trim()}`);
+    if (created.exitCode !== 0) {
+      if (!/already exists/i.test(created.stdout + created.stderr)) {
+        throw new Error(`No se pudo crear el proyecto: ${created.stderr.trim()}`);
+      }
+      await this.confirmReuse(name, config.reuseExistingProject === true, interactive, prompter);
     }
     const linked = await runner.run("vercel", ["link", "--yes", "--project", name]);
     if (linked.exitCode !== 0) {
@@ -37,6 +50,29 @@ export class ProjectStep implements Step {
     state.projectId = link.projectId;
   }
 
+  private async confirmReuse(
+    name: string,
+    allowed: boolean,
+    interactive: boolean,
+    prompter: DeployContext["prompter"],
+  ): Promise<void> {
+    if (allowed) return;
+    if (!interactive) {
+      throw new Error(
+        `Ya existe un proyecto "${name}" en tu cuenta de Vercel y el asistente cambiaría su directorio raíz y su repositorio. ` +
+          `Elige otro shortName o agrega "reuseExistingProject": true a la configuración si quieres usarlo.`,
+      );
+    }
+    const accepted = await prompter.confirm(
+      `Ya existe un proyecto "${name}" en tu cuenta de Vercel. Si lo usas, el asistente cambiará su directorio raíz a apps/web y lo conectará a este repositorio. ¿Usarlo?`,
+    );
+    if (!accepted) {
+      throw new Error(
+        `No se tocó el proyecto "${name}". Elige otro nombre corto y vuelve a correr el asistente.`,
+      );
+    }
+  }
+
   private async fixRootDirectory(
     fetchFn: typeof fetch,
     link: { projectId: string; orgId?: string },
@@ -51,7 +87,11 @@ export class ProjectStep implements Step {
     const response = await fetchFn(`https://api.vercel.com/v9/projects/${link.projectId}${team}`, {
       method: "PATCH",
       headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ rootDirectory: "apps/web", framework: "nextjs" }),
+      body: JSON.stringify({
+        rootDirectory: "apps/web",
+        framework: "nextjs",
+        sourceFilesOutsideRootDirectory: true,
+      }),
     });
     if (!response.ok) {
       throw new Error(

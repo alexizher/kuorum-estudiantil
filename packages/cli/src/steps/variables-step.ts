@@ -6,7 +6,8 @@ const ENVIRONMENTS = ["production", "preview"];
 
 export class VariablesStep implements Step {
   readonly id = "variables";
-  readonly description = "Cargando las variables de entorno";
+  readonly description =
+    "Cargando KUORUM_INSTITUCION_NOMBRE como variable de entorno del proyecto en production y preview";
 
   async run({ config, runner }: DeployContext): Promise<void> {
     for (const environment of ENVIRONMENTS) {
