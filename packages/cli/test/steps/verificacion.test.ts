@@ -39,6 +39,20 @@ describe("verificacion", () => {
     expect(calls).toBe(2);
   });
 
+  it("pasa una señal de tiempo límite y un timeout cuenta como intento fallido", async () => {
+    let calls = 0;
+    const signals: (AbortSignal | null | undefined)[] = [];
+    const fetchFake = (async (_url: unknown, init?: RequestInit) => {
+      signals.push(init?.signal);
+      calls += 1;
+      if (calls === 1) throw new DOMException("timeout", "TimeoutError");
+      return new Response("{}", { status: 200 });
+    }) as typeof fetch;
+    await new VerificationStep().run(makeContext({ state, fetch: fetchFake }));
+    expect(calls).toBe(2);
+    expect(signals.every((signal) => signal instanceof AbortSignal)).toBe(true);
+  });
+
   it("falla si no hay productionUrl", async () => {
     await expect(new VerificationStep().run(makeContext())).rejects.toThrow(/URL/);
   });

@@ -1,3 +1,4 @@
+import type { CommandRunner } from "../io/command-runner.js";
 import type { DeployContext, Step } from "../wizard/step.js";
 
 const NEON_FREE_PLAN = "free_v3";
@@ -11,6 +12,12 @@ export class DatabaseStep implements Step {
   async run({ config, state, runner, prompter }: DeployContext): Promise<void> {
     if (state.databaseName) return;
     const name = `${config.shortName}-db`;
+
+    // Un paso anterior pudo crear la base y fallar después: no se crea otra.
+    if ((await this.missingVariables(runner)).length === 0) {
+      state.databaseName = name;
+      return;
+    }
 
     const added = await runner.run("vercel", [
       "integration",
@@ -39,15 +46,19 @@ export class DatabaseStep implements Step {
         throw new Error("Falta crear la base de datos en Neon; vuelve a correr el asistente.");
     }
 
-    const listed = await runner.run("vercel", ["env", "ls"]);
-    const missing = REQUIRED_VARIABLES.filter(
-      (variable) => !new RegExp(`\\b${variable}\\b`).test(listed.stdout),
-    );
+    state.databaseName = name; // ya existe: si la verificación falla, al reanudar no se duplica
+    const missing = await this.missingVariables(runner);
     if (missing.length > 0) {
       throw new Error(
         `El proyecto no tiene la variable ${missing.join(" ni ")} de la base de datos.`,
       );
     }
-    state.databaseName = name;
+  }
+
+  private async missingVariables(runner: CommandRunner): Promise<string[]> {
+    const listed = await runner.run("vercel", ["env", "ls", "production"]);
+    return REQUIRED_VARIABLES.filter(
+      (variable) => !new RegExp(`\\b${variable}\\b`).test(listed.stdout),
+    );
   }
 }

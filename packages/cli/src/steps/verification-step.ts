@@ -1,6 +1,7 @@
 import type { DeployContext, Step } from "../wizard/step.js";
 
 const ATTEMPTS = 12;
+const ATTEMPT_TIMEOUT_MS = 10_000;
 const INTERVAL_MS = 5000; // cubre el arranque en frío de Neon
 
 export class VerificationStep implements Step {
@@ -13,7 +14,7 @@ export class VerificationStep implements Step {
     let last = "sin respuesta";
     for (let attempt = 1; attempt <= ATTEMPTS; attempt++) {
       try {
-        const response = await fetch(url);
+        const response = await fetch(url, { signal: AbortSignal.timeout(ATTEMPT_TIMEOUT_MS) });
         if (response.status === 200) return;
         last = `HTTP ${response.status}`;
       } catch (error) {

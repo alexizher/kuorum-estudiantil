@@ -22,7 +22,7 @@ El asistente pregunta el nombre de la institución y un nombre corto (minúscula
 1. `requisitos`: revisa node, pnpm, git y vercel.
 2. `sesion-vercel`: comprueba la sesión con `vercel whoami` y abre `vercel login` si hace falta.
 3. `proyecto`: crea el proyecto, lo enlaza y fija `apps/web` como directorio raíz con el framework Next.js. Si el remoto `origin` es de GitHub, conecta el repositorio.
-4. `base-de-datos`: instala la integración de Neon con el nombre `<nombre-corto>-db` y plan gratuito en production, preview y development, y comprueba que existan `DATABASE_URL` y `DATABASE_URL_UNPOOLED`.
+4. `base-de-datos`: instala la integración de Neon con el nombre `<nombre-corto>-db` y plan gratuito en production, preview y development, y comprueba que production tenga `DATABASE_URL` y `DATABASE_URL_UNPOOLED`. Si ya las tiene (por ejemplo, tras un corte a mitad del paso), no crea otra base.
 5. `variables`: carga `KUORUM_INSTITUCION_NOMBRE` en production y preview.
 6. `despliegue`: corre `vercel deploy --prod --yes` y guarda la URL.
 7. `verificacion`: pide `/api/salud` hasta recibir 200 (12 intentos, uno cada 5 segundos, por si Neon arranca en frío).

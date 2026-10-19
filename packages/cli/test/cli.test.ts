@@ -10,6 +10,13 @@ describe("parseCommand", () => {
     });
   });
 
+  it("ignora el separador -- que reenvía pnpm", () => {
+    expect(parseCommand(["desplegar", "--", "--config", "a.json"])).toEqual({
+      kind: "desplegar",
+      configPath: "a.json",
+    });
+  });
+
   it("muestra el uso con una opción desconocida, sin comando o con otro comando", () => {
     expect(parseCommand(["desplegar", "--foo"])).toEqual({ kind: "uso" });
     expect(parseCommand([])).toEqual({ kind: "uso" });

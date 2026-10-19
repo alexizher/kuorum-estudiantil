@@ -11,7 +11,7 @@ export type Command = { kind: "desplegar"; configPath?: string } | { kind: "uso"
 export function parseCommand(argv: string[]): Command {
   try {
     const { values, positionals } = parseArgs({
-      args: argv,
+      args: argv.filter((arg) => arg !== "--"), // pnpm reenvía el "--" tal cual
       allowPositionals: true,
       options: { config: { type: "string" } },
     });
