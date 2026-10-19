@@ -19,6 +19,7 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm depcheck
       - run: pnpm test
+      - run: pnpm build
 
   integracion:
     runs-on: ubuntu-latest

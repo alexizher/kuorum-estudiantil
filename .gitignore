@@ -10,3 +10,4 @@ coverage/
 .vercel/
 .superpowers/
 **/src/generated/
+next-env.d.ts

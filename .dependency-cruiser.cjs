@@ -20,7 +20,17 @@ module.exports = {
       comment: "Los paquetes no dependen de las apps.",
       severity: "error",
       from: { path: "^packages/" },
-      to: { path: "^apps/" },
+      to: { path: "^(apps/|@kuorum/web(/|$))" },
+    },
+    {
+      name: "contracts-sin-capas",
+      comment:
+        "contracts solo depende de zod: no importa domain, application, infrastructure ni apps.",
+      severity: "error",
+      from: { path: "^packages/contracts/src" },
+      to: {
+        path: "^(packages/(domain|application|infrastructure)/|apps/|@kuorum/(domain|application|infrastructure|web)(/|$))",
+      },
     },
     {
       name: "nadie-importa-cli",

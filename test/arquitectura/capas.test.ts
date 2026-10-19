@@ -51,34 +51,42 @@ describe("regla de dependencias entre capas", () => {
 
   // Árbol temporal con un paquete "destino" ya construido (exports a dist) y enlazado
   // por nombre desde el paquete "origen", como lo deja pnpm en un workspace real.
-  function importarPorNombre(origen: string, destino: string, construido: boolean) {
+  function importarPorNombre(
+    origen: string,
+    destino: string,
+    construido: boolean,
+    carpetaDestino = "packages",
+  ) {
     const dir = mkdtempSync(join(tmpdir(), "capas-"));
     temporales.push(dir);
     mkdirSync(join(dir, `packages/${origen}/src`), { recursive: true });
-    mkdirSync(join(dir, `packages/${destino}/src`), { recursive: true });
+    mkdirSync(join(dir, `${carpetaDestino}/${destino}/src`), { recursive: true });
     writeFileSync(
       join(dir, `packages/${origen}/src/uso.ts`),
       `import { x } from "@kuorum/${destino}";\nexport const y = x;\n`,
     );
     writeFileSync(
-      join(dir, `packages/${destino}/package.json`),
+      join(dir, `${carpetaDestino}/${destino}/package.json`),
       JSON.stringify({
         name: `@kuorum/${destino}`,
         type: "module",
         exports: { ".": "./dist/index.js" },
       }),
     );
-    writeFileSync(join(dir, `packages/${destino}/src/index.ts`), "export const x = 1;\n");
+    writeFileSync(join(dir, `${carpetaDestino}/${destino}/src/index.ts`), "export const x = 1;\n");
     if (construido) {
-      mkdirSync(join(dir, `packages/${destino}/dist`));
-      writeFileSync(join(dir, `packages/${destino}/dist/index.js`), "export const x = 1;\n");
+      mkdirSync(join(dir, `${carpetaDestino}/${destino}/dist`));
+      writeFileSync(
+        join(dir, `${carpetaDestino}/${destino}/dist/index.js`),
+        "export const x = 1;\n",
+      );
     }
     mkdirSync(join(dir, `packages/${origen}/node_modules/@kuorum`), { recursive: true });
     symlinkSync(
-      join(dir, `packages/${destino}`),
+      join(dir, `${carpetaDestino}/${destino}`),
       join(dir, `packages/${origen}/node_modules/@kuorum/${destino}`),
     );
-    return cruzar(dir, ["packages"]);
+    return cruzar(dir, [...new Set(["packages", carpetaDestino])]);
   }
 
   it.each([true, false])(
@@ -99,6 +107,23 @@ describe("regla de dependencias entre capas", () => {
     (construido) => {
       const { violaciones } = importarPorNombre("application", "cli", construido);
       expect(violaciones.map((v) => v.rule.name)).toContain("nadie-importa-cli");
+    },
+  );
+
+  it.each([true, false])(
+    "importar @kuorum/web por nombre rompe nadie-importa-apps (construido: %s)",
+    (construido) => {
+      const { violaciones } = importarPorNombre("application", "web", construido, "apps");
+      expect(violaciones.map((v) => v.rule.name)).toContain("nadie-importa-apps");
+    },
+  );
+
+  it.each([true, false])(
+    "contracts importando domain por nombre rompe contracts-sin-capas (construido: %s)",
+    (construido) => {
+      const { codigo, violaciones } = importarPorNombre("contracts", "domain", construido);
+      expect(codigo).not.toBe(0);
+      expect(violaciones.map((v) => v.rule.name)).toContain("contracts-sin-capas");
     },
   );
 
