@@ -14,12 +14,18 @@ export const options = {
 
 // Cada VU tiene su propia copia del módulo, así que la etiqueta es por usuario virtual.
 let etiqueta;
+let primera = true;
 
 export function setup() {
   if (!base || !sesion) throw new Error("Faltan las variables URL y SESION");
 }
 
 export default function () {
+  if (primera) {
+    // Desfase inicial aleatorio para que los VUs no consulten todos a la vez.
+    primera = false;
+    sleep(Math.random() * intervalo);
+  }
   const cabeceras = etiqueta ? { "If-None-Match": etiqueta } : {};
   const respuesta = http.get(`${base}/api/public/v1/sesiones/${sesion}/estado`, {
     headers: cabeceras,

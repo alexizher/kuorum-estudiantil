@@ -60,7 +60,15 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - uses: grafana/setup-k6-action@43b9fc21641a76002687994433dd586f56e791b1 # v1.2.2
       - name: Avanzar la versión cada 10 s
-        run: node tools/load/avanzar.mjs "$SESION" > avanzar.log 2>&1 &
+        run: |
+          node tools/load/avanzar.mjs "$SESION" > avanzar.log 2>&1 &
+          avanzar=$!
+          sleep 5
+          if ! kill -0 "$avanzar" 2>/dev/null || grep -qi "error\|no existe" avanzar.log; then
+            echo "avanzar.mjs falló al arrancar:" >&2
+            cat avanzar.log >&2
+            exit 1
+          fi
         env:
           CARGA_DATABASE_URL: ${{ secrets.CARGA_DATABASE_URL }}
       - name: Consulta con k6

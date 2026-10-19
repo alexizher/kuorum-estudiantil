@@ -151,4 +151,36 @@ describe("FuenteDeEstadoPorConsulta", () => {
 
     expect(fetchFalso).toHaveBeenCalledOnce();
   });
+
+  it("llama a fetch sin la instancia como this", async () => {
+    let esteValor: unknown = "sin llamar";
+    const fetchFalso = vi.fn(async function (this: unknown) {
+      esteValor = this;
+      return ok(1);
+    });
+    const fuente = new FuenteDeEstadoPorConsulta(fetchFalso, 3000, new TemporizadorFalso());
+    fuente.suscribir("s", vi.fn());
+    await vaciar();
+
+    expect(esteValor).not.toBe(fuente);
+  });
+
+  it("informa los fallos por alFallar y sigue reintentando", async () => {
+    const error = new Error("red");
+    const fetchFalso = vi
+      .fn()
+      .mockRejectedValueOnce(error)
+      .mockResolvedValueOnce(new Response("x", { status: 500 }));
+    const temporizador = new TemporizadorFalso();
+    const alFallar = vi.fn();
+    new FuenteDeEstadoPorConsulta(fetchFalso, 3000, temporizador, alFallar).suscribir("s", vi.fn());
+
+    await vaciar();
+    temporizador.disparar();
+    await vaciar();
+
+    expect(alFallar).toHaveBeenCalledTimes(2);
+    expect(alFallar).toHaveBeenNthCalledWith(1, error);
+    expect(temporizador.pendientes).toHaveLength(1);
+  });
 });

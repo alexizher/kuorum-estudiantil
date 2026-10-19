@@ -14,19 +14,27 @@ function conConsulta(ejecutar: (id: string) => Promise<InstantaneaDeSesion>) {
   } as unknown as ReturnType<typeof contenedor>);
 }
 
-function bloque(version: number): string {
+function bloque(version: number, prefijo = ""): string {
   const cuerpo = {
     sesionId: "s",
     estado: "EN_CURSO",
     version,
     actualizadaEn: actualizadaEn.toISOString(),
   };
-  return `event: estado\ndata: ${JSON.stringify(cuerpo)}\n\n`;
+  return `${prefijo}event: estado\ndata: ${JSON.stringify(cuerpo)}\n\n`;
 }
 
 function lectorDe(respuesta: Response) {
   if (respuesta.body === null) throw new Error("la respuesta no tiene cuerpo");
   return respuesta.body.getReader();
+}
+
+// Lee hasta el cierre; los ping intermedios no cuentan.
+async function cerrado(lector: ReturnType<typeof lectorDe>): Promise<boolean> {
+  for (let i = 0; i < 100; i++) {
+    if ((await lector.read()).done) return true;
+  }
+  return false;
 }
 
 function pedir(controlador = new AbortController(), id = "s") {
@@ -64,7 +72,7 @@ describe("GET /api/public/v1/sesiones/[id]/eventos", () => {
     expect(respuesta.headers.get("Content-Type")).toBe("text/event-stream");
     expect(respuesta.headers.get("Cache-Control")).toContain("no-cache");
     const primero = await lector.read();
-    expect(decodificador.decode(primero.value)).toBe(bloque(1));
+    expect(decodificador.decode(primero.value)).toBe(bloque(1, "retry: 3000\n"));
     await lector.cancel();
   });
 
@@ -88,10 +96,9 @@ describe("GET /api/public/v1/sesiones/[id]/eventos", () => {
     const lector = lectorDe(respuesta);
     await lector.read();
 
-    const fin = lector.read();
     await vi.advanceTimersByTimeAsync(290_000);
 
-    expect((await fin).done).toBe(true);
+    expect(await cerrado(lector)).toBe(true);
   });
 
   it("deja de consultar cuando el cliente se desconecta", async () => {
@@ -120,5 +127,51 @@ describe("GET /api/public/v1/sesiones/[id]/eventos", () => {
 
     expect(respuesta.status).toBe(404);
     expect(await respuesta.json()).toEqual({ error: "SESION_NO_ENCONTRADA" });
+  });
+
+  it("cierra por tiempo real aunque las consultas sean lentas", async () => {
+    let llamadas = 0;
+    conConsulta(async (id) => {
+      // la consulta inicial es rápida; las del ciclo tardan
+      if (llamadas++ > 0) await new Promise((resolver) => setTimeout(resolver, 400));
+      return new InstantaneaDeSesion(id, "EN_CURSO", version, actualizadaEn);
+    });
+    const lector = lectorDe(await pedir());
+    await lector.read();
+
+    await vi.advanceTimersByTimeAsync(292_000);
+
+    expect(await cerrado(lector)).toBe(true);
+  });
+
+  it("no escribe en un flujo cerrado si el cliente se va durante la consulta", async () => {
+    let llamadas = 0;
+    conConsulta(async (id) => {
+      // la consulta inicial es rápida; las del ciclo tardan
+      if (llamadas++ > 0) await new Promise((resolver) => setTimeout(resolver, 500));
+      return new InstantaneaDeSesion(id, "EN_CURSO", version, actualizadaEn);
+    });
+    const controlador = new AbortController();
+    const lector = lectorDe(await pedir(controlador));
+    await lector.read();
+    await vi.advanceTimersByTimeAsync(1200);
+    version = 2;
+
+    controlador.abort();
+    await vi.advanceTimersByTimeAsync(2000);
+
+    expect((await lector.read()).done).toBe(true);
+  });
+
+  it("envía un comentario ping cada 20 s si nada cambia", async () => {
+    const lector = lectorDe(await pedir());
+    const decodificador = new TextDecoder();
+    await lector.read();
+
+    const siguiente = lector.read();
+    await vi.advanceTimersByTimeAsync(20_000);
+
+    expect(decodificador.decode((await siguiente).value)).toBe(": ping\n\n");
+    await lector.cancel();
   });
 });

@@ -11,6 +11,7 @@ export class FuenteDeEstadoPorConsulta implements FuenteDeEstado {
     private readonly fetch: typeof globalThis.fetch,
     private readonly intervaloMs: number,
     private readonly temporizador: Temporizador = temporizadorPorDefecto,
+    private readonly alFallar?: (error: unknown) => void,
   ) {}
 
   suscribir(sesionId: string, alCambiar: (estado: EstadoPublicoDeSesion) => void): () => void {
@@ -27,7 +28,12 @@ export class FuenteDeEstadoPorConsulta implements FuenteDeEstado {
       try {
         const cabeceras: Record<string, string> = {};
         if (etiqueta !== undefined) cabeceras["If-None-Match"] = etiqueta;
-        const respuesta = await this.fetch(urlDeEstado(sesionId), { headers: cabeceras });
+        // Llamada suelta: window.fetch lanza "Illegal invocation" si `this` es la instancia.
+        const pedir = this.fetch;
+        const respuesta = await pedir(urlDeEstado(sesionId), { headers: cabeceras });
+        if (activa && respuesta.status !== 200 && respuesta.status !== 304) {
+          throw new Error(`Respuesta ${respuesta.status} al consultar el estado`);
+        }
         if (activa && respuesta.status === 200) {
           const analizado = esquemaEstadoPublicoDeSesion.safeParse(await respuesta.json());
           if (activa && analizado.success) {
@@ -35,8 +41,9 @@ export class FuenteDeEstadoPorConsulta implements FuenteDeEstado {
             alCambiar(analizado.data);
           }
         }
-      } catch {
-        // error de red o cuerpo ilegible: se reintenta en el siguiente turno
+      } catch (error) {
+        // se reintenta en el siguiente turno; quien llama decide si registrarlo
+        if (activa) this.alFallar?.(error);
       }
       esperar();
     };

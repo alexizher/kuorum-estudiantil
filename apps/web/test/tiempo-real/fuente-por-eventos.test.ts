@@ -1,5 +1,6 @@
 import type { EstadoPublicoDeSesion } from "@kuorum/contracts";
 import { describe, expect, it, vi } from "vitest";
+import type { Temporizador } from "../../src/tiempo-real/fuente-de-estado";
 import { FuenteDeEstadoPorEventos } from "../../src/tiempo-real/fuente-por-eventos";
 
 class EventSourceFalso {
@@ -14,6 +15,9 @@ class EventSourceFalso {
   close(): void {
     this.cerrado = true;
     this.readyState = 2;
+  }
+  abrir(): void {
+    this.escuchas.get("open")?.({ data: "" });
   }
   emitir(datos: unknown): void {
     this.escuchas.get("estado")?.({
@@ -37,12 +41,33 @@ function conexion(creados: EventSourceFalso[], i: number): EventSourceFalso {
 
 function preparar() {
   const creados: EventSourceFalso[] = [];
+  const esperas: number[] = [];
+  let pendiente: (() => void) | undefined;
+  const temporizador: Temporizador = {
+    programar(accion, ms) {
+      esperas.push(ms);
+      pendiente = accion;
+      return () => {
+        pendiente = undefined;
+      };
+    },
+  };
   const fuente = new FuenteDeEstadoPorEventos((url) => {
     const es = new EventSourceFalso(url);
     creados.push(es);
     return es as unknown as EventSource;
-  });
-  return { creados, fuente };
+  }, temporizador);
+  const disparar = () => {
+    const accion = pendiente;
+    pendiente = undefined;
+    accion?.();
+  };
+  const fallar = (i: number) => {
+    const es = conexion(creados, i);
+    es.readyState = 2;
+    es.onerror?.();
+  };
+  return { creados, esperas, fuente, disparar, fallar };
 }
 
 describe("FuenteDeEstadoPorEventos", () => {
@@ -68,15 +93,17 @@ describe("FuenteDeEstadoPorEventos", () => {
     expect(alCambiar).not.toHaveBeenCalled();
   });
 
-  it("reconecta cuando la conexión queda cerrada", () => {
-    const { creados, fuente } = preparar();
+  it("reconecta tras la espera cuando la conexión queda cerrada", () => {
+    const { creados, fuente, disparar, fallar, esperas } = preparar();
     const alCambiar = vi.fn();
     fuente.suscribir("s", alCambiar);
 
-    conexion(creados, 0).readyState = 2;
-    conexion(creados, 0).onerror?.();
+    fallar(0);
+    expect(creados).toHaveLength(1);
+    disparar();
     conexion(creados, 1).emitir(estado);
 
+    expect(esperas).toEqual([1000]);
     expect(creados).toHaveLength(2);
     expect(conexion(creados, 0).cerrado).toBe(true);
     expect(alCambiar).toHaveBeenCalledOnce();
@@ -100,6 +127,31 @@ describe("FuenteDeEstadoPorEventos", () => {
     conexion(creados, 0).onerror?.();
 
     expect(conexion(creados, 0).cerrado).toBe(true);
+    expect(creados).toHaveLength(1);
+  });
+
+  it("la espera crece al doble hasta 30 s y se reinicia al abrir", () => {
+    const { creados, fuente, disparar, fallar, esperas } = preparar();
+    fuente.suscribir("s", vi.fn());
+
+    for (let i = 0; i < 7; i++) {
+      fallar(i);
+      disparar();
+    }
+    conexion(creados, 7).abrir();
+    fallar(7);
+
+    expect(esperas).toEqual([1000, 2000, 4000, 8000, 16000, 30000, 30000, 1000]);
+  });
+
+  it("cancelar durante la espera impide reconectar", () => {
+    const { creados, fuente, disparar, fallar } = preparar();
+    const cancelar = fuente.suscribir("s", vi.fn());
+
+    fallar(0);
+    cancelar();
+    disparar();
+
     expect(creados).toHaveLength(1);
   });
 });
