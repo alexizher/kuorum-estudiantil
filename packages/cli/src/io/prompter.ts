@@ -12,10 +12,18 @@ export interface Prompter {
   fail(message: string): void;
 }
 
+/** El mensaje de cancelación ya lo mostró clack; quien la capture no debe repetirlo. */
+export class PromptCancelledError extends Error {
+  constructor() {
+    super("Operación cancelada por la persona usuaria.");
+    this.name = "PromptCancelledError";
+  }
+}
+
 function unwrap<T>(value: T | symbol): T {
   if (isCancel(value) || typeof value === "symbol") {
     cancel("Operación cancelada.");
-    throw new Error("Operación cancelada por la persona usuaria.");
+    throw new PromptCancelledError();
   }
   return value as T;
 }

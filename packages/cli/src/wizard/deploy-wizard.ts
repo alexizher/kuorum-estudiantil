@@ -1,7 +1,6 @@
 import type { ConfigSource } from "../config/config-source.js";
-import { InvalidConfigError, MissingConfigError } from "../config/deploy-config.js";
 import type { CommandRunner } from "../io/command-runner.js";
-import type { Prompter } from "../io/prompter.js";
+import { PromptCancelledError, type Prompter } from "../io/prompter.js";
 import type { StateRepository } from "./state-store.js";
 import type { DeployContext, DeployState, Step } from "./step.js";
 
@@ -18,7 +17,13 @@ export class DeployWizard {
   ) {}
 
   async run(): Promise<number> {
-    const state = await this.store.load();
+    let state: DeployState;
+    try {
+      state = await this.store.load();
+    } catch (error) {
+      this.report(error);
+      return 1;
+    }
     const config = await this.resolveConfig(state);
     if (!config) return 1;
     state.config = config;
@@ -38,7 +43,7 @@ export class DeployWizard {
       try {
         await step.run(context);
       } catch (error) {
-        this.prompter.fail(error instanceof Error ? error.message : String(error));
+        this.report(error);
         await this.store.save(state);
         return 1;
       }
@@ -53,12 +58,13 @@ export class DeployWizard {
     try {
       return await this.configSource.load();
     } catch (error) {
-      if (error instanceof MissingConfigError || error instanceof InvalidConfigError) {
-        this.prompter.fail(error.message);
-      } else {
-        this.prompter.fail(error instanceof Error ? error.message : String(error));
-      }
+      this.report(error);
       return undefined;
     }
+  }
+
+  private report(error: unknown): void {
+    if (error instanceof PromptCancelledError) return;
+    this.prompter.fail(error instanceof Error ? error.message : String(error));
   }
 }

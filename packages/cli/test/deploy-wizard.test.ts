@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { FileConfigSource, InteractiveConfigSource } from "../src/config/config-source.js";
 import {
+  InvalidConfigError,
   MissingConfigError,
   parseDeployConfig,
   slugify,
@@ -11,7 +12,8 @@ import {
   type DeployConfig,
 } from "../src/config/deploy-config.js";
 import { DeployWizard } from "../src/wizard/deploy-wizard.js";
-import { StateStore } from "../src/wizard/state-store.js";
+import { PromptCancelledError } from "../src/io/prompter.js";
+import { CorruptStateError, StateStore } from "../src/wizard/state-store.js";
 import type { Step } from "../src/wizard/step.js";
 import { FakePrompter, FakeRunner, MemoryStateStore } from "./doubles.js";
 
@@ -98,6 +100,90 @@ describe("DeployWizard", () => {
   });
 });
 
+describe("DeployWizard, endurecimiento", () => {
+  it("con shortName inválido devuelve 1 y muestra el mensaje de InvalidConfigError", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "kuorum-cli-"));
+    try {
+      const path = join(dir, "config.json");
+      await writeFile(
+        path,
+        JSON.stringify({ institutionName: "UdeA", shortName: "UdeA Medellín" }),
+      );
+      const log: string[] = [];
+      const { wizard, prompter } = build(
+        [stepOf("a", log)],
+        new MemoryStateStore(),
+        new FileConfigSource(path),
+      );
+      expect(await wizard.run()).toBe(1);
+      expect(log).toEqual([]);
+      expect(prompter.failures).toHaveLength(1);
+      expect(prompter.failures[0]).toContain("shortName");
+      expect(new InvalidConfigError("shortName", "x")).toBeInstanceOf(Error);
+    } finally {
+      await rm(dir, { recursive: true });
+    }
+  });
+
+  it("al reanudar, un paso que falla conserva los completados y no repite los anteriores", async () => {
+    const log: string[] = [];
+    const store = new MemoryStateStore({ completedSteps: ["a"], config });
+    const { wizard, prompter } = build(
+      [stepOf("a", log), stepOf("b", log, "falló b otra vez"), stepOf("c", log)],
+      store,
+    );
+    expect(await wizard.run()).toBe(1);
+    expect(log).toEqual([]);
+    expect(store.state.completedSteps).toEqual(["a"]);
+    expect(prompter.failures).toEqual(["falló b otra vez"]);
+  });
+
+  it("si la persona cancela un paso, devuelve 1 sin un segundo mensaje de error", async () => {
+    const cancelling: Step = {
+      id: "x",
+      description: "paso x",
+      async run() {
+        throw new PromptCancelledError();
+      },
+    };
+    const { wizard, prompter } = build([cancelling], new MemoryStateStore());
+    expect(await wizard.run()).toBe(1);
+    expect(prompter.failures).toEqual([]);
+  });
+
+  it("si cancela al pedir la configuración, devuelve 1 sin mensaje adicional", async () => {
+    const source = {
+      load: async (): Promise<DeployConfig> => {
+        throw new PromptCancelledError();
+      },
+    };
+    const { wizard, prompter } = build([], new MemoryStateStore(), source);
+    expect(await wizard.run()).toBe(1);
+    expect(prompter.failures).toEqual([]);
+  });
+
+  it("con un archivo de estado dañado devuelve 1 con mensaje en español", async () => {
+    const store = {
+      load: async () => {
+        throw new CorruptStateError("/x/.kuorum/despliegue.json");
+      },
+      save: async () => {},
+    };
+    const prompter = new FakePrompter();
+    const wizard = new DeployWizard(
+      [],
+      store,
+      fixedSource,
+      prompter,
+      new FakeRunner(),
+      environment,
+    );
+    expect(await wizard.run()).toBe(1);
+    expect(prompter.failures[0]).toContain("despliegue.json");
+    expect(prompter.failures[0]).toContain("dañado");
+  });
+});
+
 describe("configuración", () => {
   it("FileConfigSource lanza MissingConfigError con el campo", async () => {
     const dir = await mkdtemp(join(tmpdir(), "kuorum-cli-"));
@@ -126,6 +212,21 @@ describe("configuración", () => {
     const prompter = new FakePrompter(["Universidad del Ejemplo"]);
     const loaded = await new InteractiveConfigSource(prompter).load();
     expect(loaded.shortName).toBe("universidad-del-ejemplo");
+  });
+});
+
+describe("StateStore, archivo dañado", () => {
+  it("lanza CorruptStateError si el JSON no se puede leer", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "kuorum-cli-"));
+    try {
+      const path = join(dir, "despliegue.json");
+      await writeFile(path, "{ esto no es json");
+      await expect(new StateStore(path).load()).rejects.toBeInstanceOf(CorruptStateError);
+      await writeFile(path, JSON.stringify({ otraCosa: 1 }));
+      await expect(new StateStore(path).load()).rejects.toBeInstanceOf(CorruptStateError);
+    } finally {
+      await rm(dir, { recursive: true });
+    }
   });
 });
 

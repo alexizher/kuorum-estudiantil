@@ -1,26 +1,16 @@
 #!/usr/bin/env node
-import { parseArgs } from "node:util";
+import { USAGE, parseCommand } from "./cli.js";
 import { buildDeployWizard } from "./composition.js";
 
-const USAGE = `Uso: kuorum desplegar [--config <ruta>]
-
-  desplegar         Despliega una instalación en Vercel
-  --config <ruta>   Lee la configuración de un JSON y no pregunta nada
-`;
-
 async function main(argv: string[]): Promise<number> {
-  const { values, positionals } = parseArgs({
-    args: argv,
-    allowPositionals: true,
-    options: { config: { type: "string" } },
-  });
-  if (positionals[0] !== "desplegar") {
+  const command = parseCommand(argv);
+  if (command.kind === "uso") {
     process.stderr.write(USAGE);
     return 2;
   }
   const wizard = buildDeployWizard({
     cwd: process.cwd(),
-    ...(values.config !== undefined ? { configPath: values.config } : {}),
+    ...(command.configPath !== undefined ? { configPath: command.configPath } : {}),
   });
   return wizard.run();
 }

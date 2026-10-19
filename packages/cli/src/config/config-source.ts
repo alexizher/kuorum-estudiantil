@@ -1,11 +1,6 @@
 import { readFile } from "node:fs/promises";
 import type { Prompter } from "../io/prompter.js";
-import {
-  parseDeployConfig,
-  slugify,
-  validateField,
-  type DeployConfig,
-} from "./deploy-config.js";
+import { parseDeployConfig, slugify, validateField, type DeployConfig } from "./deploy-config.js";
 
 export interface ConfigSource {
   load(): Promise<DeployConfig>;

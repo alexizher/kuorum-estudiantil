@@ -30,6 +30,10 @@ export class SpawnCommandRunner implements CommandRunner {
       child.on("error", reject);
       child.on("close", (code) => resolve({ exitCode: code ?? 1, stdout, stderr }));
       if (!options.inheritStdio) {
+        // Si el proceso termina sin leer stdin, escribir da EPIPE; el código de salida ya lo cuenta.
+        child.stdin?.on("error", (error: NodeJS.ErrnoException) => {
+          if (error.code !== "EPIPE") reject(error);
+        });
         child.stdin?.end(options.input ?? "");
       }
     });
