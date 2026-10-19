@@ -46,6 +46,7 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter "@kuorum/infrastructure^..." build
       - run: pnpm --filter @kuorum/infrastructure generate
       - run: pnpm --filter @kuorum/infrastructure db:deploy
       - run: pnpm --filter @kuorum/infrastructure test:int
