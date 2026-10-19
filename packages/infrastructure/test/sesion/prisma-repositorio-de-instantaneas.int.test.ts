@@ -1,11 +1,10 @@
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { InstantaneaDeSesion } from "@kuorum/domain";
+import { urlDePruebas } from "../helpers/url-de-base-local.js";
 import { createPrismaClient } from "../../src/prisma/create-prisma-client.js";
 import { PrismaRepositorioDeInstantaneas } from "../../src/sesion/prisma-repositorio-de-instantaneas.js";
 
-const databaseUrl =
-  process.env["DATABASE_URL"] ?? "postgresql://kuorum:kuorum@localhost:54329/kuorum";
-const prisma = createPrismaClient(databaseUrl);
+const prisma = createPrismaClient(urlDePruebas());
 const repositorio = new PrismaRepositorioDeInstantaneas(prisma);
 
 describe("PrismaRepositorioDeInstantaneas", () => {

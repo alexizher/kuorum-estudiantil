@@ -2,7 +2,7 @@ import { PrismaNeon } from "@prisma/adapter-neon";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../generated/prisma/client.js";
 
-const HOSTS_LOCALES = new Set(["localhost", "127.0.0.1"]);
+const HOSTS_LOCALES = new Set(["localhost", "127.0.0.1", "[::1]"]);
 
 // Postgres local no habla el protocolo HTTP/WebSocket de Neon, por eso necesita pg.
 export function selectAdapterKind(databaseUrl: string): "pg" | "neon" {

@@ -5,6 +5,7 @@ describe("selectAdapterKind", () => {
   it.each([
     "postgresql://kuorum:kuorum@localhost:54329/kuorum",
     "postgresql://kuorum:kuorum@127.0.0.1:5432/kuorum",
+    "postgresql://kuorum:kuorum@[::1]:5432/kuorum",
   ])("usa pg para %s", (url) => {
     expect(selectAdapterKind(url)).toBe("pg");
   });
