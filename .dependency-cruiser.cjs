@@ -13,7 +13,7 @@ module.exports = {
       comment: "application solo importa domain y a sí misma.",
       severity: "error",
       from: { path: "^packages/application/src" },
-      to: { pathNot: "^packages/(domain|application)/" },
+      to: { pathNot: "^(packages/(domain|application)/|@kuorum/(domain|application)(/|$))" },
     },
     {
       name: "nadie-importa-apps",
@@ -27,12 +27,14 @@ module.exports = {
       comment: "Nada fuera de packages/cli importa packages/cli.",
       severity: "error",
       from: { pathNot: "^packages/cli/" },
-      to: { path: "^packages/cli/" },
+      to: { path: "^(packages/cli/|@kuorum/cli(/|$))" },
     },
   ],
   options: {
     doNotFollow: { path: "node_modules" },
-    exclude: { path: "(^|/)(dist|\\.next|\\.turbo)/" },
+    // dist no se excluye: un import por nombre de workspace resuelve a packages/<x>/dist
+    // y excluirlo borraría la arista. Si dist no existe, la regla casa el nombre @kuorum/*.
+    exclude: { path: "(^|/)(\\.next|\\.turbo)/" },
     tsPreCompilationDeps: true,
     enhancedResolveOptions: {
       exportsFields: ["exports"],
