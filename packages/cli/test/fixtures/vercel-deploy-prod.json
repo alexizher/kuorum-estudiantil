@@ -1,0 +1,41 @@
+{
+  "status": "ok",
+  "deployment": {
+    "id": "dpl_23DCE94wfssCtNgTkRNsTqkL1Gb2",
+    "url": "https://kuorum-estudiantil-demo-msnipu532.vercel.app",
+    "productionUrl": "https://kuorum-estudiantil-demo.vercel.app",
+    "inspectorUrl": "https://vercel.com/alexis-herreras-projects-9fc5cd02/kuorum-estudiantil-demo/23DCE94wfssCtNgTkRNsTqkL1Gb2",
+    "readyState": "READY",
+    "target": "production",
+    "deploymentApiUrl": "https://api.vercel.com/v13/deployments/dpl_23DCE94wfssCtNgTkRNsTqkL1Gb2",
+    "buildMachine": {
+      "cores": 2,
+      "memory": 8192,
+      "machine": "basic",
+      "selectionType": "fixed",
+      "selectionSource": "plan-default"
+    },
+    "deploymentProtection": [
+      "vercel_authentication"
+    ]
+  },
+  "message": "Deployment kuorum-estudiantil-demo-msnipu532.vercel.app ready. Production URL: https://kuorum-estudiantil-demo.vercel.app",
+  "next": [
+    {
+      "command": "vercel git connect",
+      "when": "Automatically deploy changes on every push"
+    },
+    {
+      "command": "vercel curl https://kuorum-estudiantil-demo.vercel.app",
+      "when": "Verify deployment, including when Deployment Protection is enabled"
+    },
+    {
+      "command": "vercel inspect kuorum-estudiantil-demo-msnipu532.vercel.app",
+      "when": "Inspect deployment"
+    },
+    {
+      "command": "vercel deploy --prod",
+      "when": "Promote to production"
+    }
+  ]
+}
