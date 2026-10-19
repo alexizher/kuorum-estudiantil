@@ -19,3 +19,33 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm depcheck
       - run: pnpm test
+
+  integracion:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: kuorum
+          POSTGRES_PASSWORD: kuorum
+          POSTGRES_DB: kuorum
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U kuorum"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://kuorum:kuorum@localhost:5432/kuorum
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @kuorum/infrastructure generate
+      - run: pnpm --filter @kuorum/infrastructure db:deploy
+      - run: pnpm --filter @kuorum/infrastructure test:int
