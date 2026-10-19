@@ -42,9 +42,11 @@ export class ProjectStep implements Step {
     if (remote.exitCode === 0 && remote.stdout.includes("github.com")) {
       const connected = await runner.run("vercel", ["git", "connect", "--yes"]);
       if (connected.exitCode !== 0) {
-        prompter.info(
-          "No se pudo conectar el repositorio de GitHub; conéctalo desde el panel de Vercel si quieres despliegues por push.",
-        );
+        const detail = errorLine(connected.stderr + connected.stdout);
+        const loginHint = /Login Connection/i.test(detail)
+          ? " Conecta GitHub en Vercel (Account Settings > Authentication > Login Connections) y vuelve a conectar el repositorio desde el panel del proyecto. Mientras tanto, los despliegues siguen funcionando con pnpm desplegar."
+          : " Conéctalo desde el panel de Vercel si quieres despliegues por push; los despliegues con pnpm desplegar siguen funcionando.";
+        prompter.info(`No se pudo conectar el repositorio de GitHub (${detail}).${loginHint}`);
       }
     }
     state.projectId = link.projectId;
@@ -99,6 +101,11 @@ export class ProjectStep implements Step {
       );
     }
   }
+}
+
+function errorLine(output: string): string {
+  const lines = output.split("\n").map((line) => line.trim());
+  return lines.find((line) => /^error/i.test(line)) ?? lines.find(Boolean) ?? "sin detalle";
 }
 
 async function readLink(cwd: string): Promise<{ projectId: string; orgId?: string }> {

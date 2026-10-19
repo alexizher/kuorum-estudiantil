@@ -145,6 +145,59 @@ describe("proyecto", () => {
     expect(runner.lines).not.toContain("vercel git connect --yes");
   });
 
+  describe("si vercel git connect falla", () => {
+    const LOGIN_ERROR =
+      "Error: Failed to link alexizher/kuorum-estudiantil. You need to add a Login Connection to your GitHub account first. (400)";
+
+    function connectFails(stderr: string) {
+      return new FakeRunner((command, args) =>
+        command === "vercel" && args[0] === "git" ? { exitCode: 1, stderr } : script(command, args),
+      );
+    }
+
+    it("incluye la línea de error de la CLI en el aviso y no falla", async () => {
+      const prompter = new FakePrompter();
+      const context = makeContext({
+        runner: connectFails(LOGIN_ERROR),
+        prompter,
+        fetch: okFetch() as unknown as typeof fetch,
+        cwd: dir,
+      });
+      await new ProjectStep(token).run(context);
+      expect(prompter.infos.join("\n")).toContain(LOGIN_ERROR);
+      expect(context.state.projectId).toBe("prj_123");
+    });
+
+    it("con Login Connection explica cómo conectar GitHub y que pnpm desplegar sigue funcionando", async () => {
+      const prompter = new FakePrompter();
+      await new ProjectStep(token).run(
+        makeContext({
+          runner: connectFails(LOGIN_ERROR),
+          prompter,
+          fetch: okFetch() as unknown as typeof fetch,
+          cwd: dir,
+        }),
+      );
+      const aviso = prompter.infos.join("\n");
+      expect(aviso).toContain("Login Connections");
+      expect(aviso).toContain("pnpm desplegar");
+    });
+
+    it("con otro error no menciona Login Connections", async () => {
+      const prompter = new FakePrompter();
+      await new ProjectStep(token).run(
+        makeContext({
+          runner: connectFails("Error: algo distinto"),
+          prompter,
+          fetch: okFetch() as unknown as typeof fetch,
+          cwd: dir,
+        }),
+      );
+      expect(prompter.infos.join("\n")).toContain("Error: algo distinto");
+      expect(prompter.infos.join("\n")).not.toContain("Login Connections");
+    });
+  });
+
   it("si la API responde error, falla sin guardar projectId", async () => {
     const context = makeContext({
       runner: new FakeRunner(script),

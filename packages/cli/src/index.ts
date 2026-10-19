@@ -15,4 +15,9 @@ async function main(argv: string[]): Promise<number> {
   return wizard.run();
 }
 
-process.exit(await main(process.argv.slice(2)));
+// Nunca dejar un await sin resolver: cualquier fallo inesperado termina con código 1.
+const code = await main(process.argv.slice(2)).catch((error: unknown) => {
+  process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
+  return 1;
+});
+process.exit(code);

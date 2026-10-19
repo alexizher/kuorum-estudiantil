@@ -54,6 +54,7 @@ describe("base-de-datos", () => {
       "--environment",
       "development",
       "--no-env-pull",
+      "--non-interactive",
     ]);
     expect(runner.lines).toContain("vercel env ls production");
     expect(context.state.databaseName).toBe("ejemplo-db");
@@ -98,5 +99,77 @@ describe("base-de-datos", () => {
     await new DatabaseStep().run(context);
     expect(runner.lines).toEqual(["vercel env ls production"]);
     expect(context.state.databaseName).toBe("ejemplo-db");
+  });
+
+  describe("términos de Neon pendientes", () => {
+    const TERMS = JSON.stringify({
+      userActionRequired: true,
+      verification_uri: "https://vercel.com/equipo/~/integrations/accept-terms/neon?source=cli",
+      policy_links: { terms: "https://neon.com/terms", privacy: "https://neon.com/privacy" },
+      hint: "accept terms",
+      next: [{ command: "vercel integration add neon", when: "Retry install" }],
+    });
+
+    /** El primer add pide términos; desde el segundo, funciona. */
+    function termsThenOk() {
+      let adds = 0;
+      let added = false;
+      const runner = new FakeRunner((_, args) => {
+        if (args[1] === "add") {
+          adds += 1;
+          if (adds === 1) return { exitCode: 1, stdout: TERMS };
+          added = true;
+          return undefined;
+        }
+        if (args[0] === "env") return { stdout: added ? ENV_OK : "" };
+        return undefined;
+      });
+      return runner;
+    }
+
+    it("interactivo: muestra la URL y los enlaces, espera confirmación y reintenta una vez", async () => {
+      const runner = termsThenOk();
+      const prompter = new FakePrompter();
+      const context = makeContext({ runner, prompter });
+      await new DatabaseStep().run(context);
+      const info = prompter.infos.join("\n");
+      expect(info).toContain(
+        "https://vercel.com/equipo/~/integrations/accept-terms/neon?source=cli",
+      );
+      expect(info).toContain("https://neon.com/terms");
+      expect(prompter.confirmations).toEqual(["¿Ya aceptaste los términos?"]);
+      expect(runner.calls.filter((c) => c.args[1] === "add")).toHaveLength(2);
+      expect(context.state.databaseName).toBe("ejemplo-db");
+    });
+
+    it("interactivo: si no confirma, falla sin reintentar", async () => {
+      const runner = termsThenOk();
+      await expect(
+        new DatabaseStep().run(makeContext({ runner, prompter: new FakePrompter([], false) })),
+      ).rejects.toThrow(/términos/);
+      expect(runner.calls.filter((c) => c.args[1] === "add")).toHaveLength(1);
+    });
+
+    it("no interactivo: falla con la URL y pide volver a correr pnpm desplegar, sin preguntar", async () => {
+      const runner = termsThenOk();
+      const prompter = new FakePrompter();
+      const error = await new DatabaseStep()
+        .run(makeContext({ runner, prompter, interactive: false }))
+        .catch((e: Error) => e);
+      expect((error as Error).message).toContain(
+        "https://vercel.com/equipo/~/integrations/accept-terms/neon?source=cli",
+      );
+      expect((error as Error).message).toContain("pnpm desplegar");
+      expect(prompter.confirmations).toEqual([]);
+    });
+  });
+
+  it("no interactivo: el alta manual falla con un error en español, sin preguntar", async () => {
+    const runner = afterAdd(ENV_OK, { exitCode: 1, stderr: "requires browser" });
+    const prompter = new FakePrompter();
+    await expect(
+      new DatabaseStep().run(makeContext({ runner, prompter, interactive: false })),
+    ).rejects.toThrow(/https:\/\/vercel\.com\/marketplace\/neon/);
+    expect(prompter.confirmations).toEqual([]);
   });
 });

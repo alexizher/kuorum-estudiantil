@@ -7,7 +7,7 @@ export class RequirementsStep implements Step {
   readonly id = "requisitos";
   readonly description = "Comprobando requisitos (node, pnpm, git, vercel)";
 
-  async run({ runner, prompter }: DeployContext): Promise<void> {
+  async run({ runner, prompter, interactive }: DeployContext): Promise<void> {
     const node = await tryRun(runner, "node", ["--version"]);
     const major = Number(/^v(\d+)\./.exec(node?.stdout.trim() ?? "")?.[1]);
     if (node?.exitCode !== 0 || !(major >= MIN_NODE_MAJOR)) {
@@ -20,6 +20,11 @@ export class RequirementsStep implements Step {
     }
     if ((await tryRun(runner, "vercel", ["--version"]))?.exitCode === 0) return;
 
+    if (!interactive) {
+      throw new Error(
+        'No se encontró la CLI de Vercel. Instálala con "pnpm add -g vercel@64" y vuelve a correr pnpm desplegar.',
+      );
+    }
     const install = await prompter.confirm(
       "No se encontró la CLI de Vercel. ¿Instalarla con pnpm add -g vercel@64?",
     );

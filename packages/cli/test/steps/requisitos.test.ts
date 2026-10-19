@@ -42,4 +42,14 @@ describe("requisitos", () => {
     );
     expect(runner.lines).not.toContain("pnpm add -g vercel@64");
   });
+
+  it("no interactivo: si falta vercel falla explicando cómo instalarlo, sin preguntar", async () => {
+    const runner = runnerWith({ vercel: { exitCode: 1 } });
+    const prompter = new FakePrompter();
+    await expect(
+      new RequirementsStep().run(makeContext({ runner, prompter, interactive: false })),
+    ).rejects.toThrow(/pnpm add -g vercel@64/);
+    expect(prompter.confirmations).toEqual([]);
+    expect(runner.lines).not.toContain("pnpm add -g vercel@64");
+  });
 });

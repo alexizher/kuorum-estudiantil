@@ -32,6 +32,12 @@ Para fijar el directorio raíz el asistente llama a la API de Vercel y necesita 
 
 Si la CLI no puede crear la base de Neon sin intervención, el asistente muestra la página de la integración (https://vercel.com/marketplace/neon), pide que la crees a mano con el nombre indicado y sigue cuando confirmas.
 
+La primera vez que una cuenta de Vercel instala Neon, hay que aceptar los términos de Neon. El asistente detecta ese caso, muestra el enlace de aceptación y los enlaces de políticas, y espera tu confirmación para reintentar. Es una sola vez por cuenta. En modo no interactivo falla con ese enlace: acepta los términos y vuelve a correr `pnpm desplegar`, que retoma desde el paso pendiente.
+
+Si `vercel git connect` falla con "You need to add a Login Connection to your GitHub account first", el asistente lo deja como aviso y sigue. Para tener despliegues por push, conecta GitHub en Vercel (Account Settings > Authentication > Login Connections) y vuelve a conectar el repositorio desde el panel del proyecto. Sin esa conexión, los despliegues siguen funcionando con `pnpm desplegar`.
+
+En modo no interactivo, cualquier acción manual (instalar la CLI de Vercel, crear la base a mano, reutilizar un proyecto existente) termina con un error que explica qué hacer, en vez de quedarse esperando una respuesta.
+
 ## Modo no interactivo
 
 ```
