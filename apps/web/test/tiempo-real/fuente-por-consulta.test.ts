@@ -153,16 +153,12 @@ describe("FuenteDeEstadoPorConsulta", () => {
   });
 
   it("llama a fetch sin la instancia como this", async () => {
-    let esteValor: unknown = "sin llamar";
-    const fetchFalso = vi.fn(async function (this: unknown) {
-      esteValor = this;
-      return ok(1);
-    });
+    const fetchFalso = vi.fn().mockResolvedValue(ok(1));
     const fuente = new FuenteDeEstadoPorConsulta(fetchFalso, 3000, new TemporizadorFalso());
     fuente.suscribir("s", vi.fn());
     await vaciar();
 
-    expect(esteValor).not.toBe(fuente);
+    expect(fetchFalso.mock.contexts[0]).not.toBe(fuente);
   });
 
   it("informa los fallos por alFallar y sigue reintentando", async () => {
