@@ -12,4 +12,3 @@ coverage/
 **/src/generated/
 next-env.d.ts
 .kuorum/
-.vercel/
