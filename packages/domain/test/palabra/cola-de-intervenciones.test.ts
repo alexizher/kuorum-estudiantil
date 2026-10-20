@@ -5,6 +5,7 @@ import {
   SolicitudDePalabra,
   PRIORIDAD_DE_MOCION,
   DESCRIPCION_DE_MOCION,
+  NOMBRE_DE_MOCION,
   type GeneradorDeIds,
   type Reloj,
 } from "../../src/index.js";
@@ -40,11 +41,22 @@ function nuevaCola() {
   const cola = new ColaDeIntervenciones([], 180, "s-1");
   const pedirIntervencion = (p: string) => {
     reloj.avanzar(1);
-    return cola.pedir({ participanteId: p, nombreVisible: `Nombre ${p}`, tipo: "INTERVENCION" }, reloj, generador);
+    return cola.pedir(
+      { participanteId: p, nombreVisible: `Nombre ${p}`, tipo: "INTERVENCION" },
+      reloj,
+      generador,
+    );
   };
-  const pedirMocion = (p: string, mocion: "ORDEN" | "PROCEDIMIENTO" | "ACLARACION" | "SUFICIENTE_ILUSTRACION") => {
+  const pedirMocion = (
+    p: string,
+    mocion: "ORDEN" | "PROCEDIMIENTO" | "ACLARACION" | "SUFICIENTE_ILUSTRACION",
+  ) => {
     reloj.avanzar(1);
-    return cola.pedir({ participanteId: p, nombreVisible: `Nombre ${p}`, tipo: "MOCION", mocion }, reloj, generador);
+    return cola.pedir(
+      { participanteId: p, nombreVisible: `Nombre ${p}`, tipo: "MOCION", mocion },
+      reloj,
+      generador,
+    );
   };
   return { reloj, generador, cola, pedirIntervencion, pedirMocion };
 }
@@ -57,9 +69,18 @@ describe("tipos de moción", () => {
       ACLARACION: 3,
       SUFICIENTE_ILUSTRACION: 4,
     });
-    for (const tipo of Object.keys(PRIORIDAD_DE_MOCION)) {
-      expect(DESCRIPCION_DE_MOCION[tipo as keyof typeof DESCRIPCION_DE_MOCION].length).toBeGreaterThan(10);
-    }
+    expect(DESCRIPCION_DE_MOCION).toEqual({
+      ORDEN: "Pide que se respete el reglamento o el orden del día.",
+      PROCEDIMIENTO: "Propone otra forma de llevar la discusión o la votación.",
+      ACLARACION: "Pide que se explique un dato o qué se está votando.",
+      SUFICIENTE_ILUSTRACION: "Propone cerrar el debate y pasar a votar.",
+    });
+    expect(NOMBRE_DE_MOCION).toEqual({
+      ORDEN: "De orden",
+      PROCEDIMIENTO: "De procedimiento",
+      ACLARACION: "De aclaración",
+      SUFICIENTE_ILUSTRACION: "De suficiente ilustración",
+    });
   });
 });
 
@@ -141,7 +162,11 @@ describe("ColaDeIntervenciones", () => {
     pedirIntervencion("a");
     expect(
       codigoDeError(() =>
-        cola.pedir({ participanteId: "a", nombreVisible: "A", tipo: "INTERVENCION" }, reloj, generador),
+        cola.pedir(
+          { participanteId: "a", nombreVisible: "A", tipo: "INTERVENCION" },
+          reloj,
+          generador,
+        ),
       ),
     ).toBe("YA_EN_LA_FILA");
     expect(() => pedirMocion("a", "ORDEN")).not.toThrow();
@@ -159,18 +184,29 @@ describe("ColaDeIntervenciones", () => {
 
   it("valida moción y nombre", () => {
     const { cola, reloj, generador } = nuevaCola();
-    const pedir = (datos: Parameters<typeof cola.pedir>[0]) => () => cola.pedir(datos, reloj, generador);
-    expect(codigoDeError(pedir({ participanteId: "a", nombreVisible: "A", tipo: "MOCION" }))).toBe("MOCION_INVALIDA");
-    expect(
-      codigoDeError(pedir({ participanteId: "a", nombreVisible: "A", tipo: "INTERVENCION", mocion: "ORDEN" })),
-    ).toBe("MOCION_INVALIDA");
-    expect(codigoDeError(pedir({ participanteId: "a", nombreVisible: "   ", tipo: "INTERVENCION" }))).toBe(
-      "NOMBRE_VISIBLE_INVALIDO",
+    const pedir = (datos: Parameters<typeof cola.pedir>[0]) => () =>
+      cola.pedir(datos, reloj, generador);
+    expect(codigoDeError(pedir({ participanteId: "a", nombreVisible: "A", tipo: "MOCION" }))).toBe(
+      "MOCION_INVALIDA",
     );
     expect(
-      codigoDeError(pedir({ participanteId: "a", nombreVisible: "x".repeat(61), tipo: "INTERVENCION" })),
+      codigoDeError(
+        pedir({ participanteId: "a", nombreVisible: "A", tipo: "INTERVENCION", mocion: "ORDEN" }),
+      ),
+    ).toBe("MOCION_INVALIDA");
+    expect(
+      codigoDeError(pedir({ participanteId: "a", nombreVisible: "   ", tipo: "INTERVENCION" })),
     ).toBe("NOMBRE_VISIBLE_INVALIDO");
-    const ok = cola.pedir({ participanteId: "a", nombreVisible: "  Valentina, Ingeniería ", tipo: "INTERVENCION" }, reloj, generador);
+    expect(
+      codigoDeError(
+        pedir({ participanteId: "a", nombreVisible: "x".repeat(61), tipo: "INTERVENCION" }),
+      ),
+    ).toBe("NOMBRE_VISIBLE_INVALIDO");
+    const ok = cola.pedir(
+      { participanteId: "a", nombreVisible: "  Valentina, Ingeniería ", tipo: "INTERVENCION" },
+      reloj,
+      generador,
+    );
     expect(ok.nombreVisible).toBe("Valentina, Ingeniería");
     expect(ok.sesionId).toBe("s-1");
     expect(ok.mocion).toBeNull();
@@ -223,15 +259,72 @@ describe("ColaDeIntervenciones", () => {
 
   it("cambiadas devuelve solo lo modificado", () => {
     const sol = SolicitudDePalabra.reconstruir({
-      id: "x", sesionId: "s-1", participanteId: "z", nombreVisible: "Z", tipo: "INTERVENCION",
-      mocion: null, estado: "ESPERANDO", pedidaEn: new Date(0), inicioEn: null, finEn: null, segundosExtra: 0,
+      id: "x",
+      sesionId: "s-1",
+      participanteId: "z",
+      nombreVisible: "Z",
+      tipo: "INTERVENCION",
+      mocion: null,
+      estado: "ESPERANDO",
+      pedidaEn: new Date(0),
+      inicioEn: null,
+      finEn: null,
+      segundosExtra: 0,
     });
     const cola = new ColaDeIntervenciones([sol], 180, "s-1");
     const reloj = new RelojFalso(1000);
     expect(cola.cambiadas()).toEqual([]);
-    const nueva = cola.pedir({ participanteId: "a", nombreVisible: "A", tipo: "INTERVENCION" }, reloj, ids());
+    const nueva = cola.pedir(
+      { participanteId: "a", nombreVisible: "A", tipo: "INTERVENCION" },
+      reloj,
+      ids(),
+    );
     expect(cola.cambiadas()).toEqual([nueva]);
     cola.darLaPalabra("x", reloj);
-    expect(cola.cambiadas().map((s) => s.id).sort()).toEqual(["sol-1", "x"]);
+    expect(
+      cola
+        .cambiadas()
+        .map((s) => s.id)
+        .sort(),
+    ).toEqual(["sol-1", "x"]);
+  });
+
+  it("con el mismo pedidaEn conserva el orden de la lista", () => {
+    const mk = (id: string) =>
+      SolicitudDePalabra.reconstruir({
+        id,
+        sesionId: "s-1",
+        participanteId: id,
+        nombreVisible: id,
+        tipo: "INTERVENCION",
+        mocion: null,
+        estado: "ESPERANDO",
+        pedidaEn: new Date(5000),
+        inicioEn: null,
+        finEn: null,
+        segundosExtra: 0,
+      });
+    const cola = new ColaDeIntervenciones([mk("a"), mk("b"), mk("c")], 180, "s-1");
+    expect(cola.enEspera().map((s) => s.id)).toEqual(["a", "b", "c"]);
+  });
+
+  it("rechaza dos solicitudes con la palabra", () => {
+    const mk = (id: string) =>
+      SolicitudDePalabra.reconstruir({
+        id,
+        sesionId: "s-1",
+        participanteId: id,
+        nombreVisible: id,
+        tipo: "INTERVENCION",
+        mocion: null,
+        estado: "CON_LA_PALABRA",
+        pedidaEn: new Date(0),
+        inicioEn: new Date(0),
+        finEn: null,
+        segundosExtra: 0,
+      });
+    expect(codigoDeError(() => new ColaDeIntervenciones([mk("a"), mk("b")], 180, "s-1"))).toBe(
+      "COLA_INCONSISTENTE",
+    );
   });
 });

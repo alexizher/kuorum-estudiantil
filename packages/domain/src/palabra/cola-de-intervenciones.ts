@@ -15,6 +15,9 @@ export class ColaDeIntervenciones {
     private readonly segundosPorIntervencion: number,
     private readonly sesionId: string,
   ) {
+    if (solicitudes.filter((s) => s.estado === "CON_LA_PALABRA").length > 1) {
+      throw new ErrorDeDominio("COLA_INCONSISTENTE");
+    }
     this.solicitudes = [...solicitudes];
   }
 

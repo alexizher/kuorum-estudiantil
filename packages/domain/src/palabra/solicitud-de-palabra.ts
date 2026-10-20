@@ -6,7 +6,8 @@ import type { TipoDeMocion } from "./tipo-de-mocion.js";
 const NOMBRE_MIN = 1;
 const NOMBRE_MAX = 60;
 
-export type EstadoDeSolicitud = "ESPERANDO" | "CON_LA_PALABRA" | "TERMINADA" | "RETIRADA" | "RECHAZADA";
+export type EstadoDeSolicitud =
+  "ESPERANDO" | "CON_LA_PALABRA" | "TERMINADA" | "RETIRADA" | "RECHAZADA";
 export type TipoDeSolicitud = "INTERVENCION" | "MOCION";
 
 export interface PropiedadesDeSolicitud {

@@ -16,7 +16,11 @@ export type { EstadoDePregunta, PropiedadesDePregunta } from "./votacion/pregunt
 export { Resultado } from "./votacion/resultado.js";
 export type { ResultadoPorOpcion } from "./votacion/resultado.js";
 export type { RegistroDeVotos } from "./votacion/registro-de-votos.js";
-export { PRIORIDAD_DE_MOCION, DESCRIPCION_DE_MOCION } from "./palabra/tipo-de-mocion.js";
+export {
+  PRIORIDAD_DE_MOCION,
+  DESCRIPCION_DE_MOCION,
+  NOMBRE_DE_MOCION,
+} from "./palabra/tipo-de-mocion.js";
 export type { TipoDeMocion } from "./palabra/tipo-de-mocion.js";
 export { SolicitudDePalabra } from "./palabra/solicitud-de-palabra.js";
 export type {
