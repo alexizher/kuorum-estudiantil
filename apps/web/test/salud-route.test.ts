@@ -6,7 +6,6 @@ vi.mock("../src/composicion", () => ({ contenedor: vi.fn() }));
 
 function conBaseDeDatos(verificarBaseDeDatos: () => Promise<boolean>) {
   vi.mocked(contenedor).mockReturnValue({
-    consultarEstadoDeSesion: { ejecutar: vi.fn() },
     verificarBaseDeDatos,
   } as unknown as ReturnType<typeof contenedor>);
 }

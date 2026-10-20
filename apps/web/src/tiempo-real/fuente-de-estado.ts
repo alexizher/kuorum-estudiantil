@@ -7,6 +7,8 @@ export interface FuenteDeEstado {
     alCambiar: (estado: EstadoDeSala) => void,
     /** La sala no existe (404). La fuente deja de consultar. */
     alNoExistir?: () => void,
+    /** Resultado de cada intento de consulta: true con 200 o 304, false con un error. */
+    alIntentar?: (conExito: boolean) => void,
   ): () => void;
 }
 

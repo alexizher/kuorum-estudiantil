@@ -24,6 +24,7 @@ export class FuenteDeEstadoPorConsulta implements FuenteDeEstado {
     codigo: string,
     alCambiar: (estado: EstadoDeSala) => void,
     alNoExistir?: () => void,
+    alIntentar?: (conExito: boolean) => void,
   ): () => void {
     let activa = true;
     let etiqueta: string | undefined;
@@ -59,9 +60,13 @@ export class FuenteDeEstadoPorConsulta implements FuenteDeEstado {
             alCambiar(analizado.data);
           }
         }
+        if (activa) alIntentar?.(true);
       } catch (error) {
         // se reintenta en el siguiente turno; quien llama decide si registrarlo
-        if (activa) this.alFallar?.(error);
+        if (activa) {
+          this.alFallar?.(error);
+          alIntentar?.(false);
+        }
       }
       esperar();
     };

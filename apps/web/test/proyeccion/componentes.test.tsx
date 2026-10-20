@@ -29,8 +29,40 @@ const sinAxe = async (contenedor: HTMLElement) =>
 
 describe("Proyeccion", () => {
   it("cargando", async () => {
-    const { container } = pintar({ vista: "cargando", segundosRestantes: null, urlDeEntrada: "" });
+    const { container } = pintar({
+      vista: "cargando",
+      segundosRestantes: null,
+      sinConexion: false,
+      urlDeEntrada: "",
+    });
     expect(screen.getByRole("status").textContent).toContain("Cargando");
+    await sinAxe(container);
+  });
+
+  it("terminada: título de la sala y aviso", async () => {
+    const base = salaVacia();
+    const { container } = pintar({
+      vista: "terminada",
+      estado: { ...base, sala: { ...base.sala, estado: "CERRADA" } },
+      segundosRestantes: null,
+      sinConexion: false,
+      urlDeEntrada: URL_DE_ENTRADA,
+    });
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("La sesión terminó");
+    expect(screen.getByText("Asamblea General de Estudiantes")).toBeTruthy();
+    await sinAxe(container);
+  });
+
+  it("sin conexión: aviso discreto y la vista sigue", async () => {
+    const { container } = pintar({
+      vista: "esperando",
+      estado: salaVacia(),
+      segundosRestantes: null,
+      sinConexion: true,
+      urlDeEntrada: URL_DE_ENTRADA,
+    });
+    expect(screen.getByRole("status").textContent).toBe("Sin conexión, reintentando");
+    expect(screen.getByRole("heading", { level: 1 })).toBeTruthy();
     await sinAxe(container);
   });
 
@@ -38,6 +70,7 @@ describe("Proyeccion", () => {
     const { container } = pintar({
       vista: "no-disponible",
       segundosRestantes: null,
+      sinConexion: false,
       urlDeEntrada: "",
     });
     expect(screen.getByRole("heading").textContent).toBe("Esta sala no existe o ya terminó.");
@@ -49,6 +82,7 @@ describe("Proyeccion", () => {
       vista: "esperando",
       estado: salaVacia(),
       segundosRestantes: null,
+      sinConexion: false,
       urlDeEntrada: URL_DE_ENTRADA,
     });
     expect(screen.getByRole("heading", { level: 1 }).textContent).toBe(
@@ -65,6 +99,7 @@ describe("Proyeccion", () => {
       vista: "esperando",
       estado: salaVacia({ asistencia: null }),
       segundosRestantes: null,
+      sinConexion: false,
       urlDeEntrada: URL_DE_ENTRADA,
     });
     expect(container.querySelector("header")).toBeNull();
@@ -75,6 +110,7 @@ describe("Proyeccion", () => {
       vista: "votacion",
       estado: salaVacia({ pregunta: preguntaAbierta() }),
       segundosRestantes: null,
+      sinConexion: false,
       urlDeEntrada: URL_DE_ENTRADA,
     });
     expect(screen.getByRole("heading", { level: 1 }).textContent).toContain("¿Aprueba");
@@ -95,6 +131,7 @@ describe("Proyeccion", () => {
         pregunta: preguntaAbierta(),
       }),
       segundosRestantes: null,
+      sinConexion: false,
       urlDeEntrada: URL_DE_ENTRADA,
     });
     const avance = screen.getByText(/Votos emitidos/).closest("div") as HTMLElement;
@@ -108,6 +145,7 @@ describe("Proyeccion", () => {
       vista: "resultados",
       estado: salaVacia({ pregunta: preguntaConResultado() }),
       segundosRestantes: null,
+      sinConexion: false,
       urlDeEntrada: URL_DE_ENTRADA,
     });
     expect(screen.getByText("Aprobada")).toBeTruthy();
@@ -133,6 +171,7 @@ describe("Proyeccion", () => {
         pregunta: preguntaConResultado([100, 300, 5], undefined, false),
       }),
       segundosRestantes: null,
+      sinConexion: false,
       urlDeEntrada: URL_DE_ENTRADA,
     });
     expect(screen.getByText("Rechazada")).toBeTruthy();
@@ -146,6 +185,7 @@ describe("Proyeccion", () => {
       vista: "resultados",
       estado: salaVacia({ pregunta: preguntaConResultado([50, 50, 0], undefined, false) }),
       segundosRestantes: null,
+      sinConexion: false,
       urlDeEntrada: URL_DE_ENTRADA,
     });
     expect(screen.getByText("Empate")).toBeTruthy();
@@ -158,6 +198,7 @@ describe("Proyeccion", () => {
         pregunta: preguntaConResultado([30, 10], ["Plancha A", "Plancha B"], null),
       }),
       segundosRestantes: null,
+      sinConexion: false,
       urlDeEntrada: URL_DE_ENTRADA,
     });
     expect(screen.getAllByText("Plancha A")).toHaveLength(2);
@@ -177,6 +218,7 @@ describe("Proyeccion", () => {
         },
       }),
       segundosRestantes: 98,
+      sinConexion: false,
       urlDeEntrada: URL_DE_ENTRADA,
     });
     expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Valentina Ríos");
@@ -196,6 +238,7 @@ describe("Proyeccion", () => {
       vista: "palabra",
       estado: salaVacia({ palabra: { conLaPalabra: conLaPalabra(), fila: [] } }),
       segundosRestantes: 10,
+      sinConexion: false,
       urlDeEntrada: URL_DE_ENTRADA,
     });
     expect(screen.getByText("La fila está vacía.")).toBeTruthy();
@@ -211,6 +254,7 @@ describe("Proyeccion", () => {
         },
       }),
       segundosRestantes: 10,
+      sinConexion: false,
       urlDeEntrada: URL_DE_ENTRADA,
     });
     expect(screen.getByText("Moción de aclaración")).toBeTruthy();
@@ -238,6 +282,22 @@ describe("ControlesDeProyeccion", () => {
     expect(controles.getAttribute("data-visible")).toBe("true");
     act(() => vi.advanceTimersByTime(3001));
     expect(controles.getAttribute("data-visible")).toBe("false");
+  });
+
+  it.each(["keydown", "pointerdown"])("%s vuelve a mostrar los controles", (evento) => {
+    vi.useFakeTimers();
+    render(
+      <TemaProvider>
+        <ControlesDeProyeccion />
+      </TemaProvider>,
+    );
+    const controles = screen.getByRole("group", { name: "Controles de la proyección" });
+    act(() => vi.advanceTimersByTime(3001));
+    expect(controles.getAttribute("data-visible")).toBe("false");
+    act(() => {
+      document.dispatchEvent(new Event(evento));
+    });
+    expect(controles.getAttribute("data-visible")).toBe("true");
   });
 
   it("no se oculta mientras el foco está dentro", () => {

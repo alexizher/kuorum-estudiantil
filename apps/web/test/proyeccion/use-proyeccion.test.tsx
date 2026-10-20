@@ -9,16 +9,19 @@ import { HORA, conLaPalabra, preguntaAbierta, preguntaConResultado, salaVacia } 
 class FuenteFalsa implements FuenteDeEstado {
   alCambiar: ((estado: EstadoDeSala) => void) | undefined;
   alNoExistir: (() => void) | undefined;
+  alIntentar: ((conExito: boolean) => void) | undefined;
   codigo: string | undefined;
   canceladas = 0;
   suscribir(
     codigo: string,
     alCambiar: (estado: EstadoDeSala) => void,
     alNoExistir?: () => void,
+    alIntentar?: (conExito: boolean) => void,
   ): () => void {
     this.codigo = codigo;
     this.alCambiar = alCambiar;
     this.alNoExistir = alNoExistir;
+    this.alIntentar = alIntentar;
     return () => {
       this.canceladas++;
     };
@@ -35,7 +38,11 @@ describe("useProyeccion", () => {
   it("empieza cargando y se suscribe al código", () => {
     const fuente = new FuenteFalsa();
     const { result } = renderHook(() => useProyeccion(fuente, "K7F2"));
-    expect(result.current).toEqual({ vista: "cargando", segundosRestantes: null });
+    expect(result.current).toEqual({
+      vista: "cargando",
+      segundosRestantes: null,
+      sinConexion: false,
+    });
     expect(fuente.codigo).toBe("K7F2");
   });
 
@@ -76,6 +83,42 @@ describe("useProyeccion", () => {
     expect(fuente.codigo).toBe("ABCD");
     unmount();
     expect(fuente.canceladas).toBe(2);
+  });
+
+  it("avisa sin conexión tras 3 fallos seguidos y lo quita al primer éxito", () => {
+    const fuente = new FuenteFalsa();
+    const { result } = renderHook(() => useProyeccion(fuente, "K7F2"));
+    act(() => fuente.alCambiar?.(salaVacia()));
+    const intentar = (ok: boolean) => act(() => fuente.alIntentar?.(ok));
+
+    intentar(false);
+    intentar(false);
+    expect(result.current.sinConexion).toBe(false);
+    intentar(false);
+    expect(result.current.sinConexion).toBe(true);
+    expect(result.current.vista).toBe("esperando");
+    intentar(true);
+    expect(result.current.sinConexion).toBe(false);
+  });
+
+  it("un éxito en medio reinicia la cuenta de fallos", () => {
+    const fuente = new FuenteFalsa();
+    const { result } = renderHook(() => useProyeccion(fuente, "K7F2"));
+    const intentar = (ok: boolean) => act(() => fuente.alIntentar?.(ok));
+    intentar(false);
+    intentar(false);
+    intentar(true);
+    intentar(false);
+    intentar(false);
+    expect(result.current.sinConexion).toBe(false);
+  });
+
+  it("sala terminada da la vista terminada", () => {
+    const fuente = new FuenteFalsa();
+    const { result } = renderHook(() => useProyeccion(fuente, "K7F2"));
+    const base = salaVacia();
+    act(() => fuente.alCambiar?.({ ...base, sala: { ...base.sala, estado: "CERRADA" } }));
+    expect(result.current.vista).toBe("terminada");
   });
 
   describe("cronómetro", () => {

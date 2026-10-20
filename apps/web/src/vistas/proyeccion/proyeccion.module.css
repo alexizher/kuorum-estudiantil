@@ -1,13 +1,16 @@
 /* La proyección escala con --u (1 u = 1/100 del ancho, con topes; definido en tokens.css). */
 
 .pagina {
-  --u: clamp(5px, min(1vw, 1.7vh), 24px);
+  --alto-de-controles: 64px;
+  --u: clamp(5px, min(1vw, 1.5vh), 24px);
   min-height: 100vh;
   min-height: 100dvh;
   display: grid;
   grid-template-rows: auto 1fr;
   font-size: calc(var(--u) * 1.35);
   overflow-x: hidden;
+  /* Lugar de los controles fijos: nunca tapan el contenido. */
+  padding-bottom: calc(var(--alto-de-controles) + var(--u) * 1.2);
 }
 
 .cabecera {
@@ -319,6 +322,24 @@
 }
 .fila li[data-mocion="true"] .filaPosicion {
   color: var(--ambar-texto);
+}
+
+.terminada {
+  align-content: center;
+  gap: calc(var(--u) * 1.5);
+}
+.sinConexion {
+  position: fixed;
+  top: calc(var(--u) * 1);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0.25rem 0.75rem;
+  background: var(--ambar-fondo);
+  color: var(--ambar-texto);
+  border-left: 4px solid var(--ambar);
+  font-size: 0.875rem;
+  font-weight: 600;
+  z-index: 1;
 }
 
 /* Controles que se esconden solos */

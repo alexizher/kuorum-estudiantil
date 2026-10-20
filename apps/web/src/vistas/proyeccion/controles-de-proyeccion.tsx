@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "
 import estilos from "./proyeccion.module.css";
 
 const OCULTAR_TRAS_MS = 3000;
+const EVENTOS_QUE_MUESTRAN = ["mousemove", "keydown", "pointerdown"] as const;
 
 function suscribirAPantallaCompleta(alCambiar: () => void): () => void {
   document.addEventListener("fullscreenchange", alCambiar);
@@ -34,9 +35,9 @@ export function ControlesDeProyeccion() {
   useEffect(() => {
     setDisponible(typeof document.documentElement.requestFullscreen === "function");
     mostrar();
-    document.addEventListener("mousemove", mostrar);
+    for (const evento of EVENTOS_QUE_MUESTRAN) document.addEventListener(evento, mostrar);
     return () => {
-      document.removeEventListener("mousemove", mostrar);
+      for (const evento of EVENTOS_QUE_MUESTRAN) document.removeEventListener(evento, mostrar);
       clearTimeout(temporizador.current);
     };
   }, [mostrar]);

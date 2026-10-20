@@ -34,4 +34,15 @@ describe("elegirVista", () => {
     const palabra = { conLaPalabra: conLaPalabra(), fila: [] };
     expect(elegirVista(salaVacia({ palabra, pregunta: preguntaConResultado() }))).toBe("palabra");
   });
+
+  it.each(["CERRADA", "ACTA_FINAL", "CANCELADA"] as const)(
+    "sala %s muestra que la sesión terminó, aunque haya pregunta o palabra",
+    (terminal) => {
+      const base = salaVacia({
+        pregunta: preguntaConResultado(),
+        palabra: { conLaPalabra: conLaPalabra(), fila: [] },
+      });
+      expect(elegirVista({ ...base, sala: { ...base.sala, estado: terminal } })).toBe("terminada");
+    },
+  );
 });

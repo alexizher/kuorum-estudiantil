@@ -290,4 +290,26 @@ describe("FuenteDeEstadoPorConsulta", () => {
     await vaciar();
     expect(fetchFalso.mock.calls[0]?.[0]).toBe("/api/public/v1/salas/a%2Fb/estado");
   });
+
+  it("informa por alIntentar cada intento: error false, 200 y 304 true", async () => {
+    const fetchFalso = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("red"))
+      .mockResolvedValueOnce(ok(1))
+      .mockResolvedValueOnce(new Response(null, { status: 304 }));
+    const temporizador = new TemporizadorFalso();
+    const alIntentar = vi.fn();
+    new FuenteDeEstadoPorConsulta(fetchFalso, new PoliticaFija(3000), temporizador).suscribir(
+      "K7F2",
+      vi.fn(),
+      undefined,
+      alIntentar,
+    );
+    await vaciar();
+    temporizador.disparar();
+    await vaciar();
+    temporizador.disparar();
+    await vaciar();
+    expect(alIntentar.mock.calls).toEqual([[false], [true], [true]]);
+  });
 });

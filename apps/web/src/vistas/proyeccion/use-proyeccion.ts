@@ -12,6 +12,8 @@ export interface Proyeccion {
   estado?: EstadoDeSala;
   /** Solo en la vista de palabra. */
   segundosRestantes: number | null;
+  /** Tres consultas seguidas fallaron; se quita con la siguiente que responda. */
+  sinConexion: boolean;
 }
 
 export interface OpcionesDeProyeccion {
@@ -21,6 +23,7 @@ export interface OpcionesDeProyeccion {
 }
 
 const INTERVALO_DEL_CRONOMETRO_MS = 250;
+const FALLOS_PARA_AVISAR = 3;
 
 interface Recibido {
   estado: EstadoDeSala;
@@ -43,11 +46,13 @@ export function useProyeccion(
 ): Proyeccion {
   const [recibido, setRecibido] = useState<Recibido | null>(null);
   const [noDisponible, setNoDisponible] = useState(false);
+  const [fallos, setFallos] = useState(0);
   const [ahora, setAhora] = useState(() => reloj());
 
   useEffect(() => {
     setRecibido(null);
     setNoDisponible(false);
+    setFallos(0);
     return fuente.suscribir(
       codigo,
       (estado) => {
@@ -56,6 +61,7 @@ export function useProyeccion(
         setAhora(local);
       },
       () => setNoDisponible(true),
+      (conExito) => setFallos((previos) => (conExito ? 0 : previos + 1)),
     );
     // `reloj` es estable salvo en pruebas; no debe reiniciar la suscripción.
   }, [fuente, codigo]);
@@ -69,9 +75,11 @@ export function useProyeccion(
     return () => clearInterval(id);
   }, [hayCronometro, intervaloMs]);
 
-  if (noDisponible) return { vista: "no-disponible", segundosRestantes: null };
-  if (!recibido || !vista) return { vista: "cargando", segundosRestantes: null };
+  const sinConexion = fallos >= FALLOS_PARA_AVISAR;
+  if (noDisponible) return { vista: "no-disponible", segundosRestantes: null, sinConexion: false };
+  if (!recibido || !vista) return { vista: "cargando", segundosRestantes: null, sinConexion };
   return {
+    sinConexion,
     vista,
     estado: recibido.estado,
     segundosRestantes: hayCronometro ? segundosQueQuedan(recibido, ahora) : null,
