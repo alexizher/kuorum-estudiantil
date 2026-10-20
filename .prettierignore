@@ -1,0 +1,5 @@
+**/src/generated/
+dist/
+.next/
+.turbo/
+next-env.d.ts

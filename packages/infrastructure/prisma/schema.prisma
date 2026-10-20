@@ -1,0 +1,27 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum EstadoDeSesion {
+  PROGRAMADA
+  ABIERTA
+  EN_CURSO
+  CERRADA
+  ACTA_FINAL
+  CANCELADA
+}
+
+model Sesion {
+  id            String         @id @default(cuid())
+  estado        EstadoDeSesion @default(PROGRAMADA)
+  version       Int            @default(0)
+  actualizadaEn DateTime       @updatedAt
+  creadaEn      DateTime       @default(now())
+
+  @@map("sesiones")
+}

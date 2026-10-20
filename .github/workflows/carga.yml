@@ -1,0 +1,84 @@
+name: Carga
+
+# Solo manual: cada corrida gasta cuota real del despliegue y de la base.
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: URL base del despliegue, sin barra final
+        required: true
+      sesion:
+        description: Id de la sesión de pruebas (salida de tools/load/preparar.mjs)
+        required: true
+      transporte:
+        description: Transporte a medir
+        type: choice
+        options: [consulta, eventos]
+        required: true
+      vus:
+        description: Usuarios virtuales o conexiones (máximo 300)
+        default: "300"
+        required: true
+      duracion:
+        description: Duración, por ejemplo 5m (máximo 10m)
+        default: 5m
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  carga:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      URL: ${{ inputs.url }}
+      SESION: ${{ inputs.sesion }}
+      VUS: ${{ inputs.vus }}
+      DURACION: ${{ inputs.duracion }}
+    steps:
+      - name: Validar límites
+        run: |
+          if ! [[ "$VUS" =~ ^[0-9]+$ ]] || [ "$VUS" -gt 300 ] || [ "$VUS" -lt 1 ]; then
+            echo "vus debe estar entre 1 y 300" >&2; exit 1
+          fi
+          if ! [[ "$DURACION" =~ ^([0-9]+)([sm])$ ]]; then
+            echo "duracion debe ser como 90s o 5m" >&2; exit 1
+          fi
+          n="${BASH_REMATCH[1]}"; u="${BASH_REMATCH[2]}"
+          segundos=$n; [ "$u" = "m" ] && segundos=$((n * 60))
+          if [ "$segundos" -gt 600 ] || [ "$segundos" -lt 1 ]; then
+            echo "duracion no puede pasar de 10m" >&2; exit 1
+          fi
+          echo "DURACION_S=$segundos" >> "$GITHUB_ENV"
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: grafana/setup-k6-action@43b9fc21641a76002687994433dd586f56e791b1 # v1.2.2
+      - name: Avanzar la versión cada 10 s
+        run: |
+          node tools/load/avanzar.mjs "$SESION" > avanzar.log 2>&1 &
+          avanzar=$!
+          sleep 5
+          if ! kill -0 "$avanzar" 2>/dev/null || grep -qi "error\|no existe" avanzar.log; then
+            echo "avanzar.mjs falló al arrancar:" >&2
+            cat avanzar.log >&2
+            exit 1
+          fi
+        env:
+          CARGA_DATABASE_URL: ${{ secrets.CARGA_DATABASE_URL }}
+      - name: Consulta con k6
+        if: inputs.transporte == 'consulta'
+        run: k6 run -e URL="$URL" -e SESION="$SESION" -e VUS="$VUS" -e DURACION="$DURACION" -e INTERVALO_S=3 tools/load/consulta.k6.js
+      - name: Eventos con EventSource
+        if: inputs.transporte == 'eventos'
+        run: node tools/load/eventos.mjs
+        env:
+          CONEXIONES: ${{ inputs.vus }}
+      - name: Versiones publicadas
+        if: always()
+        run: cat avanzar.log || true
