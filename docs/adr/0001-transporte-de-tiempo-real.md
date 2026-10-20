@@ -55,7 +55,7 @@ Un lector compartido por sesión bajaría la CPU de las consultas a la base, per
 
 Con Cloudflare delante (dominio propio, plan gratuito, sin cobro por petición), Vercel recibe unas 0,5 peticiones por segundo por sesión abierta, y la general de 3.000 cabe con holgura.
 
-Sin dominio, la cuota de 1M de peticiones al mes alcanza para unas 830 persona-hora con intervalo fijo de 3 s, o unas 2.000 con el intervalo adaptativo (3 s solo con votación abierta o en la fila, de 10 a 15 s el resto).
+Sin dominio, la cuota de 1M de peticiones al mes alcanza para unas 830 persona-hora con intervalo fijo de 3 s, o unas 2.000 con el intervalo adaptativo (3 s solo con votación abierta o en la fila, 12 s el resto). La cifra de 2.000 es una estimación, no una medición: supone que la persona pasa cerca del 22 % del tiempo en estado activo (3 s) y el resto en reposo (12 s). Como referencia, serían unas 830 con 3 s siempre y unas 3.300 con 12 s siempre.
 
 ## Decisión
 
@@ -67,11 +67,11 @@ Transporte por defecto: consulta periódica con la caché del borde (2 s) y un i
 
 Los intervalos son constantes con nombre en `apps/web/src/tiempo-real/intervalo-adaptativo.ts`, y `FuenteDeEstadoPorConsulta` los toma de un `PoliticaDeIntervalo`.
 
-SSE se descarta en Vercel Hobby por dos razones. Para una general de 3.000 personas supera unas 50 veces las cuotas de memoria y de CPU. Además, un endpoint público que mantiene una función abierta por conexión deja a cualquiera gastar la cuota solo con abrir conexiones. Se eliminan la ruta `/api/public/v1/sesiones/{id}/eventos`, `FuenteDeEstadoPorEventos`, sus pruebas y la opción `eventos` de `tools/load` y de `carga.yml`. La interfaz `FuenteDeEstado` se conserva para conectar otro transporte (por ejemplo un servicio WebSocket externo) sin tocar a quien la usa.
+SSE se descarta en Vercel Hobby por dos razones. Para una general de 3.000 personas supera unas 50 veces las cuotas de memoria y de CPU. Además, mantener una función abierta por conexión hace barato agotar la cuota abriendo conexiones. La consulta con CDN tampoco es inmune: alguien puede inundarla contra la cuota de 1M de peticiones. En ambos casos la mitigación es el borde (Cloudflare) y, más adelante, limitar la tasa de peticiones. Se eliminan la ruta `/api/public/v1/sesiones/{id}/eventos`, `FuenteDeEstadoPorEventos`, sus pruebas y la opción `eventos` de `tools/load` y de `carga.yml`. La interfaz `FuenteDeEstado` se conserva para conectar otro transporte (por ejemplo un servicio WebSocket externo) sin tocar a quien la usa.
 
 Guía de capacidad:
 
-- Sin dominio propio: unas 830 persona-hora al mes con 3 s fijos, o unas 2.000 con el intervalo adaptativo.
+- Sin dominio propio: unas 830 persona-hora al mes con 3 s fijos, o unas 2.000 con el intervalo adaptativo (estimación, ver Extrapolación).
 - Con dominio propio y Cloudflare gratuito delante: cabe una general de 3.000 personas.
 - Los límites hay que revisarlos en https://vercel.com/docs/limits, porque Vercel los cambia.
 
@@ -80,7 +80,7 @@ Guía de capacidad:
 - La fase 1 usa `FuenteDeEstadoPorConsulta` con `PoliticaAdaptativa`. El contexto (votación abierta, fila de palabra) lo aporta la pantalla que se suscribe.
 - El panel de administración estimará el uso mensual a partir de las sesiones programadas y avisará si se acerca a la cuota.
 - La documentación recomienda Cloudflare para asambleas generales de más de unas 300 personas.
-- Con un intervalo de 12 s en reposo, un cambio puede tardar hasta unos 14 s en llegar a quien no está en votación ni en la fila (12 s más los 2 s de la caché).
+- Con un intervalo de 12 s en reposo, un cambio puede tardar hasta unos 14 a 16 s en llegar a quien no está en votación ni en la fila (12 s de intervalo más hasta 4 s de la caché: 2 de `s-maxage` y 2 de `stale-while-revalidate`).
 
 ## Cómo repetir la medición
 
