@@ -1,15 +1,23 @@
-import type { EstadoPublicoDeSesion } from "@kuorum/contracts";
+import type { EstadoDeSala } from "@kuorum/contracts";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { FuenteDeEstadoPorConsulta } from "../../src/tiempo-real/fuente-por-consulta";
 import type { Temporizador } from "../../src/tiempo-real/fuente-de-estado";
 import { PoliticaAdaptativa, PoliticaFija } from "../../src/tiempo-real/intervalo-adaptativo";
 
-function estado(version: number): EstadoPublicoDeSesion {
+function estado(version: number): EstadoDeSala {
   return {
-    sesionId: "s",
-    estado: "EN_CURSO",
+    sala: {
+      codigo: "K7F2",
+      titulo: "Asamblea",
+      estado: "EN_CURSO",
+      modo: "SALA_ABIERTA",
+      indicativa: false,
+    },
     version,
-    actualizadaEn: "2026-10-19T12:00:00.000Z",
+    asistencia: null,
+    pregunta: null,
+    palabra: { conLaPalabra: null, fila: [] },
+    horaDelServidor: "2026-10-19T12:00:00.000Z",
   };
 }
 
@@ -44,7 +52,7 @@ describe("FuenteDeEstadoPorConsulta", () => {
     const temporizador = new TemporizadorFalso();
     const alCambiar = vi.fn();
     new FuenteDeEstadoPorConsulta(fetchFalso, new PoliticaFija(3000), temporizador).suscribir(
-      "s",
+      "K7F2",
       alCambiar,
     );
 
@@ -53,7 +61,7 @@ describe("FuenteDeEstadoPorConsulta", () => {
     await vaciar();
 
     expect(alCambiar.mock.calls).toEqual([[estado(1)], [estado(2)]]);
-    expect(fetchFalso.mock.calls[0]?.[0]).toBe("/api/public/v1/sesiones/s/estado");
+    expect(fetchFalso.mock.calls[0]?.[0]).toBe("/api/public/v1/salas/K7F2/estado");
   });
 
   it("un 304 no llama a alCambiar y la segunda petición lleva If-None-Match", async () => {
@@ -64,7 +72,7 @@ describe("FuenteDeEstadoPorConsulta", () => {
     const temporizador = new TemporizadorFalso();
     const alCambiar = vi.fn();
     new FuenteDeEstadoPorConsulta(fetchFalso, new PoliticaFija(3000), temporizador).suscribir(
-      "s",
+      "K7F2",
       alCambiar,
     );
 
@@ -88,7 +96,7 @@ describe("FuenteDeEstadoPorConsulta", () => {
     const temporizador = new TemporizadorFalso();
     const alCambiar = vi.fn();
     new FuenteDeEstadoPorConsulta(fetchFalso, new PoliticaFija(3000), temporizador).suscribir(
-      "s",
+      "K7F2",
       alCambiar,
     );
 
@@ -104,7 +112,7 @@ describe("FuenteDeEstadoPorConsulta", () => {
     const temporizador = new TemporizadorFalso();
     const alCambiar = vi.fn();
     new FuenteDeEstadoPorConsulta(fetchFalso, new PoliticaFija(3000), temporizador).suscribir(
-      "s",
+      "K7F2",
       alCambiar,
     );
 
@@ -122,7 +130,7 @@ describe("FuenteDeEstadoPorConsulta", () => {
       fetchFalso,
       new PoliticaFija(3000),
       temporizador,
-    ).suscribir("s", vi.fn());
+    ).suscribir("K7F2", vi.fn());
     await vaciar();
 
     cancelar();
@@ -141,7 +149,7 @@ describe("FuenteDeEstadoPorConsulta", () => {
       fetchFalso,
       new PoliticaFija(3000),
       new TemporizadorFalso(),
-    ).suscribir("s", alCambiar);
+    ).suscribir("K7F2", alCambiar);
 
     cancelar();
     resolver(ok(1));
@@ -155,7 +163,7 @@ describe("FuenteDeEstadoPorConsulta", () => {
     const fetchFalso = vi.fn().mockResolvedValue(ok(1));
     const temporizador = new TemporizadorFalso();
     new FuenteDeEstadoPorConsulta(fetchFalso, new PoliticaFija(3000), temporizador).suscribir(
-      "s",
+      "K7F2",
       vi.fn(),
     );
     await vaciar();
@@ -187,7 +195,7 @@ describe("FuenteDeEstadoPorConsulta", () => {
       temporizador,
       undefined,
       () => contexto,
-    ).suscribir("s", vi.fn());
+    ).suscribir("K7F2", vi.fn());
     await vaciar();
     contexto = { votacionAbierta: true, enFilaDePalabra: false };
     accion?.();
@@ -203,7 +211,7 @@ describe("FuenteDeEstadoPorConsulta", () => {
       new PoliticaFija(3000),
       new TemporizadorFalso(),
     );
-    fuente.suscribir("s", vi.fn());
+    fuente.suscribir("K7F2", vi.fn());
     await vaciar();
 
     expect(fetchFalso.mock.contexts[0]).not.toBe(fuente);
@@ -222,7 +230,7 @@ describe("FuenteDeEstadoPorConsulta", () => {
       new PoliticaFija(3000),
       temporizador,
       alFallar,
-    ).suscribir("s", vi.fn());
+    ).suscribir("K7F2", vi.fn());
 
     await vaciar();
     temporizador.disparar();
@@ -243,12 +251,43 @@ describe("FuenteDeEstadoPorConsulta", () => {
       new PoliticaFija(3000),
       temporizador,
       alFallar,
-    ).suscribir("s", alCambiar);
+    ).suscribir("K7F2", alCambiar);
 
     await vaciar();
 
     expect(alFallar).toHaveBeenCalledOnce();
     expect(alCambiar).not.toHaveBeenCalled();
     expect(temporizador.pendientes).toHaveLength(1);
+  });
+
+  it("un 404 avisa que la sala no existe y deja de consultar", async () => {
+    const fetchFalso = vi.fn().mockResolvedValue(new Response(null, { status: 404 }));
+    const temporizador = new TemporizadorFalso();
+    const alNoExistir = vi.fn();
+    const alFallar = vi.fn();
+    new FuenteDeEstadoPorConsulta(
+      fetchFalso,
+      new PoliticaFija(3000),
+      temporizador,
+      alFallar,
+    ).suscribir("K7F2", vi.fn(), alNoExistir);
+
+    await vaciar();
+
+    expect(alNoExistir).toHaveBeenCalledOnce();
+    expect(alFallar).not.toHaveBeenCalled();
+    expect(temporizador.pendientes).toHaveLength(0);
+    expect(fetchFalso).toHaveBeenCalledOnce();
+  });
+
+  it("codifica el código en la URL", async () => {
+    const fetchFalso = vi.fn().mockResolvedValue(new Response(null, { status: 304 }));
+    new FuenteDeEstadoPorConsulta(
+      fetchFalso,
+      new PoliticaFija(3000),
+      new TemporizadorFalso(),
+    ).suscribir("a/b", vi.fn());
+    await vaciar();
+    expect(fetchFalso.mock.calls[0]?.[0]).toBe("/api/public/v1/salas/a%2Fb/estado");
   });
 });

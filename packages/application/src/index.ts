@@ -1,4 +1,3 @@
-export { ConsultarEstadoDeSesion } from "./sesion/consultar-estado-de-sesion.js";
 export { CrearSesion } from "./sala/crear-sesion.js";
 export { IniciarSesion } from "./sala/iniciar-sesion.js";
 export { TerminarSesion } from "./sala/terminar-sesion.js";

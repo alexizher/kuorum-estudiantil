@@ -1,8 +1,13 @@
-import type { EstadoPublicoDeSesion } from "@kuorum/contracts";
+import type { EstadoDeSala } from "@kuorum/contracts";
 
 export interface FuenteDeEstado {
   /** Devuelve la función que cancela la suscripción. */
-  suscribir(sesionId: string, alCambiar: (estado: EstadoPublicoDeSesion) => void): () => void;
+  suscribir(
+    codigo: string,
+    alCambiar: (estado: EstadoDeSala) => void,
+    /** La sala no existe (404). La fuente deja de consultar. */
+    alNoExistir?: () => void,
+  ): () => void;
 }
 
 export interface Temporizador {
@@ -17,6 +22,6 @@ export const temporizadorPorDefecto: Temporizador = {
   },
 };
 
-export function urlDeEstado(sesionId: string): string {
-  return `/api/public/v1/sesiones/${encodeURIComponent(sesionId)}/estado`;
+export function urlDeEstado(codigo: string): string {
+  return `/api/public/v1/salas/${encodeURIComponent(codigo)}/estado`;
 }

@@ -1,4 +1,4 @@
-import { esquemaEstadoPublicoDeSesion, type EstadoPublicoDeSesion } from "@kuorum/contracts";
+import { esquemaEstadoDeSala, type EstadoDeSala } from "@kuorum/contracts";
 import {
   temporizadorPorDefecto,
   urlDeEstado,
@@ -20,7 +20,11 @@ export class FuenteDeEstadoPorConsulta implements FuenteDeEstado {
     private readonly contexto: () => ContextoDeIntervalo = () => CONTEXTO_EN_REPOSO,
   ) {}
 
-  suscribir(sesionId: string, alCambiar: (estado: EstadoPublicoDeSesion) => void): () => void {
+  suscribir(
+    codigo: string,
+    alCambiar: (estado: EstadoDeSala) => void,
+    alNoExistir?: () => void,
+  ): () => void {
     let activa = true;
     let etiqueta: string | undefined;
     let cancelarEspera: (() => void) | undefined;
@@ -36,12 +40,17 @@ export class FuenteDeEstadoPorConsulta implements FuenteDeEstado {
         if (etiqueta !== undefined) cabeceras["If-None-Match"] = etiqueta;
         // Llamada suelta: window.fetch lanza "Illegal invocation" si `this` es la instancia.
         const pedir = this.fetch;
-        const respuesta = await pedir(urlDeEstado(sesionId), { headers: cabeceras });
+        const respuesta = await pedir(urlDeEstado(codigo), { headers: cabeceras });
+        if (activa && respuesta.status === 404) {
+          activa = false;
+          alNoExistir?.();
+          return;
+        }
         if (activa && respuesta.status !== 200 && respuesta.status !== 304) {
           throw new Error(`Respuesta ${respuesta.status} al consultar el estado`);
         }
         if (activa && respuesta.status === 200) {
-          const analizado = esquemaEstadoPublicoDeSesion.safeParse(await respuesta.json());
+          const analizado = esquemaEstadoDeSala.safeParse(await respuesta.json());
           if (activa && !analizado.success) {
             throw new Error("El estado recibido no cumple el contrato", { cause: analizado.error });
           }
