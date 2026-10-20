@@ -1,8 +1,10 @@
 "use client";
 
+import { Boton, CampoDeTexto } from "@kuorum/ui";
 import { useRouter } from "next/navigation";
 import type { FormEvent } from "react";
 import { clienteDeAuth } from "./cliente-de-auth";
+import estilos from "./ingreso.module.css";
 import { useIngreso, type Ingresar } from "./use-ingreso";
 
 const ingresarConBetterAuth: Ingresar = async (correo, contrasena) => {
@@ -23,31 +25,35 @@ export function FormularioDeIngreso() {
   }
 
   return (
-    <form onSubmit={alEnviar} aria-describedby={error ? "error-de-ingreso" : undefined}>
-      <p>
-        <label htmlFor="correo">Correo</label>
-        <br />
-        <input id="correo" name="correo" type="email" autoComplete="username" required />
-      </p>
-      <p>
-        <label htmlFor="contrasena">Contraseña</label>
-        <br />
-        <input
-          id="contrasena"
-          name="contrasena"
-          type="password"
-          autoComplete="current-password"
-          required
-        />
-      </p>
+    <form
+      className={estilos.formulario}
+      onSubmit={alEnviar}
+      aria-describedby={error ? "error-de-ingreso" : undefined}
+    >
+      <CampoDeTexto
+        etiqueta="Correo"
+        id="correo"
+        name="correo"
+        type="email"
+        autoComplete="username"
+        required
+      />
+      <CampoDeTexto
+        etiqueta="Contraseña"
+        id="contrasena"
+        name="contrasena"
+        type="password"
+        autoComplete="current-password"
+        required
+      />
       {error ? (
-        <p id="error-de-ingreso" role="alert">
+        <p id="error-de-ingreso" role="alert" className={estilos.error}>
           {error}
         </p>
       ) : null}
-      <button type="submit" disabled={enviando}>
+      <Boton type="submit" variante="tinta" ancho disabled={enviando}>
         Entrar
-      </button>
+      </Boton>
     </form>
   );
 }

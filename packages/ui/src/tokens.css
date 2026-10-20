@@ -1,0 +1,90 @@
+/* Tokens de Kuorum Estudiantil. Claro: papel reciclado y tinta de serigrafía. Oscuro: tablero.
+   [data-tema="claro"|"oscuro"] en <html> manda sobre prefers-color-scheme. */
+
+:root {
+  color-scheme: light;
+  --papel: #e8ebe4;
+  --superficie: #f6f7f3;
+  --tinta: #1b2242;
+  --tinta-suave: #4a5270;
+  --linea: #c9cec3;
+  --borde-control: #7c8299;
+  --si: #1e7a4c;
+  --si-texto: #17663f;
+  --no: #c4302a;
+  --no-texto: #a82822;
+  --ambar: #e2a11b;
+  --ambar-texto: #7a4e00;
+  --ambar-fondo: #f3e3bc;
+  --sobre-tinta: #e8ebe4;
+  --sobre-color: #ffffff;
+  --sobre-ambar: #1b2242;
+  --mezcla: multiply;
+  --foco: #1b2242;
+  --qr-fondo: #f6f7f3;
+  --qr-tinta: #1b2242;
+  --u: clamp(5px, min(1vw, 1.7vh), 24px);
+  --fuente: var(--font-archivo, "Archivo"), system-ui, sans-serif;
+
+  --f-ancho-titular: 68%;
+  --r-control: 2px;
+  --r-hoja: 10px;
+  --r-tinta: 0;
+
+  --t-0: 0.8rem;
+  --t-1: 1rem;
+  --t-2: 1.25rem;
+  --t-3: 1.563rem;
+  --t-4: 1.953rem;
+  --t-5: 2.441rem;
+  --t-6: 3.052rem;
+
+  --dur: 180ms;
+  --curva: cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-tema="claro"]) {
+    color-scheme: dark;
+    --papel: #121831;
+    --superficie: #1a2142;
+    --tinta: #e6e9e1;
+    --tinta-suave: #a9b0c8;
+    --linea: #2e3762;
+    --borde-control: #6b7495;
+    --si: #3dbe7e;
+    --si-texto: #3dbe7e;
+    --no: #f0574f;
+    --no-texto: #ff6b62;
+    --ambar: #f2b640;
+    --ambar-texto: #f2b640;
+    --ambar-fondo: #3a2f14;
+    --sobre-tinta: #121831;
+    --sobre-color: #121831;
+    --sobre-ambar: #121831;
+    --mezcla: normal;
+    --foco: #f2b640;
+  }
+}
+
+:root[data-tema="oscuro"] {
+  color-scheme: dark;
+  --papel: #121831;
+  --superficie: #1a2142;
+  --tinta: #e6e9e1;
+  --tinta-suave: #a9b0c8;
+  --linea: #2e3762;
+  --borde-control: #6b7495;
+  --si: #3dbe7e;
+  --si-texto: #3dbe7e;
+  --no: #f0574f;
+  --no-texto: #ff6b62;
+  --ambar: #f2b640;
+  --ambar-texto: #f2b640;
+  --ambar-fondo: #3a2f14;
+  --sobre-tinta: #121831;
+  --sobre-color: #121831;
+  --sobre-ambar: #121831;
+  --mezcla: normal;
+  --foco: #f2b640;
+}

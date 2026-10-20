@@ -127,6 +127,48 @@ describe("regla de dependencias entre capas", () => {
     },
   );
 
+  it.each([true, false])(
+    "ui importando domain por nombre rompe ui-sin-capas (construido: %s)",
+    (construido) => {
+      const { codigo, violaciones } = importarPorNombre("ui", "domain", construido);
+      expect(codigo).not.toBe(0);
+      expect(violaciones.map((v) => v.rule.name)).toContain("ui-sin-capas");
+    },
+  );
+
+  it("ui importando contracts por nombre es válido", () => {
+    const { codigo, violaciones } = importarPorNombre("ui", "contracts", true);
+    expect(violaciones).toEqual([]);
+    expect(codigo).toBe(0);
+  });
+
+  it("ui importando un módulo de Node o una librería ajena rompe ui-sin-capas, react y qrcode no", () => {
+    const dir = mkdtempSync(join(tmpdir(), "capas-"));
+    temporales.push(dir);
+    mkdirSync(join(dir, "packages/ui/src"), { recursive: true });
+    writeFileSync(
+      join(dir, "packages/ui/src/uso.ts"),
+      [
+        'import { useState } from "react";',
+        'import { jsx } from "react/jsx-runtime";',
+        'import QRCode from "qrcode";',
+        'import { readFileSync } from "node:fs";',
+        'import { z } from "zod";',
+        "export const y = [useState, jsx, QRCode, readFileSync, z];",
+        "",
+      ].join("\n"),
+    );
+
+    const { codigo, violaciones } = cruzar(dir, ["packages"]);
+
+    const ofensores = violaciones
+      .filter((v) => v.rule.name === "ui-sin-capas")
+      .map((v) => v.to)
+      .sort();
+    expect(codigo).not.toBe(0);
+    expect(ofensores).toEqual(["fs", "zod"]);
+  });
+
   it("application importando domain por nombre es válido", () => {
     const { codigo, violaciones } = importarPorNombre("application", "domain", true);
     expect(violaciones).toEqual([]);
