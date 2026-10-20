@@ -79,11 +79,11 @@ describe("PrismaRepositorioDePreguntas", () => {
     );
   });
 
-  it("crea 16 fragmentos por opción", async () => {
+  it("crea una fila de conteo por opción", async () => {
     const sesion = await sesionGuardada();
     const pregunta = preguntaDePrueba(sesion.id, "ABIERTA");
     await banco.preguntas.guardar(pregunta);
-    expect(await banco.prisma.conteo.count()).toBe(16 * pregunta.opciones.length);
+    expect(await banco.prisma.conteo.count()).toBe(pregunta.opciones.length);
   });
 
   it("un borrador no tiene conteos todavía", async () => {
@@ -99,7 +99,7 @@ describe("PrismaRepositorioDePreguntas", () => {
     await banco.preguntas.guardar(pregunta);
     const [primera] = pregunta.opciones;
     await banco.prisma.conteo.updateMany({
-      where: { opcionId: primera?.id ?? "", shard: 0 },
+      where: { opcionId: primera?.id ?? "" },
       data: { total: 4 },
     });
 

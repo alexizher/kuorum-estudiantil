@@ -10,7 +10,6 @@ import {
   type ClienteTransaccional,
   type ContextoTransaccional,
 } from "../prisma/contexto-transaccional.js";
-import { FRAGMENTOS_DE_CONTEO } from "./fragmentos.js";
 
 type FilaConOpciones = FilaDePregunta & { opciones: FilaDeOpcion[] };
 
@@ -71,7 +70,7 @@ export class PrismaRepositorioDePreguntas implements RepositorioDePreguntas {
    * reintentos para que una ráfaga de votos no lo deje esperando para siempre; si no
    * se logra, CIERRE_OCUPADO. Dentro de una unidad de trabajo ajena no se puede
    * reintentar (la transacción queda abortada): falla a la primera y la unidad se revierte.
-   * Los conteos se crean en 0 (16 fragmentos por opción) al guardarla ABIERTA, sin pisar
+   * Los conteos se crean en 0 (una fila por opción) al guardarla ABIERTA, sin pisar
    * los existentes. La segunda ABIERTA de una sesión la rechaza el índice único parcial.
    */
   async guardar(pregunta: Pregunta): Promise<void> {
@@ -132,14 +131,11 @@ export class PrismaRepositorioDePreguntas implements RepositorioDePreguntas {
     });
     if (pregunta.estado === "ABIERTA") {
       await tx.conteo.createMany({
-        data: pregunta.opciones.flatMap((o) =>
-          Array.from({ length: FRAGMENTOS_DE_CONTEO }, (_, shard) => ({
-            preguntaId: pregunta.id,
-            opcionId: o.id,
-            shard,
-            total: 0,
-          })),
-        ),
+        data: pregunta.opciones.map((o) => ({
+          preguntaId: pregunta.id,
+          opcionId: o.id,
+          total: 0,
+        })),
         skipDuplicates: true,
       });
     }

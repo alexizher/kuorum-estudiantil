@@ -83,6 +83,30 @@ describe("PrismaRepositorioDeSesiones", () => {
     expect((await banco.sesiones.porId(sesion.id))?.version).toBe(0);
   });
 
+  it("SESION_NO_CARGADA dentro de una unidad de trabajo no aborta la transacción", async () => {
+    const sesion = sesionDePrueba();
+    await banco.sesiones.guardar(sesion);
+    const copia = Sesion.reconstruir({
+      id: sesion.id,
+      titulo: sesion.titulo,
+      codigoDeSala: sesion.codigoDeSala,
+      modo: sesion.modo,
+      estado: sesion.estado,
+      segundosPorIntervencion: sesion.segundosPorIntervencion,
+      version: 1,
+      creadaEn: sesion.creadaEn,
+    });
+
+    const despues = await banco.unidad.ejecutar(async () => {
+      await expect(banco.sesiones.guardar(copia)).rejects.toMatchObject({
+        codigo: "SESION_NO_CARGADA",
+      });
+      return banco.sesiones.porId(sesion.id);
+    });
+
+    expect(despues?.id).toBe(sesion.id);
+  });
+
   it("un dato inválido en la base lanza en vez de repararse", async () => {
     const sesion = sesionDePrueba();
     await banco.sesiones.guardar(sesion);

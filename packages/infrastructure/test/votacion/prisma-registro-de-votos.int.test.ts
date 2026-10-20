@@ -152,7 +152,7 @@ describe("PrismaRegistroDeVotos", () => {
       SELECT column_name FROM information_schema.columns
       WHERE table_schema = 'public' AND table_name = 'conteos'
       ORDER BY column_name`;
-    expect(conteos.map((c) => c.column_name)).toEqual(["opcionId", "preguntaId", "shard", "total"]);
+    expect(conteos.map((c) => c.column_name)).toEqual(["opcionId", "preguntaId", "total"]);
   });
 
   it("ninguna tabla une al participante con la opción", async () => {
@@ -169,29 +169,41 @@ describe("PrismaRegistroDeVotos", () => {
     ]);
   });
 
-  it("el xmin no delata por quién votó: cada voto toca todas las opciones de su fragmento", async () => {
+  it("las filas vivas de conteo comparten un solo xmin (el del último votante)", async () => {
     const { pregunta, si, no } = await preguntaAbierta();
-    await banco.votos.emitir(pregunta.id, "p1", si);
-    await banco.votos.emitir(pregunta.id, "p2", no);
-    await banco.votos.emitir(pregunta.id, "p3", no);
-
-    const votantes = await banco.prisma.$queryRaw<{ xmin: string }[]>`
-      SELECT xmin::text AS "xmin" FROM "votos_emitidos" WHERE "preguntaId" = ${pregunta.id}`;
-    const xidsDeVotantes = new Set(votantes.map((v) => v.xmin));
-    expect(xidsDeVotantes.size).toBe(3);
-
-    const conteos = await banco.prisma.$queryRaw<
-      { xmin: string; opcionId: string; shard: number }[]
-    >`SELECT xmin::text AS "xmin", "opcionId", "shard" FROM "conteos" WHERE "preguntaId" = ${pregunta.id}`;
-    const tocadas = conteos.filter((c) => xidsDeVotantes.has(c.xmin));
-    expect(tocadas.length).toBeGreaterThanOrEqual(pregunta.opciones.length);
-    for (const xid of xidsDeVotantes) {
-      const opciones = new Set(tocadas.filter((c) => c.xmin === xid).map((c) => c.opcionId));
-      // Si dos votos caen en el mismo fragmento, el segundo reemplaza las filas del primero
-      // (ese xid ya no aparece). Si aparece, aparece en todas las opciones: ninguna fila es
-      // exclusiva de una opción.
-      if (opciones.size > 0) expect(opciones.size).toBe(pregunta.opciones.length);
+    for (const [participante, opcion] of [
+      ["p1", si],
+      ["p2", no],
+      ["p3", si],
+      ["p4", no],
+    ] as const) {
+      await banco.votos.emitir(pregunta.id, participante, opcion);
     }
+
+    const xminsDeConteo = await banco.prisma.$queryRaw<{ xmin: string }[]>`
+      SELECT DISTINCT xmin::text AS "xmin" FROM "conteos" WHERE "preguntaId" = ${pregunta.id}`;
+    const ultimo = await banco.prisma.$queryRaw<{ xmin: string }[]>`
+      SELECT xmin::text AS "xmin" FROM "votos_emitidos"
+      WHERE "preguntaId" = ${pregunta.id} AND "participanteId" = 'p4'`;
+    expect(xminsDeConteo).toEqual(ultimo);
+
+    // La consulta de unión por xmin no atribuye a nadie una opción de total 1 (2 y 2 votos).
+    const union = await banco.prisma.$queryRaw<{ participanteId: string; opcionId: string }[]>`
+      SELECT ve."participanteId", c."opcionId" FROM "votos_emitidos" ve
+      JOIN "conteos" c ON c.xmin = ve.xmin AND c."preguntaId" = ve."preguntaId"
+      WHERE c."total" = 1`;
+    expect(union).toEqual([]);
+  });
+
+  it("borde: con un solo voto en total, el conteo de uno lo delata (igual que cualquier conteo de uno)", async () => {
+    const { pregunta, si } = await preguntaAbierta();
+    await banco.votos.emitir(pregunta.id, "p1", si);
+
+    const union = await banco.prisma.$queryRaw<{ participanteId: string; opcionId: string }[]>`
+      SELECT ve."participanteId", c."opcionId" FROM "votos_emitidos" ve
+      JOIN "conteos" c ON c.xmin = ve.xmin AND c."preguntaId" = ve."preguntaId"
+      WHERE c."total" = 1`;
+    expect(union).toEqual([{ participanteId: "p1", opcionId: si }]);
   });
 
   it("300 votos simultáneos de 300 participantes terminan sin errores y suman 300", async () => {
@@ -209,6 +221,7 @@ describe("PrismaRegistroDeVotos", () => {
     expect(conteos.get(no)).toBe(100);
     expect(conteos.get(si)).toBe(200);
     expect(await banco.votos.votosEmitidos(pregunta.id)).toBe(300);
-    expect(Date.now() - inicio).toBeLessThan(10_000);
+    const duracion = Date.now() - inicio;
+    expect(duracion).toBeLessThan(10_000);
   }, 20_000);
 });
