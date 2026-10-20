@@ -8,7 +8,10 @@ on:
         description: URL base del despliegue, sin barra final
         required: true
       sesion:
-        description: Id de la sesión de pruebas (salida de tools/load/preparar.mjs)
+        description: Id de la sesión de pruebas (línea sesion= de tools/load/preparar.mjs)
+        required: true
+      sala:
+        description: Código de sala de esa sesión (línea sala= de tools/load/preparar.mjs)
         required: true
       transporte:
         description: Transporte a medir
@@ -34,6 +37,7 @@ jobs:
     env:
       URL: ${{ inputs.url }}
       SESION: ${{ inputs.sesion }}
+      SALA: ${{ inputs.sala }}
       VUS: ${{ inputs.vus }}
       DURACION: ${{ inputs.duracion }}
     steps:
@@ -73,7 +77,7 @@ jobs:
           CARGA_DATABASE_URL: ${{ secrets.CARGA_DATABASE_URL }}
       - name: Consulta con k6
         if: inputs.transporte == 'consulta'
-        run: k6 run -e URL="$URL" -e SESION="$SESION" -e VUS="$VUS" -e DURACION="$DURACION" -e INTERVALO_S=3 tools/load/consulta.k6.js
+        run: k6 run -e URL="$URL" -e SALA="$SALA" -e VUS="$VUS" -e DURACION="$DURACION" -e INTERVALO_S=3 tools/load/consulta.k6.js
       - name: Versiones publicadas
         if: always()
         run: cat avanzar.log || true
