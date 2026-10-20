@@ -17,7 +17,9 @@ describe("PrismaRepositorioDeInstantaneas", () => {
   });
 
   it("devuelve la instantánea de una sesión existente", async () => {
-    const creada = await prisma.sesion.create({ data: { estado: "EN_CURSO", version: 3 } });
+    const creada = await prisma.sesion.create({
+      data: { titulo: "Asamblea", codigoDeSala: "ABCD", estado: "EN_CURSO", version: 3 },
+    });
 
     const instantanea = await repositorio.obtener(creada.id);
 

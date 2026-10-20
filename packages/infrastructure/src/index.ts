@@ -1,3 +1,13 @@
 export { createPrismaClient, selectAdapterKind } from "./prisma/create-prisma-client.js";
-export { PrismaRepositorioDeInstantaneas } from "./sesion/prisma-repositorio-de-instantaneas.js";
+export { ContextoTransaccional } from "./prisma/contexto-transaccional.js";
+export { PrismaUnidadDeTrabajo } from "./prisma/prisma-unidad-de-trabajo.js";
 export { verificarConexion } from "./prisma/verificar-conexion.js";
+export { PrismaRepositorioDeInstantaneas } from "./sesion/prisma-repositorio-de-instantaneas.js";
+export { PrismaRepositorioDeSesiones } from "./sesion/prisma-repositorio-de-sesiones.js";
+export { PrismaRepositorioDeParticipantes } from "./participantes/prisma-repositorio-de-participantes.js";
+export { PrismaRepositorioDePreguntas } from "./votacion/prisma-repositorio-de-preguntas.js";
+export { PrismaRegistroDeVotos } from "./votacion/prisma-registro-de-votos.js";
+export { PrismaRepositorioDeSolicitudes } from "./palabra/prisma-repositorio-de-solicitudes.js";
+export { HasheadorSha256 } from "./crypto/hasheador-sha256.js";
+export { GeneradorDeIdsUuid } from "./crypto/generador-de-ids-uuid.js";
+export { GeneradorDeCodigosAleatorio } from "./codigos/generador-aleatorio.js";

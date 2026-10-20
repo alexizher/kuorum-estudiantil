@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { GenerarCodigosDeAcceso, IngresarASala } from "../../src/index.js";
 import { crearEscenario, sembrarSesion, type Escenario } from "../dobles/escenario.js";
 
@@ -110,6 +110,20 @@ describe("IngresarASala con código", () => {
 });
 
 describe("IngresarASala con navegador", () => {
+  it("si otra entrada creó al participante en medio, devuelve al existente", async () => {
+    const e = crearEscenario();
+    const sesion = await sembrarSesion(e, { estado: "ABIERTA" });
+    const credencial = { tipo: "NAVEGADOR", token: TOKEN } as const;
+    const primero = await ingresar(e).ejecutar(sesion.codigoDeSala.valor, credencial);
+    // La otra entrada aún no veía al participante cuando consultó.
+    vi.spyOn(e.participantes, "porCredencial").mockResolvedValueOnce(null);
+
+    const segundo = await ingresar(e).ejecutar(sesion.codigoDeSala.valor, credencial);
+
+    expect(segundo.participanteId).toBe(primero.participanteId);
+    expect(e.participantes.participantes).toHaveLength(1);
+  });
+
   it("crea un participante y el mismo token lo recupera sin cambiar la versión", async () => {
     const e = crearEscenario();
     const sesion = await sembrarSesion(e, { estado: "ABIERTA" });
@@ -120,7 +134,7 @@ describe("IngresarASala con navegador", () => {
 
     expect(segundo.participanteId).toBe(primero.participanteId);
     expect(primero.sesionId).toBe(sesion.id);
-    expect(await e.participantes.contarActivos(sesion.id)).toBe(1);
+    expect(e.participantes.participantes).toHaveLength(1);
     expect(sesion.version).toBe(0);
     expect(e.participantes.volcado()).not.toContain(TOKEN);
   });

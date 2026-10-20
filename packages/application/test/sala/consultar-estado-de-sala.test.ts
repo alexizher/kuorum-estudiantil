@@ -79,7 +79,10 @@ describe("ConsultarEstadoDeSala", () => {
         hash: `h-${id}`,
         creadoEn: e.reloj.ahora(),
       });
+      await e.participantes.guardarCodigos(sesion.id, [`h-${id}`]);
+      await e.participantes.activarCodigo(sesion.id, `h-${id}`);
     }
+    await e.participantes.guardarCodigos(sesion.id, ["sin-usar"]);
     const estado = await consulta(e).ejecutar(sesion.codigoDeSala.valor);
     expect(estado.asistencia).toBe(2);
     expect(estado.sala.indicativa).toBe(false);

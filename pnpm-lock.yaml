@@ -103,6 +103,9 @@ importers:
 
   packages/infrastructure:
     dependencies:
+      '@kuorum/application':
+        specifier: workspace:*
+        version: link:../application
       '@kuorum/domain':
         specifier: workspace:*
         version: link:../domain

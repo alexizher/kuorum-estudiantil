@@ -66,7 +66,7 @@ export class IngresarASala {
           hash,
           creadoEn: this.reloj.ahora(),
         } satisfies Participante;
-        await this.participantes.crear(participante);
+        participante = await this.participantes.crear(participante);
       }
       if (activado) {
         sesion.registrarCambio();

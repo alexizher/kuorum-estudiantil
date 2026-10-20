@@ -16,12 +16,163 @@ enum EstadoDeSesion {
   CANCELADA
 }
 
+enum ModoDeParticipacion {
+  SALA_ABIERTA
+  CON_CODIGOS
+}
+
+enum CredencialDeParticipante {
+  CODIGO
+  NAVEGADOR
+}
+
+enum EstadoDePregunta {
+  BORRADOR
+  ABIERTA
+  CERRADA
+  ANULADA
+}
+
+enum EstadoDeSolicitud {
+  ESPERANDO
+  CON_LA_PALABRA
+  TERMINADA
+  RETIRADA
+  RECHAZADA
+}
+
+enum TipoDeSolicitud {
+  INTERVENCION
+  MOCION
+}
+
+enum TipoDeMocion {
+  ORDEN
+  PROCEDIMIENTO
+  ACLARACION
+  SUFICIENTE_ILUSTRACION
+}
+
 model Sesion {
-  id            String         @id @default(cuid())
-  estado        EstadoDeSesion @default(PROGRAMADA)
-  version       Int            @default(0)
-  actualizadaEn DateTime       @updatedAt
-  creadaEn      DateTime       @default(now())
+  id                      String              @id @default(cuid())
+  titulo                  String
+  codigoDeSala            String              @unique
+  modo                    ModoDeParticipacion @default(SALA_ABIERTA)
+  segundosPorIntervencion Int                 @default(180)
+  estado                  EstadoDeSesion      @default(PROGRAMADA)
+  version                 Int                 @default(0)
+  actualizadaEn           DateTime            @updatedAt
+  creadaEn                DateTime            @default(now())
+
+  participantes Participante[]
+  codigos       CodigoDeAcceso[]
+  preguntas     Pregunta[]
+  solicitudes   SolicitudDePalabra[]
 
   @@map("sesiones")
+}
+
+// Guarda solo el hash de la credencial (código de acceso o token del navegador).
+model Participante {
+  id         String                   @id
+  sesionId   String
+  credencial CredencialDeParticipante
+  hash       String
+  creadoEn   DateTime
+
+  sesion      Sesion               @relation(fields: [sesionId], references: [id], onDelete: Cascade)
+  solicitudes SolicitudDePalabra[]
+
+  @@unique([sesionId, hash])
+  @@map("participantes")
+}
+
+// Solo el hash SHA-256; el texto plano existe una vez, al generarlo.
+model CodigoDeAcceso {
+  sesionId   String
+  hash       String
+  activadoEn DateTime?
+
+  sesion Sesion @relation(fields: [sesionId], references: [id], onDelete: Cascade)
+
+  @@id([sesionId, hash])
+  @@map("codigos_de_acceso")
+}
+
+// Una sola pregunta ABIERTA por sesión: índice único parcial en la migración
+// (Prisma no sabe expresarlo).
+model Pregunta {
+  id               String           @id
+  sesionId         String
+  texto            String
+  estado           EstadoDePregunta @default(BORRADOR)
+  resultadoVisible Boolean          @default(false)
+  abiertaEn        DateTime?
+  cerradaEn        DateTime?
+  creadaEn         DateTime         @default(now())
+
+  sesion   Sesion        @relation(fields: [sesionId], references: [id], onDelete: Cascade)
+  opciones Opcion[]
+  votos    VotoEmitido[]
+  conteos  Conteo[]
+
+  @@index([sesionId])
+  @@map("preguntas")
+}
+
+model Opcion {
+  id         String @id
+  preguntaId String
+  texto      String
+  orden      Int
+
+  pregunta Pregunta @relation(fields: [preguntaId], references: [id], onDelete: Cascade)
+  conteos  Conteo[]
+
+  @@unique([preguntaId, orden])
+  @@map("opciones")
+}
+
+// Quién ya votó. Sin hora y sin opción: no se puede unir con conteos.
+model VotoEmitido {
+  preguntaId     String
+  participanteId String
+
+  pregunta Pregunta @relation(fields: [preguntaId], references: [id], onDelete: Cascade)
+
+  @@id([preguntaId, participanteId])
+  @@map("votos_emitidos")
+}
+
+// Cuántos votos tiene cada opción. Sin relación con quién votó.
+model Conteo {
+  preguntaId String
+  opcionId   String
+  total      Int    @default(0)
+
+  pregunta Pregunta @relation(fields: [preguntaId], references: [id], onDelete: Cascade)
+  opcion   Opcion   @relation(fields: [opcionId], references: [id], onDelete: Cascade)
+
+  @@id([preguntaId, opcionId])
+  @@map("conteos")
+}
+
+model SolicitudDePalabra {
+  id             String            @id
+  sesionId       String
+  participanteId String
+  nombreVisible  String
+  tipo           TipoDeSolicitud
+  mocion         TipoDeMocion?
+  estado         EstadoDeSolicitud @default(ESPERANDO)
+  pedidaEn       DateTime
+  inicioEn       DateTime?
+  finEn          DateTime?
+  segundosExtra  Int               @default(0)
+
+  sesion       Sesion       @relation(fields: [sesionId], references: [id], onDelete: Cascade)
+  participante Participante @relation(fields: [participanteId], references: [id], onDelete: Cascade)
+
+  @@index([sesionId, estado])
+  @@map("solicitudes_de_palabra")
 }

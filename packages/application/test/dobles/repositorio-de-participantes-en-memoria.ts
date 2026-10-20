@@ -17,8 +17,11 @@ export class RepositorioDeParticipantesEnMemoria implements RepositorioDePartici
     return this.participantes.find((p) => p.sesionId === sesionId && p.hash === hash) ?? null;
   }
 
-  async crear(participante: Participante): Promise<void> {
+  async crear(participante: Participante): Promise<Participante> {
+    const existente = await this.porCredencial(participante.sesionId, participante.hash);
+    if (existente !== null) return existente;
     this.participantes.push(participante);
+    return participante;
   }
 
   async guardarCodigos(sesionId: string, hashes: string[]): Promise<void> {
@@ -37,7 +40,8 @@ export class RepositorioDeParticipantesEnMemoria implements RepositorioDePartici
   }
 
   async contarActivos(sesionId: string): Promise<number> {
-    return this.participantes.filter((p) => p.sesionId === sesionId).length;
+    // Como la base: códigos activados, no participantes.
+    return [...(this.codigos.get(sesionId)?.values() ?? [])].filter(Boolean).length;
   }
 
   /** Todo lo guardado, para comprobar que no hay texto plano. */
