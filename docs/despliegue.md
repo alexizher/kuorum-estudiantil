@@ -79,8 +79,18 @@ El asistente guarda cada paso terminado en `.kuorum/despliegue.json`. Si se cort
 
 ## Límites del plan gratuito
 
-Las cifras vigentes están en https://vercel.com/docs/limits y https://neon.com/docs/introduction/plans. El tamaño de sesión que aguanta la cuota gratuita sin dominio propio se mide en la tarea de capacidad y se anota en esta guía cuando esté listo.
+Las cifras vigentes están en https://vercel.com/docs/limits y https://neon.com/docs/introduction/plans. Revísalas antes de planear una asamblea, porque cambian.
+
+## Capacidad del plan gratuito
+
+La pantalla pública consulta el estado de la sesión cada 3 s mientras hay una votación abierta o la persona está en la fila de palabra, y cada 12 s en el resto del tiempo. En pausa si la pestaña está oculta. El límite que se alcanza primero es el de peticiones de CDN de Vercel Hobby (unos 1M al mes). Las mediciones y el cálculo están en [ADR 0001](adr/0001-transporte-de-tiempo-real.md).
+
+- Sin dominio propio: unas 830 persona-hora al mes si todos consultan cada 3 s, o unas 2.000 con el intervalo adaptativo. Una persona conectada una hora son 1.200 peticiones a 3 s.
+- Con dominio propio y Cloudflare gratuito delante: las consultas las responde Cloudflare y Vercel recibe unas 0,5 peticiones por segundo por sesión abierta. Una general de 3.000 personas durante 3 horas cabe.
+- Si superas la cuota, Vercel pausa el despliegue hasta el mes siguiente.
+
+Pon Cloudflare delante en cuanto planees asambleas generales de más de unas 300 personas, o varias sesiones grandes en el mismo mes.
 
 ## Dominio propio con Cloudflare (recomendado para asambleas grandes)
 
-Cloudflare solo puede ponerse delante de un dominio propio, no de un `*.vercel.app`. Con un dominio (unos 10 USD al año) y el plan gratuito de Cloudflare, las consultas de estado las responde Cloudflare y la cuota de Vercel alcanza para sesiones de miles de personas. Los pasos son: comprar el dominio, pasarlo a Cloudflare, conectarlo al proyecto en Vercel y dejar que Cloudflare guarde en caché las consultas de estado público. Sin dominio, la cuota gratuita limita el tamaño de la sesión.
+Cloudflare solo puede ponerse delante de un dominio propio, no de un `*.vercel.app`. Con un dominio (unos 10 USD al año) y el plan gratuito de Cloudflare, las consultas de estado las responde Cloudflare y la cuota de Vercel alcanza para sesiones de miles de personas. Los pasos son: comprar el dominio, pasarlo a Cloudflare, conectarlo al proyecto en Vercel y dejar que Cloudflare guarde en caché las consultas de estado público. Sin dominio, la cuota gratuita limita el tamaño de la sesión (ver "Capacidad del plan gratuito").
