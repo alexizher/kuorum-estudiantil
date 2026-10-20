@@ -123,10 +123,11 @@ export class Pregunta {
   }
 
   anular(): void {
-    if (this._estado !== "BORRADOR" && this._estado !== "ABIERTA") {
+    if (this._estado === "ANULADA") {
       throw new ErrorDeDominio("TRANSICION_INVALIDA");
     }
     this._estado = "ANULADA";
+    this._resultadoVisible = false;
   }
 
   exigirOpcion(opcionId: string): void {

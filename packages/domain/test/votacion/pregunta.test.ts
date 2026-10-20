@@ -194,11 +194,36 @@ describe("transiciones de Pregunta", () => {
     expect(abierta.estado).toBe("ANULADA");
   });
 
-  it("anular desde CERRADA falla con TRANSICION_INVALIDA", () => {
+  it("anular funciona desde CERRADA", () => {
     const pregunta = nuevaSiNo();
     pregunta.abrir(reloj);
     pregunta.cerrar(reloj);
+    pregunta.anular();
+    expect(pregunta.estado).toBe("ANULADA");
+  });
+
+  it("anular desde CERRADA con resultado proyectado oculta el resultado", () => {
+    const pregunta = nuevaSiNo();
+    pregunta.abrir(reloj);
+    pregunta.cerrar(reloj);
+    pregunta.proyectarResultado();
+    expect(pregunta.resultadoVisible).toBe(true);
+    pregunta.anular();
+    expect(pregunta.resultadoVisible).toBe(false);
+  });
+
+  it("anular desde ANULADA falla con TRANSICION_INVALIDA", () => {
+    const pregunta = nuevaSiNo();
+    pregunta.anular();
     expect(codigoDeError(() => pregunta.anular())).toBe("TRANSICION_INVALIDA");
+  });
+
+  it("proyectarResultado sobre una pregunta ANULADA falla con PREGUNTA_NO_CERRADA", () => {
+    const pregunta = nuevaSiNo();
+    pregunta.abrir(reloj);
+    pregunta.cerrar(reloj);
+    pregunta.anular();
+    expect(codigoDeError(() => pregunta.proyectarResultado())).toBe("PREGUNTA_NO_CERRADA");
   });
 });
 
