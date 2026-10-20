@@ -60,6 +60,16 @@ describe("Proyeccion", () => {
     await sinAxe(container);
   });
 
+  it("esperando en sala abierta no deja una cabecera vacía", () => {
+    const { container } = pintar({
+      vista: "esperando",
+      estado: salaVacia({ asistencia: null }),
+      segundosRestantes: null,
+      urlDeEntrada: URL_DE_ENTRADA,
+    });
+    expect(container.querySelector("header")).toBeNull();
+  });
+
   it("votación con asistencia: votos emitidos de asistentes y barra", async () => {
     const { container } = pintar({
       vista: "votacion",

@@ -259,20 +259,24 @@
   font-size: calc(var(--u) * 7);
   margin-top: calc(var(--u) * 0.8);
 }
+/* Cifra y "quedan de" en una línea, la barra completa debajo. */
 .reloj {
   margin-top: calc(var(--u) * 3.5);
-  display: grid;
-  gap: calc(var(--u) * 1);
-  justify-items: start;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: calc(var(--u) * 1) calc(var(--u) * 2);
 }
 .reloj :global(.cronometro) {
-  gap: calc(var(--u) * 1);
+  display: contents;
 }
 .reloj :global(.barra) {
+  order: 2;
+  flex-basis: 100%;
   height: calc(var(--u) * 0.9);
-  width: 100%;
 }
 .relojDetalle {
+  order: 1;
   font-size: calc(var(--u) * 1.9);
   color: var(--tinta-suave);
 }
