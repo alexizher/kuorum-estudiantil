@@ -75,6 +75,10 @@ importers:
       '@kuorum/domain':
         specifier: workspace:*
         version: link:../domain
+    devDependencies:
+      '@kuorum/contracts':
+        specifier: workspace:*
+        version: link:../contracts
 
   packages/cli:
     dependencies:

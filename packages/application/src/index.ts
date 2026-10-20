@@ -28,3 +28,5 @@ export { DarLaPalabra } from "./palabra/dar-la-palabra.js";
 export { TerminarIntervencion } from "./palabra/terminar-intervencion.js";
 export { RechazarMocion } from "./palabra/rechazar-mocion.js";
 export { SumarMinuto } from "./palabra/sumar-minuto.js";
+export { ConsultarEstadoDeSala, etiquetaDeEstado } from "./sala/consultar-estado-de-sala.js";
+export type { EstadoDeSala } from "./sala/consultar-estado-de-sala.js";

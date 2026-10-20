@@ -4,7 +4,7 @@ import type { RepositorioDeSesiones } from "../puertos/repositorio-de-sesiones.j
 import type { RepositorioDeSolicitudes } from "../puertos/repositorio-de-solicitudes.js";
 import type { UnidadDeTrabajo } from "../puertos/unidad-de-trabajo.js";
 import { cargarColaDeLaSesion, guardarColaDeLaSesion } from "./cola-de-la-sesion.js";
-import { exigirParticipanteDeLaSesion } from "./exigir-participante-de-la-sesion.js";
+import { exigirParticipanteDeLaSesion } from "../sala/exigir-participante-de-la-sesion.js";
 
 export class RetirarSolicitud {
   constructor(
