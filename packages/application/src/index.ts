@@ -13,3 +13,10 @@ export type {
 } from "./puertos/repositorio-de-participantes.js";
 export type { UnidadDeTrabajo } from "./puertos/unidad-de-trabajo.js";
 export type { Hasheador } from "./puertos/hasheador.js";
+export { CrearPregunta } from "./votacion/crear-pregunta.js";
+export { AbrirPregunta } from "./votacion/abrir-pregunta.js";
+export { CerrarPregunta } from "./votacion/cerrar-pregunta.js";
+export { AnularPregunta } from "./votacion/anular-pregunta.js";
+export { ProyectarResultado } from "./votacion/proyectar-resultado.js";
+export { EmitirVoto } from "./votacion/emitir-voto.js";
+export type { RepositorioDePreguntas } from "./puertos/repositorio-de-preguntas.js";

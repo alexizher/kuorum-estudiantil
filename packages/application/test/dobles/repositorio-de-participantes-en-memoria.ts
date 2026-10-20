@@ -9,6 +9,10 @@ export class RepositorioDeParticipantesEnMemoria implements RepositorioDePartici
   // sesionId -> hash -> activo
   readonly codigos = new Map<string, Map<string, boolean>>();
 
+  async porId(id: string): Promise<Participante | null> {
+    return this.participantes.find((p) => p.id === id) ?? null;
+  }
+
   async porCredencial(sesionId: string, hash: string): Promise<Participante | null> {
     return this.participantes.find((p) => p.sesionId === sesionId && p.hash === hash) ?? null;
   }
