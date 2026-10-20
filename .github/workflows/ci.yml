@@ -53,4 +53,4 @@ jobs:
       - run: pnpm --filter "@kuorum/infrastructure^..." build
       - run: pnpm --filter @kuorum/infrastructure generate
       - run: pnpm --filter @kuorum/infrastructure db:deploy
-      - run: pnpm --filter @kuorum/infrastructure test:int
+      - run: pnpm test:int

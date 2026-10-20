@@ -6,12 +6,16 @@ export const DeployConfigSchema = z.object({
   institutionName: z.string().min(2).max(120),
   shortName: z.string().regex(SHORT_NAME_PATTERN),
   reuseExistingProject: z.boolean().optional(),
+  adminEmail: z.email().max(254).optional(),
+  adminName: z.string().min(2).max(120).optional(),
 });
 
 export type DeployConfig = z.infer<typeof DeployConfigSchema>;
 
 const RULES: Record<string, string> = {
   institutionName: "debe tener entre 2 y 120 caracteres",
+  adminEmail: "debe ser un correo válido",
+  adminName: "debe tener entre 2 y 120 caracteres",
   shortName: "debe tener entre 3 y 40 caracteres: minúsculas sin tildes, números y guiones",
 };
 

@@ -39,6 +39,31 @@ function build(steps: Step[], store: MemoryStateStore, source = fixedSource) {
   return { wizard, prompter, runner };
 }
 
+describe("DeployWizard con --config", () => {
+  it("agregar adminEmail y adminName después de instalar no cuenta como cambio", async () => {
+    const store = new MemoryStateStore({ completedSteps: ["a"], config });
+    const dadas = { ...config, adminEmail: "mesa@ejemplo.test", adminName: "Mesa" };
+    let vista: DeployConfig | undefined;
+    const paso: Step = {
+      id: "b",
+      description: "b",
+      async run(contexto) {
+        vista = contexto.config;
+      },
+    };
+    const wizard = new DeployWizard(
+      [paso],
+      store,
+      { load: async () => dadas },
+      new FakePrompter(),
+      new FakeRunner(),
+      { ...environment, interactive: false },
+    );
+    expect(await wizard.run()).toBe(0);
+    expect(vista).toEqual(dadas);
+  });
+});
+
 describe("DeployWizard", () => {
   it("corre los pasos en orden y los marca como completados", async () => {
     const log: string[] = [];

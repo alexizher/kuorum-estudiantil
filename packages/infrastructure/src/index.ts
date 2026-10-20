@@ -1,4 +1,8 @@
 export { createPrismaClient, selectAdapterKind } from "./prisma/create-prisma-client.js";
+export {
+  crearAdaptadorDeAutenticacion,
+  type AdaptadorDeAutenticacion,
+} from "./autenticacion/adaptador-de-autenticacion.js";
 export { ContextoTransaccional } from "./prisma/contexto-transaccional.js";
 export { PrismaUnidadDeTrabajo } from "./prisma/prisma-unidad-de-trabajo.js";
 export { verificarConexion } from "./prisma/verificar-conexion.js";

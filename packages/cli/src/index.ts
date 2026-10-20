@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { USAGE, parseCommand } from "./cli.js";
-import { buildDeployWizard } from "./composition.js";
+import { buildDeployWizard, buildPublishWizard } from "./composition.js";
 
 async function main(argv: string[]): Promise<number> {
   const command = parseCommand(argv);
@@ -8,6 +8,7 @@ async function main(argv: string[]): Promise<number> {
     process.stderr.write(USAGE);
     return 2;
   }
+  if (command.kind === "publicar") return buildPublishWizard({ cwd: process.cwd() }).run();
   const wizard = buildDeployWizard({
     cwd: process.cwd(),
     ...(command.configPath !== undefined ? { configPath: command.configPath } : {}),

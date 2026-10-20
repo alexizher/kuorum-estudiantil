@@ -14,7 +14,8 @@
     "test:int": "turbo run test:int",
     "depcheck": "depcruise packages apps --config .dependency-cruiser.cjs",
     "format": "prettier --write .",
-    "desplegar": "pnpm --filter @kuorum/cli build && node packages/cli/dist/index.js desplegar"
+    "desplegar": "pnpm --filter @kuorum/cli build && node packages/cli/dist/index.js desplegar",
+    "publicar": "pnpm --filter @kuorum/cli build && node packages/cli/dist/index.js publicar"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

@@ -9,8 +9,12 @@
     "noEmit": true,
     "allowJs": false,
     "incremental": true,
-    "plugins": [{ "name": "next" }]
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ]
   },
-  "include": ["next-env.d.ts", "src", "test", ".next/types/**/*.ts"],
+  "include": ["next-env.d.ts", "src", "scripts", "test", ".next/types/**/*.ts"],
   "exclude": ["node_modules"]
 }

@@ -29,7 +29,8 @@
     "@kuorum/domain": "workspace:*",
     "@prisma/adapter-neon": "7.10.1",
     "@prisma/adapter-pg": "7.10.1",
-    "@prisma/client": "7.10.1"
+    "@prisma/client": "7.10.1",
+    "better-auth": "1.7.12"
   },
   "devDependencies": {
     "prisma": "7.10.1"
