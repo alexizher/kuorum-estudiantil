@@ -50,7 +50,10 @@ describe("ConsultarEstadoDeSala", () => {
     const e = crearEscenario();
     const sesion = await sembrarSesion(e, { estado: "EN_CURSO" });
     const estado = await consulta(e).ejecutar(sesion.codigoDeSala.valor);
-    const analizado: EstadoDelContrato = esquemaEstadoDeSala.parse(estado);
+    const delContrato: EstadoDelContrato = estado;
+    const deApplication: EstadoDeSala = delContrato;
+    expect(deApplication).toBe(estado);
+    const analizado = esquemaEstadoDeSala.parse(estado);
     expect(analizado).toEqual(estado);
     expect(estado.sala).toEqual({
       codigo: sesion.codigoDeSala.valor,
@@ -80,6 +83,20 @@ describe("ConsultarEstadoDeSala", () => {
     const estado = await consulta(e).ejecutar(sesion.codigoDeSala.valor);
     expect(estado.asistencia).toBe(2);
     expect(estado.sala.indicativa).toBe(false);
+  });
+
+  it("sala abierta con participantes: asistencia sigue en null", async () => {
+    const e = crearEscenario();
+    const sesion = await sembrarSesion(e, { modo: "SALA_ABIERTA", estado: "EN_CURSO" });
+    await e.participantes.crear({
+      id: "ana",
+      sesionId: sesion.id,
+      credencial: "NAVEGADOR",
+      hash: "h-ana",
+      creadoEn: e.reloj.ahora(),
+    });
+    const estado = await consulta(e).ejecutar(sesion.codigoDeSala.valor);
+    expect(estado.asistencia).toBeNull();
   });
 
   it("pregunta abierta: opciones, votos emitidos y sin resultado", async () => {
