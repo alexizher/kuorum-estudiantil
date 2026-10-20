@@ -20,7 +20,3 @@ export const temporizadorPorDefecto: Temporizador = {
 export function urlDeEstado(sesionId: string): string {
   return `/api/public/v1/sesiones/${encodeURIComponent(sesionId)}/estado`;
 }
-
-export function urlDeEventos(sesionId: string): string {
-  return `/api/public/v1/sesiones/${encodeURIComponent(sesionId)}/eventos`;
-}
