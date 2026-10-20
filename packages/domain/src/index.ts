@@ -1,4 +1,11 @@
 export { ErrorDeDominio, SesionNoEncontrada } from "./errores.js";
+export type { Reloj } from "./reloj.js";
 export type { EstadoDeSesion } from "./sesion/estado-de-sesion.js";
 export { InstantaneaDeSesion } from "./sesion/instantanea-de-sesion.js";
 export type { RepositorioDeInstantaneas } from "./sesion/repositorio-de-instantaneas.js";
+export type { ModoDeParticipacion } from "./sesion/modo-de-participacion.js";
+export { CodigoDeSala } from "./sesion/codigo-de-sala.js";
+export { CodigoDeAcceso } from "./sesion/codigo-de-acceso.js";
+export type { GeneradorDeCodigos } from "./sesion/generador-de-codigos.js";
+export { Sesion } from "./sesion/sesion.js";
+export type { DatosDeNuevaSesion, PropiedadesDeSesion } from "./sesion/sesion.js";
