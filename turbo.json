@@ -6,6 +6,10 @@
     "lint": {},
     "typecheck": { "dependsOn": ["^build", "generate"] },
     "test": { "dependsOn": ["^build", "generate"] },
-    "test:int": { "dependsOn": ["^build", "generate"], "cache": false }
+    "test:int": {
+      "dependsOn": ["^build", "generate"],
+      "cache": false,
+      "passThroughEnv": ["DATABASE_URL"]
+    }
   }
 }
