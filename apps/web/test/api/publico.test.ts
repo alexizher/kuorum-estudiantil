@@ -218,9 +218,10 @@ describe("POST ingresar", () => {
     expect(String(registro.mock.calls[0]?.[0])).toMatch(/KUORUM_SECRETO/);
   });
 
-  it("429 al pasar de 60 por minuto desde la misma IP", async () => {
+  it("429 al pasar del techo por minuto desde la misma IP", async () => {
+    limitesPublicos.reiniciar(3);
     const mismaIp = { ip: "203.0.113.5" };
-    for (let i = 0; i < 60; i += 1) {
+    for (let i = 0; i < 3; i += 1) {
       expect(
         (await ingresar(peticion("POST", { codigo: "ABCD-2345" }, mismaIp), sala())).status,
       ).toBe(200);
@@ -287,9 +288,10 @@ describe("POST votos", () => {
     expect(r.status).toBe(400);
   });
 
-  it("429 después de 60 por minuto desde la misma IP", async () => {
+  it("429 después del techo por minuto desde la misma IP", async () => {
     const o = { cookie: cookieValida(), ip: "203.0.113.6" };
-    for (let i = 0; i < 60; i += 1) await votos(peticion("POST", cuerpo, o), sala());
+    limitesPublicos.reiniciar(3);
+    for (let i = 0; i < 3; i += 1) await votos(peticion("POST", cuerpo, o), sala());
     expect((await votos(peticion("POST", cuerpo, o), sala())).status).toBe(429);
   });
 });

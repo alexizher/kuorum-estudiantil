@@ -1,17 +1,17 @@
 const VENTANA_MS = 60_000;
-const MAXIMO = 60;
+const MAXIMO = 1000;
 
 /**
  * Ventana fija por clave, en memoria del proceso. Es un paliativo contra abusos obvios:
- * cada instancia serverless lleva su propia cuenta y se pierde al reiniciar. Quien comparte
- * IP (una red de colegio) comparte cupo. La clave vive solo en memoria, nunca se guarda.
+ * cada instancia serverless lleva su propia cuenta y se pierde al reiniciar. El techo es
+ * alto a propósito: un auditorio entero comparte una IP de NAT, así que solo frena inundaciones. La clave vive solo en memoria, nunca se guarda.
  */
 export class LimiteDeTasa {
   private readonly ventanas = new Map<string, { cuenta: number; vence: number }>();
   private proximaPurga = 0;
 
   constructor(
-    private readonly maximo = MAXIMO,
+    private maximo = MAXIMO,
     private readonly ventanaMs = VENTANA_MS,
     private readonly ahora: () => number = Date.now,
   ) {}
@@ -32,7 +32,9 @@ export class LimiteDeTasa {
     return this.ventanas.size;
   }
 
-  reiniciar(): void {
+  /** Vacía las cuentas; con `maximo` también cambia el techo (las pruebas lo bajan). */
+  reiniciar(maximo = MAXIMO): void {
+    this.maximo = maximo;
     this.ventanas.clear();
   }
 

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   esquemaCrearPregunta,
+  esquemaCrearSesion,
   esquemaDarLaPalabra,
   esquemaGenerarCodigos,
   esquemaIngresar,
@@ -31,6 +32,22 @@ describe("esquemas de acciones", () => {
     expect(esquemaGenerarCodigos.safeParse({ cantidad: 10 }).success).toBe(true);
     expect(esquemaGenerarCodigos.safeParse({ cantidad: 1.5 }).success).toBe(false);
     expect(esquemaGenerarCodigos.safeParse({ cantidad: "10" }).success).toBe(false);
+    expect(esquemaGenerarCodigos.safeParse({ cantidad: 0 }).success).toBe(false);
+    expect(esquemaGenerarCodigos.safeParse({ cantidad: 2001 }).success).toBe(false);
+    expect(esquemaGenerarCodigos.safeParse({ cantidad: 2000 }).success).toBe(true);
+  });
+
+  it("segundos por intervención entre 30 y 900", () => {
+    const base = { titulo: "Asamblea", modo: "SALA_ABIERTA" as const };
+    expect(esquemaCrearSesion.safeParse({ ...base, segundosPorIntervencion: 29 }).success).toBe(
+      false,
+    );
+    expect(esquemaCrearSesion.safeParse({ ...base, segundosPorIntervencion: 901 }).success).toBe(
+      false,
+    );
+    expect(esquemaCrearSesion.safeParse({ ...base, segundosPorIntervencion: 180 }).success).toBe(
+      true,
+    );
   });
 
   it("pregunta: opciones es opcional; dar la palabra sin solicitud vale", () => {

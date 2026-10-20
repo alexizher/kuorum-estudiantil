@@ -9,8 +9,8 @@ export async function DELETE(
   request: Request,
   contexto: { params: Promise<{ codigo: string; id: string }> },
 ): Promise<Response> {
-  const { id } = await contexto.params;
   return accionDeParticipante(request, contexto, async ({ participanteId }) => {
+    const { id } = await contexto.params;
     await contenedor().retirarSolicitud.ejecutar(participanteId, id);
     return sinContenido();
   });

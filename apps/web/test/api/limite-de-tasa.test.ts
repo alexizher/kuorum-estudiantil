@@ -2,10 +2,10 @@ import { describe, expect, it } from "vitest";
 import { LimiteDeTasa, ipDe } from "../../src/http/limite-de-tasa";
 
 describe("LimiteDeTasa", () => {
-  it("deja pasar 60 por minuto y corta el 61", () => {
+  it("deja pasar el máximo por minuto y corta el siguiente", () => {
     let ahora = 1_000;
-    const limite = new LimiteDeTasa(60, 60_000, () => ahora);
-    for (let i = 0; i < 60; i += 1) expect(limite.permite("1.1.1.1")).toBe(true);
+    const limite = new LimiteDeTasa(5, 60_000, () => ahora);
+    for (let i = 0; i < 5; i += 1) expect(limite.permite("1.1.1.1")).toBe(true);
     expect(limite.permite("1.1.1.1")).toBe(false);
     expect(limite.permite("2.2.2.2")).toBe(true);
     ahora += 60_001;
@@ -19,6 +19,14 @@ describe("LimiteDeTasa", () => {
     ahora = 5_000;
     limite.permite("b");
     expect(limite.tamano()).toBe(1);
+  });
+});
+
+describe("techo por defecto", () => {
+  it("es de 1000 por minuto por IP", () => {
+    const limite = new LimiteDeTasa();
+    for (let i = 0; i < 1000; i += 1) expect(limite.permite("x")).toBe(true);
+    expect(limite.permite("x")).toBe(false);
   });
 });
 

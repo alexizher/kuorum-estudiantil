@@ -21,10 +21,10 @@ export const esquemaMocion = z.object({
 export const esquemaCrearSesion = z.object({
   titulo: texto(300),
   modo: z.enum(["SALA_ABIERTA", "CON_CODIGOS"]),
-  segundosPorIntervencion: z.number().int().optional(),
+  segundosPorIntervencion: z.number().int().min(30).max(900).optional(),
 });
 
-export const esquemaGenerarCodigos = z.object({ cantidad: z.number().int() });
+export const esquemaGenerarCodigos = z.object({ cantidad: z.number().int().min(1).max(2000) });
 
 export const esquemaCrearPregunta = z.object({
   texto: texto(1000),
