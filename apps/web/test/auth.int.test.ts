@@ -16,11 +16,15 @@ const CONTRASENA = "una-contrasena-larga-1";
 const prisma = createPrismaClient(URL_DE_PRUEBAS);
 let auth: Autenticacion;
 
-function ingresar(correo: string, contrasena: string): Promise<Response> {
+function ingresar(correo: string, contrasena: string, ip = "203.0.113.7"): Promise<Response> {
   return auth.handler(
     new Request(`${URL_BASE}/api/auth/sign-in/email`, {
       method: "POST",
-      headers: { "content-type": "application/json", origin: URL_BASE },
+      headers: {
+        "content-type": "application/json",
+        origin: URL_BASE,
+        "x-forwarded-for": ip,
+      },
       body: JSON.stringify({ email: correo, password: contrasena }),
     }),
   );
@@ -43,10 +47,12 @@ describe("ingreso de la mesa (Postgres local)", () => {
 
   beforeEach(async () => {
     await prisma.$executeRawUnsafe("DELETE FROM auth_users");
+    await prisma.$executeRawUnsafe("DELETE FROM auth_rate_limits");
     await crearCuentaDeMesa(auth, { correo: CORREO, nombre: "Mesa", contrasena: CONTRASENA });
   });
 
   afterAll(async () => {
+    await prisma.$executeRawUnsafe("DELETE FROM auth_rate_limits");
     await prisma.$executeRawUnsafe("DELETE FROM auth_users");
     await prisma.$disconnect();
   });
@@ -62,6 +68,43 @@ describe("ingreso de la mesa (Postgres local)", () => {
   it("login con contraseña o correo incorrectos da 401", async () => {
     expect((await ingresar(CORREO, "otra-contrasena-larga")).status).toBe(401);
     expect((await ingresar("nadie@ejemplo.test", CONTRASENA)).status).toBe(401);
+  });
+
+  it("el sexto intento fallido en un minuto desde la misma IP da 429", async () => {
+    const estados: number[] = [];
+    for (let i = 0; i < 6; i += 1) {
+      estados.push((await ingresar(CORREO, "incorrecta-larga-1", "198.51.100.9")).status);
+    }
+    expect(estados.slice(0, 5)).toEqual([401, 401, 401, 401, 401]);
+    expect(estados[5]).toBe(429);
+    // Otra IP no queda bloqueada.
+    expect((await ingresar(CORREO, CONTRASENA, "198.51.100.10")).status).toBe(200);
+  });
+
+  it("en production la cookie de sesión lleva Secure", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    try {
+      const segura = crearAuth({
+        adaptador: crearAdaptadorDeAutenticacion(prisma),
+        secreto: "secreto-de-prueba-de-al-menos-32-caracteres",
+        urlBase: URL_BASE,
+      });
+      const respuesta = await segura.handler(
+        new Request(`${URL_BASE}/api/auth/sign-in/email`, {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            origin: URL_BASE,
+            "x-forwarded-for": "192.0.2.50",
+          },
+          body: JSON.stringify({ email: CORREO, password: CONTRASENA }),
+        }),
+      );
+      expect(respuesta.status).toBe(200);
+      expect(respuesta.headers.get("set-cookie") ?? "").toMatch(/Secure/i);
+    } finally {
+      vi.unstubAllEnvs();
+    }
   });
 
   it("el registro público está desactivado", async () => {

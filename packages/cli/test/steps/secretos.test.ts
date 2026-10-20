@@ -59,4 +59,14 @@ describe("secretos", () => {
     );
     expect(prompter.infos.join(" ")).toContain("pnpm publicar");
   });
+
+  it("falla con claridad si vercel env ls falla y no agrega nada", async () => {
+    const runner = new FakeRunner((_, args) =>
+      args[1] === "ls" ? { exitCode: 1, stderr: "sin sesión\notra línea" } : undefined,
+    );
+    await expect(new SecretsStep().run(makeContext({ runner }))).rejects.toThrow(
+      /No se pudo leer las variables de production: sin sesión$/,
+    );
+    expect(runner.lines.some((l) => l.startsWith("vercel env add"))).toBe(false);
+  });
 });

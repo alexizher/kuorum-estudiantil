@@ -1,4 +1,5 @@
-import { chmod, mkdtemp, rm, writeFile, readFile } from "node:fs/promises";
+import { rmSync } from "node:fs";
+import { chmod, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { validateField } from "../config/deploy-config.js";
@@ -19,7 +20,33 @@ export function parseEnvFile(text: string): Record<string, string> {
   return env;
 }
 
+const SECRET_NAMES = /^(DATABASE_URL.*|BETTER_AUTH_SECRET|KUORUM_SECRETO)$/;
+
+/** Primera línea del error, sin URLs de Postgres ni valores secretos conocidos. */
+export function redact(text: string, env: Record<string, string> = {}): string {
+  let line =
+    text
+      .split("\n")
+      .find((l) => l.trim() !== "")
+      ?.trim() ?? "";
+  for (const [name, value] of Object.entries(env)) {
+    if (SECRET_NAMES.test(name) && value.length >= 4) line = line.split(value).join("[oculto]");
+  }
+  line = line.replace(/postgres(?:ql)?:\/\/\S+/gi, "[URL oculta]");
+  return line.length > 300 ? `${line.slice(0, 300)}...` : line;
+}
+
+export interface SignalEmitter {
+  on(signal: "SIGINT" | "SIGTERM", listener: () => void): unknown;
+  off(signal: "SIGINT" | "SIGTERM", listener: () => void): unknown;
+}
+
 export class AdminStep implements Step {
+  constructor(
+    private readonly signals: SignalEmitter = process,
+    private readonly exit: (code: number) => void = (code) => process.exit(code),
+  ) {}
+
   readonly id = "administrador";
   readonly description = "Creando la cuenta de la mesa en la base de producción";
 
@@ -44,6 +71,13 @@ export class AdminStep implements Step {
 
     const directory = await mkdtemp(join(tmpdir(), "kuorum-"));
     const envFile = join(directory, "produccion.env");
+    // Ctrl-C o kill: el archivo con secretos no puede quedar en tmp.
+    const onSignal = () => {
+      rmSync(directory, { recursive: true, force: true });
+      this.exit(130);
+    };
+    this.signals.on("SIGINT", onSignal);
+    this.signals.on("SIGTERM", onSignal);
     try {
       await writeFile(envFile, "", { mode: 0o600 });
       const pull = await runner.run("vercel", [
@@ -80,7 +114,7 @@ export class AdminStep implements Step {
           prompter.info(`Ya existe una cuenta con el correo ${email}; no se creó otra.`);
           return;
         }
-        throw new Error(`No se pudo crear la cuenta de la mesa: ${created.stderr.trim()}`);
+        throw new Error(`No se pudo crear la cuenta de la mesa: ${redact(created.stderr, env)}`);
       }
       const password = created.stdout
         .split("\n")
@@ -93,6 +127,8 @@ export class AdminStep implements Step {
           "Guárdala ahora: no se vuelve a mostrar ni queda guardada en ningún lado.",
       );
     } finally {
+      this.signals.off("SIGINT", onSignal);
+      this.signals.off("SIGTERM", onSignal);
       await rm(directory, { recursive: true, force: true });
     }
   }

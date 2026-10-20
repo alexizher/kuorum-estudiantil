@@ -13,6 +13,11 @@ export class SecretsStep implements Step {
   async run({ runner, state, prompter }: DeployContext): Promise<void> {
     for (const environment of ENVIRONMENTS) {
       const listed = await runner.run("vercel", ["env", "ls", environment]);
+      if (listed.exitCode !== 0) {
+        throw new Error(
+          `No se pudo leer las variables de ${environment}: ${listed.stderr.trim().split("\n")[0] ?? ""}`,
+        );
+      }
       for (const name of SECRETS) {
         if (new RegExp(`\\b${name}\\b`).test(listed.stdout)) continue;
         await this.add(runner, name, environment);

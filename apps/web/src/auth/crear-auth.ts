@@ -18,7 +18,20 @@ export function crearAuth({ adaptador, secreto, urlBase }: OpcionesDeAutenticaci
     advanced: {
       useSecureCookies: process.env.NODE_ENV === "production",
       defaultCookieAttributes: { httpOnly: true, sameSite: "lax" },
-      ipAddress: { disableIpTracking: true },
+      // Vercel pone la IP del cliente como primer salto de x-forwarded-for.
+      ipAddress: { ipAddressHeaders: ["x-forwarded-for", "x-real-ip"] },
+    },
+    // La IP de la mesa se usa solo para limitar intentos; las votantes nunca pasan por aquí.
+    rateLimit: {
+      enabled: true,
+      storage: "database",
+      customRules: { "/sign-in/email": { window: 60, max: 5 } },
+    },
+    // La sesión no conserva la IP: el contador de intentos ya la usó.
+    databaseHooks: {
+      session: {
+        create: { before: async (sesion) => ({ data: { ...sesion, ipAddress: null } }) },
+      },
     },
   });
 }

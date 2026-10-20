@@ -30,7 +30,7 @@
     "@prisma/adapter-neon": "7.10.1",
     "@prisma/adapter-pg": "7.10.1",
     "@prisma/client": "7.10.1",
-    "better-auth": "1.7.12"
+    "better-auth": "1.7.10"
   },
   "devDependencies": {
     "prisma": "7.10.1"

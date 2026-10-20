@@ -1,7 +1,7 @@
 import { existsSync, statSync } from "node:fs";
 import { writeFile } from "node:fs/promises";
 import { describe, expect, it } from "vitest";
-import { AdminStep } from "../../src/steps/admin-step.js";
+import { AdminStep, redact, type SignalEmitter } from "../../src/steps/admin-step.js";
 import { FakePrompter, FakeRunner, makeContext } from "../doubles.js";
 
 const CONFIG = {
@@ -141,5 +141,62 @@ describe("administrador", () => {
     expect(resultado).toBe("omitido");
     expect(runner.calls).toEqual([]);
     expect(prompter.infos.join(" ")).toMatch(/adminEmail/);
+  });
+
+  it("no deja URLs de Postgres ni secretos en el error de crear-admin", async () => {
+    const runner = new FakeRunner((command, args) => {
+      if (command === "pnpm") {
+        return {
+          exitCode: 1,
+          stderr: "connect fallo postgresql://u:clave@h/db y el secreto abc12345\nsegunda línea",
+        };
+      }
+      return args[0] === "env" ? undefined : undefined;
+    });
+    const original = runner.run.bind(runner);
+    runner.run = async (command, args, options) => {
+      const r = await original(command, args, options);
+      if (command === "vercel") {
+        await writeFile(args[2] as string, 'BETTER_AUTH_SECRET="abc12345"\n');
+      }
+      return r;
+    };
+    const error = await new AdminStep()
+      .run(makeContext({ runner, config: CONFIG }))
+      .catch((e: Error) => e);
+    const mensaje = (error as Error).message;
+    expect(mensaje).not.toContain("clave");
+    expect(mensaje).not.toContain("abc12345");
+    expect(mensaje).not.toContain("segunda");
+  });
+
+  it("redact oculta URLs y valores secretos", () => {
+    expect(redact("x postgres://a:b@c/d y", {})).toBe("x [URL oculta] y");
+    expect(redact("token KUORUM1234", { KUORUM_SECRETO: "KUORUM1234", OTRA: "token" })).toBe(
+      "token [oculto]",
+    );
+  });
+
+  it("al recibir SIGINT borra el archivo temporal y sale", async () => {
+    const oyentes = new Map<string, () => void>();
+    const senales: SignalEmitter = {
+      on: (senal, f) => oyentes.set(senal, f),
+      off: (senal) => oyentes.delete(senal),
+    };
+    let ruta = "";
+    let salida: number | undefined;
+    const runner = new FakeRunner((command, args) => {
+      if (command === "vercel") ruta = args[2] ?? "";
+      if (command === "pnpm") {
+        expect(existsSync(ruta)).toBe(true);
+        oyentes.get("SIGINT")?.();
+        return { stdout: `${CLAVE}\n` };
+      }
+      return undefined;
+    });
+    await new AdminStep(senales, (c) => (salida = c)).run(makeContext({ runner, config: CONFIG }));
+    expect(salida).toBe(130);
+    expect(existsSync(ruta)).toBe(false);
+    expect(oyentes.size).toBe(0);
   });
 });
