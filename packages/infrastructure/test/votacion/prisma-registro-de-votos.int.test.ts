@@ -152,7 +152,7 @@ describe("PrismaRegistroDeVotos", () => {
       SELECT column_name FROM information_schema.columns
       WHERE table_schema = 'public' AND table_name = 'conteos'
       ORDER BY column_name`;
-    expect(conteos.map((c) => c.column_name)).toEqual(["opcionId", "preguntaId", "total"]);
+    expect(conteos.map((c) => c.column_name)).toEqual(["opcionId", "preguntaId", "shard", "total"]);
   });
 
   it("ninguna tabla une al participante con la opción", async () => {
@@ -168,4 +168,47 @@ describe("PrismaRegistroDeVotos", () => {
       "votos_emitidos->preguntas",
     ]);
   });
+
+  it("el xmin no delata por quién votó: cada voto toca todas las opciones de su fragmento", async () => {
+    const { pregunta, si, no } = await preguntaAbierta();
+    await banco.votos.emitir(pregunta.id, "p1", si);
+    await banco.votos.emitir(pregunta.id, "p2", no);
+    await banco.votos.emitir(pregunta.id, "p3", no);
+
+    const votantes = await banco.prisma.$queryRaw<{ xmin: string }[]>`
+      SELECT xmin::text AS "xmin" FROM "votos_emitidos" WHERE "preguntaId" = ${pregunta.id}`;
+    const xidsDeVotantes = new Set(votantes.map((v) => v.xmin));
+    expect(xidsDeVotantes.size).toBe(3);
+
+    const conteos = await banco.prisma.$queryRaw<
+      { xmin: string; opcionId: string; shard: number }[]
+    >`SELECT xmin::text AS "xmin", "opcionId", "shard" FROM "conteos" WHERE "preguntaId" = ${pregunta.id}`;
+    const tocadas = conteos.filter((c) => xidsDeVotantes.has(c.xmin));
+    expect(tocadas.length).toBeGreaterThanOrEqual(pregunta.opciones.length);
+    for (const xid of xidsDeVotantes) {
+      const opciones = new Set(tocadas.filter((c) => c.xmin === xid).map((c) => c.opcionId));
+      // Si dos votos caen en el mismo fragmento, el segundo reemplaza las filas del primero
+      // (ese xid ya no aparece). Si aparece, aparece en todas las opciones: ninguna fila es
+      // exclusiva de una opción.
+      if (opciones.size > 0) expect(opciones.size).toBe(pregunta.opciones.length);
+    }
+  });
+
+  it("300 votos simultáneos de 300 participantes terminan sin errores y suman 300", async () => {
+    const { pregunta, si, no } = await preguntaAbierta();
+    const inicio = Date.now();
+
+    const resultados = await Promise.allSettled(
+      Array.from({ length: 300 }, (_, i) =>
+        banco.votos.emitir(pregunta.id, `p${i}`, i % 3 === 0 ? no : si),
+      ),
+    );
+
+    expect(resultados.filter((r) => r.status === "rejected")).toEqual([]);
+    const conteos = await banco.votos.conteos(pregunta.id);
+    expect(conteos.get(no)).toBe(100);
+    expect(conteos.get(si)).toBe(200);
+    expect(await banco.votos.votosEmitidos(pregunta.id)).toBe(300);
+    expect(Date.now() - inicio).toBeLessThan(10_000);
+  }, 20_000);
 });

@@ -19,6 +19,11 @@ export class ContextoTransaccional {
     return this.almacen.getStore() ?? this.prisma;
   }
 
+  /** Si ya hay una unidad de trabajo abierta (no se puede reintentar sin abortarla). */
+  hayTransaccion(): boolean {
+    return this.almacen.getStore() !== undefined;
+  }
+
   /** Reutiliza la transacción actual; si no hay, abre una y la propaga al trabajo. */
   enTransaccion<T>(trabajo: (cliente: ClienteTransaccional) => Promise<T>): Promise<T> {
     const actual = this.almacen.getStore();
@@ -36,4 +41,10 @@ export function esViolacionDeUnico(error: unknown): boolean {
   if (error.code === "P2002") return true;
   const origen = error.meta?.["driverAdapterError"];
   return JSON.stringify(origen ?? "").includes("23505");
+}
+
+/** Se venció lock_timeout (SQLSTATE 55P03) al esperar un candado. */
+export function esFalloDeCandado(error: unknown): boolean {
+  if (!(error instanceof Prisma.PrismaClientKnownRequestError)) return false;
+  return JSON.stringify(error.meta ?? "").includes("55P03") || /lock timeout/i.test(error.message);
 }

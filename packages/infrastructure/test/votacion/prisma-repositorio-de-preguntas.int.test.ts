@@ -1,5 +1,6 @@
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { Pregunta } from "@kuorum/domain";
+import { PrismaRepositorioDePreguntas } from "../../src/votacion/prisma-repositorio-de-preguntas.js";
 import { crearBanco, limpiar, preguntaDePrueba, sesionDePrueba } from "../helpers/sala.js";
 
 const banco = crearBanco();
@@ -78,6 +79,13 @@ describe("PrismaRepositorioDePreguntas", () => {
     );
   });
 
+  it("crea 16 fragmentos por opción", async () => {
+    const sesion = await sesionGuardada();
+    const pregunta = preguntaDePrueba(sesion.id, "ABIERTA");
+    await banco.preguntas.guardar(pregunta);
+    expect(await banco.prisma.conteo.count()).toBe(16 * pregunta.opciones.length);
+  });
+
   it("un borrador no tiene conteos todavía", async () => {
     const sesion = await sesionGuardada();
     const pregunta = preguntaDePrueba(sesion.id);
@@ -91,7 +99,7 @@ describe("PrismaRepositorioDePreguntas", () => {
     await banco.preguntas.guardar(pregunta);
     const [primera] = pregunta.opciones;
     await banco.prisma.conteo.updateMany({
-      where: { opcionId: primera?.id ?? "" },
+      where: { opcionId: primera?.id ?? "", shard: 0 },
       data: { total: 4 },
     });
 
@@ -147,5 +155,39 @@ describe("PrismaRepositorioDePreguntas", () => {
     await banco.preguntas.guardar(preguntaDePrueba(sesion.id, "ABIERTA"));
 
     expect(await banco.prisma.pregunta.count({ where: { estado: "ABIERTA" } })).toBe(1);
+  });
+});
+
+describe("cierre con votos en vuelo", () => {
+  const pausa = (ms: number) => new Promise((resolver) => setTimeout(resolver, ms));
+
+  it("si no consigue el candado tras los reintentos falla con CIERRE_OCUPADO y no cambia nada", async () => {
+    const rapido = new PrismaRepositorioDePreguntas(banco.contexto, {
+      esperaDeCandadoMs: 100,
+      intentosDeCierre: 3,
+    });
+    const sesion = await sesionGuardada();
+    const pregunta = preguntaDePrueba(sesion.id, "ABIERTA");
+    await banco.preguntas.guardar(pregunta);
+    const cargada = await rapido.porId(pregunta.id);
+    cargada?.cerrar({ ahora: () => new Date() });
+
+    // Un voto "colgado" que retiene FOR SHARE más que tres esperas.
+    const ocupando = banco.unidad.ejecutar(async () => {
+      await banco.votos.emitir(pregunta.id, "p1", pregunta.opciones[0]?.id ?? "");
+      await pausa(800);
+    });
+    await pausa(150);
+    const inicio = Date.now();
+    await expect(cargada ? rapido.guardar(cargada) : Promise.resolve()).rejects.toMatchObject({
+      codigo: "CIERRE_OCUPADO",
+      message: "Hay votos entrando, intenta cerrar de nuevo en unos segundos",
+    });
+    expect(Date.now() - inicio).toBeGreaterThanOrEqual(280);
+    await ocupando;
+    expect((await banco.preguntas.porId(pregunta.id))?.estado).toBe("ABIERTA");
+
+    await rapido.guardar(cargada ?? pregunta);
+    expect((await banco.preguntas.porId(pregunta.id))?.estado).toBe("CERRADA");
   });
 });

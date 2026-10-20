@@ -4,6 +4,18 @@
 2. Trabaja en una rama a partir de `main` y abre un pull request.
 3. Antes de enviar, corre `pnpm lint`, `pnpm typecheck` y `pnpm test`. El CI corre los mismos comandos.
 
+## Pruebas de integración
+
+Necesitan un Postgres local (solo se aceptan URLs locales, porque borran datos):
+
+```
+podman compose up -d
+pnpm --filter @kuorum/infrastructure db:deploy
+pnpm test:int
+```
+
+`pnpm test:int` genera el cliente de Prisma y compila los paquetes antes de correr las pruebas, así que sirve en un clon limpio. La URL por defecto es `postgresql://kuorum:kuorum@localhost:54329/kuorum`; se cambia con `DATABASE_URL`.
+
 ## Convenciones
 
 - Commits en Conventional Commits (`feat:`, `fix:`, `chore:`, `docs:`), en español.

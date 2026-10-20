@@ -12,15 +12,26 @@ if (!url) {
 const id = `carga-${randomBytes(6).toString("hex")}`;
 // Mismo alfabeto que el dominio (sin 0, 1, I, L ni O).
 const ALFABETO = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
-const codigoDeSala = Array.from({ length: 4 }, () => ALFABETO[randomInt(ALFABETO.length)]).join("");
+const INTENTOS = 10;
+const codigoNuevo = () =>
+  Array.from({ length: 4 }, () => ALFABETO[randomInt(ALFABETO.length)]).join("");
+
 const cliente = new pg.Client({ connectionString: url });
 await cliente.connect();
 try {
-  await cliente.query(
-    `INSERT INTO sesiones (id, titulo, "codigoDeSala", estado, version, "actualizadaEn")
-     VALUES ($1, 'Sesión de carga', $2, 'EN_CURSO', 0, now())`,
-    [id, codigoDeSala],
-  );
+  for (let intento = 1; ; intento += 1) {
+    try {
+      await cliente.query(
+        `INSERT INTO sesiones (id, titulo, "codigoDeSala", estado, version, "actualizadaEn")
+         VALUES ($1, 'Sesión de carga', $2, 'EN_CURSO', 0, now())`,
+        [id, codigoNuevo()],
+      );
+      break;
+    } catch (error) {
+      // 23505: el código de sala ya existe; se prueba con otro.
+      if (error.code !== "23505" || intento >= INTENTOS) throw error;
+    }
+  }
 } finally {
   await cliente.end();
 }

@@ -144,16 +144,18 @@ model VotoEmitido {
   @@map("votos_emitidos")
 }
 
-// Cuántos votos tiene cada opción. Sin relación con quién votó.
+// Cuántos votos tiene cada opción, repartidos en 16 fragmentos para que los votos
+// simultáneos no compitan por la misma fila. Sin relación con quién votó.
 model Conteo {
   preguntaId String
   opcionId   String
+  shard      Int    @db.SmallInt
   total      Int    @default(0)
 
   pregunta Pregunta @relation(fields: [preguntaId], references: [id], onDelete: Cascade)
   opcion   Opcion   @relation(fields: [opcionId], references: [id], onDelete: Cascade)
 
-  @@id([preguntaId, opcionId])
+  @@id([preguntaId, opcionId, shard])
   @@map("conteos")
 }
 

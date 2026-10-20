@@ -1,7 +1,10 @@
-import { CodigoDeSala, Sesion } from "@kuorum/domain";
+import { CodigoDeSala, ErrorDeDominio, Sesion } from "@kuorum/domain";
 import type { RepositorioDeSesiones } from "@kuorum/application";
-import type { Sesion as FilaDeSesion } from "../generated/prisma/client.js";
-import type { ContextoTransaccional } from "../prisma/contexto-transaccional.js";
+import type { Prisma, Sesion as FilaDeSesion } from "../generated/prisma/client.js";
+import {
+  esViolacionDeUnico,
+  type ContextoTransaccional,
+} from "../prisma/contexto-transaccional.js";
 
 function aDominio(fila: FilaDeSesion): Sesion {
   return Sesion.reconstruir({
@@ -51,17 +54,7 @@ export class PrismaRepositorioDeSesiones implements RepositorioDeSesiones {
       segundosPorIntervencion: sesion.segundosPorIntervencion,
     };
     if (leida === undefined) {
-      await cliente.sesion.upsert({
-        where: { id: sesion.id },
-        create: {
-          id: sesion.id,
-          codigoDeSala: sesion.codigoDeSala.valor,
-          version: sesion.version,
-          creadaEn: sesion.creadaEn,
-          ...datos,
-        },
-        update: { ...datos, version: { increment: 0 } },
-      });
+      await this.crear(sesion, datos);
     } else {
       await cliente.sesion.update({
         where: { id: sesion.id },
@@ -69,6 +62,31 @@ export class PrismaRepositorioDeSesiones implements RepositorioDeSesiones {
       });
     }
     this.versionLeida.set(sesion, sesion.version);
+  }
+
+  // Una instancia nunca leída por el repositorio solo puede ser nueva: si la fila ya existe
+  // no se sabe cuánto sumar a la versión, y descartarla en silencio rompería el ETag.
+  private async crear(sesion: Sesion, datos: object): Promise<void> {
+    try {
+      await this.contexto.cliente().sesion.create({
+        data: {
+          id: sesion.id,
+          codigoDeSala: sesion.codigoDeSala.valor,
+          version: sesion.version,
+          creadaEn: sesion.creadaEn,
+          ...datos,
+        } as Prisma.SesionUncheckedCreateInput,
+      });
+    } catch (error) {
+      if (esViolacionDeUnico(error) && (await this.existe(sesion.id))) {
+        throw new ErrorDeDominio("SESION_NO_CARGADA", "La sesión existe y no se cargó con porId");
+      }
+      throw error;
+    }
+  }
+
+  private async existe(id: string): Promise<boolean> {
+    return (await this.contexto.cliente().sesion.count({ where: { id } })) > 0;
   }
 
   private recordar(sesion: Sesion): Sesion {
