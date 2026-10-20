@@ -2,6 +2,7 @@ import type { EstadoPublicoDeSesion } from "@kuorum/contracts";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { FuenteDeEstadoPorConsulta } from "../../src/tiempo-real/fuente-por-consulta";
 import type { Temporizador } from "../../src/tiempo-real/fuente-de-estado";
+import { PoliticaAdaptativa, PoliticaFija } from "../../src/tiempo-real/intervalo-adaptativo";
 
 function estado(version: number): EstadoPublicoDeSesion {
   return {
@@ -42,7 +43,10 @@ describe("FuenteDeEstadoPorConsulta", () => {
     const fetchFalso = vi.fn().mockResolvedValueOnce(ok(1)).mockResolvedValueOnce(ok(2));
     const temporizador = new TemporizadorFalso();
     const alCambiar = vi.fn();
-    new FuenteDeEstadoPorConsulta(fetchFalso, 3000, temporizador).suscribir("s", alCambiar);
+    new FuenteDeEstadoPorConsulta(fetchFalso, new PoliticaFija(3000), temporizador).suscribir(
+      "s",
+      alCambiar,
+    );
 
     await vaciar();
     temporizador.disparar();
@@ -59,7 +63,10 @@ describe("FuenteDeEstadoPorConsulta", () => {
       .mockResolvedValueOnce(new Response(null, { status: 304 }));
     const temporizador = new TemporizadorFalso();
     const alCambiar = vi.fn();
-    new FuenteDeEstadoPorConsulta(fetchFalso, 3000, temporizador).suscribir("s", alCambiar);
+    new FuenteDeEstadoPorConsulta(fetchFalso, new PoliticaFija(3000), temporizador).suscribir(
+      "s",
+      alCambiar,
+    );
 
     await vaciar();
     temporizador.disparar();
@@ -80,7 +87,10 @@ describe("FuenteDeEstadoPorConsulta", () => {
       .mockResolvedValueOnce(ok(2));
     const temporizador = new TemporizadorFalso();
     const alCambiar = vi.fn();
-    new FuenteDeEstadoPorConsulta(fetchFalso, 3000, temporizador).suscribir("s", alCambiar);
+    new FuenteDeEstadoPorConsulta(fetchFalso, new PoliticaFija(3000), temporizador).suscribir(
+      "s",
+      alCambiar,
+    );
 
     await vaciar();
     temporizador.disparar();
@@ -93,7 +103,10 @@ describe("FuenteDeEstadoPorConsulta", () => {
     const fetchFalso = vi.fn().mockRejectedValueOnce(new Error("red")).mockResolvedValueOnce(ok(1));
     const temporizador = new TemporizadorFalso();
     const alCambiar = vi.fn();
-    new FuenteDeEstadoPorConsulta(fetchFalso, 3000, temporizador).suscribir("s", alCambiar);
+    new FuenteDeEstadoPorConsulta(fetchFalso, new PoliticaFija(3000), temporizador).suscribir(
+      "s",
+      alCambiar,
+    );
 
     await vaciar();
     temporizador.disparar();
@@ -105,10 +118,11 @@ describe("FuenteDeEstadoPorConsulta", () => {
   it("cancelar detiene las peticiones", async () => {
     const fetchFalso = vi.fn().mockResolvedValue(ok(1));
     const temporizador = new TemporizadorFalso();
-    const cancelar = new FuenteDeEstadoPorConsulta(fetchFalso, 3000, temporizador).suscribir(
-      "s",
-      vi.fn(),
-    );
+    const cancelar = new FuenteDeEstadoPorConsulta(
+      fetchFalso,
+      new PoliticaFija(3000),
+      temporizador,
+    ).suscribir("s", vi.fn());
     await vaciar();
 
     cancelar();
@@ -125,7 +139,7 @@ describe("FuenteDeEstadoPorConsulta", () => {
     const alCambiar = vi.fn();
     const cancelar = new FuenteDeEstadoPorConsulta(
       fetchFalso,
-      3000,
+      new PoliticaFija(3000),
       new TemporizadorFalso(),
     ).suscribir("s", alCambiar);
 
@@ -140,7 +154,10 @@ describe("FuenteDeEstadoPorConsulta", () => {
     vi.stubGlobal("document", { visibilityState: "hidden" });
     const fetchFalso = vi.fn().mockResolvedValue(ok(1));
     const temporizador = new TemporizadorFalso();
-    new FuenteDeEstadoPorConsulta(fetchFalso, 3000, temporizador).suscribir("s", vi.fn());
+    new FuenteDeEstadoPorConsulta(fetchFalso, new PoliticaFija(3000), temporizador).suscribir(
+      "s",
+      vi.fn(),
+    );
     await vaciar();
     expect(fetchFalso).not.toHaveBeenCalled();
     expect(temporizador.pendientes).toHaveLength(1);
@@ -152,9 +169,40 @@ describe("FuenteDeEstadoPorConsulta", () => {
     expect(fetchFalso).toHaveBeenCalledOnce();
   });
 
+  it("reprograma con el intervalo que da la política según el contexto", async () => {
+    const fetchFalso = vi.fn().mockResolvedValue(new Response(null, { status: 304 }));
+    const esperas: number[] = [];
+    let accion: (() => void) | undefined;
+    const temporizador: Temporizador = {
+      programar(a, ms) {
+        esperas.push(ms);
+        accion = a;
+        return () => {};
+      },
+    };
+    let contexto = { votacionAbierta: false, enFilaDePalabra: false };
+    new FuenteDeEstadoPorConsulta(
+      fetchFalso,
+      new PoliticaAdaptativa(),
+      temporizador,
+      undefined,
+      () => contexto,
+    ).suscribir("s", vi.fn());
+    await vaciar();
+    contexto = { votacionAbierta: true, enFilaDePalabra: false };
+    accion?.();
+    await vaciar();
+
+    expect(esperas).toEqual([12_000, 3000]);
+  });
+
   it("llama a fetch sin la instancia como this", async () => {
     const fetchFalso = vi.fn().mockResolvedValue(ok(1));
-    const fuente = new FuenteDeEstadoPorConsulta(fetchFalso, 3000, new TemporizadorFalso());
+    const fuente = new FuenteDeEstadoPorConsulta(
+      fetchFalso,
+      new PoliticaFija(3000),
+      new TemporizadorFalso(),
+    );
     fuente.suscribir("s", vi.fn());
     await vaciar();
 
@@ -169,7 +217,12 @@ describe("FuenteDeEstadoPorConsulta", () => {
       .mockResolvedValueOnce(new Response("x", { status: 500 }));
     const temporizador = new TemporizadorFalso();
     const alFallar = vi.fn();
-    new FuenteDeEstadoPorConsulta(fetchFalso, 3000, temporizador, alFallar).suscribir("s", vi.fn());
+    new FuenteDeEstadoPorConsulta(
+      fetchFalso,
+      new PoliticaFija(3000),
+      temporizador,
+      alFallar,
+    ).suscribir("s", vi.fn());
 
     await vaciar();
     temporizador.disparar();
@@ -185,10 +238,12 @@ describe("FuenteDeEstadoPorConsulta", () => {
     const temporizador = new TemporizadorFalso();
     const alFallar = vi.fn();
     const alCambiar = vi.fn();
-    new FuenteDeEstadoPorConsulta(fetchFalso, 3000, temporizador, alFallar).suscribir(
-      "s",
-      alCambiar,
-    );
+    new FuenteDeEstadoPorConsulta(
+      fetchFalso,
+      new PoliticaFija(3000),
+      temporizador,
+      alFallar,
+    ).suscribir("s", alCambiar);
 
     await vaciar();
 

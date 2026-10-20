@@ -5,13 +5,19 @@ import {
   type FuenteDeEstado,
   type Temporizador,
 } from "./fuente-de-estado";
+import {
+  CONTEXTO_EN_REPOSO,
+  type ContextoDeIntervalo,
+  type PoliticaDeIntervalo,
+} from "./intervalo-adaptativo";
 
 export class FuenteDeEstadoPorConsulta implements FuenteDeEstado {
   constructor(
     private readonly fetch: typeof globalThis.fetch,
-    private readonly intervaloMs: number,
+    private readonly politica: PoliticaDeIntervalo,
     private readonly temporizador: Temporizador = temporizadorPorDefecto,
     private readonly alFallar?: (error: unknown) => void,
+    private readonly contexto: () => ContextoDeIntervalo = () => CONTEXTO_EN_REPOSO,
   ) {}
 
   suscribir(sesionId: string, alCambiar: (estado: EstadoPublicoDeSesion) => void): () => void {
@@ -52,7 +58,10 @@ export class FuenteDeEstadoPorConsulta implements FuenteDeEstado {
     };
     const esperar = () => {
       if (activa)
-        cancelarEspera = this.temporizador.programar(() => void consultar(), this.intervaloMs);
+        cancelarEspera = this.temporizador.programar(
+          () => void consultar(),
+          this.politica.intervaloMs(this.contexto()),
+        );
     };
 
     void consultar();

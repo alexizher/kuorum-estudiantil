@@ -13,7 +13,7 @@ on:
       transporte:
         description: Transporte a medir
         type: choice
-        options: [consulta, eventos]
+        options: [consulta]
         required: true
       vus:
         description: Usuarios virtuales o conexiones (máximo 300)
@@ -74,11 +74,6 @@ jobs:
       - name: Consulta con k6
         if: inputs.transporte == 'consulta'
         run: k6 run -e URL="$URL" -e SESION="$SESION" -e VUS="$VUS" -e DURACION="$DURACION" -e INTERVALO_S=3 tools/load/consulta.k6.js
-      - name: Eventos con EventSource
-        if: inputs.transporte == 'eventos'
-        run: node tools/load/eventos.mjs
-        env:
-          CONEXIONES: ${{ inputs.vus }}
       - name: Versiones publicadas
         if: always()
         run: cat avanzar.log || true
