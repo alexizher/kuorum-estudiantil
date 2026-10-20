@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mesa de la asamblea</title>
+<script src="tema.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap">
+<link rel="stylesheet" href="estilos.css">
+<style>
+  .cabecera {
+    position: sticky; top: 0; z-index: 5;
+    background: var(--papel);
+    border-bottom: 2px solid var(--tinta);
+    padding: 12px 16px;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px 24px;
+  }
+  .cabecera__titulo { display: flex; align-items: baseline; gap: 4px 14px; flex-wrap: wrap; }
+  .cabecera__mesa { font-size: var(--t-3); }
+  .cabecera__sesion { font-weight: 600; }
+  .cabecera__sala { color: var(--tinta-suave); font-size: var(--t-0); }
+  .cabecera__sala strong { color: var(--tinta); font-stretch: 75%; font-weight: 800; font-size: 1.2em; letter-spacing: 0.03em; }
+
+  .pantalla { display: flex; align-items: center; gap: 8px 12px; flex-wrap: wrap; }
+  .pantalla__rotulo { font-size: var(--t-0); color: var(--tinta-suave); }
+  .segmento { display: inline-flex; border: 2px solid var(--tinta); border-radius: var(--r-control); }
+  .segmento button {
+    appearance: none; border: 0; background: transparent; color: var(--tinta);
+    font: inherit; font-weight: 600; min-height: 44px; padding: 0 14px; cursor: pointer;
+  }
+  .segmento button + button { border-left: 2px solid var(--tinta); }
+  .segmento button[aria-pressed="true"] { background: var(--tinta); color: var(--sobre-tinta); }
+  .segmento button:focus-visible { outline-offset: -5px; outline-color: var(--ambar); }
+
+  .pestanas { display: none; }
+
+  .tablero {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    gap: 0;
+    max-width: 1600px;
+    margin-inline: auto;
+  }
+  .columna { padding: 24px 32px 40px; min-width: 0; }
+  .columna + .columna { border-left: 1px solid var(--linea); }
+  .columna__titulo { font-size: var(--t-4); margin-bottom: 16px; }
+
+  .ahora {
+    background: var(--superficie);
+    border: 2px solid var(--tinta);
+    border-radius: var(--r-hoja);
+    padding: 18px 20px 20px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 2px 16px;
+    align-items: end;
+  }
+  .ahora__rotulo { grid-column: 1 / -1; font-size: var(--t-0); color: var(--tinta-suave); }
+  .ahora__nombre { font-size: var(--t-4); }
+  .ahora__facultad { color: var(--tinta-suave); }
+  .ahora__reloj { grid-column: 2; grid-row: 2 / span 2; font-stretch: 62%; font-weight: 850; font-size: 3.6rem; line-height: 0.85; }
+  .ahora__reloj[data-aviso="pronto"] { color: var(--ambar-texto); }
+  .ahora__reloj[data-aviso="fin"] { color: var(--no-texto); }
+  .ahora .barra { grid-column: 1 / -1; height: 6px; margin-top: 14px; background: color-mix(in srgb, var(--tinta) 12%, transparent); }
+  .ahora .barra div { height: 100%; background: var(--tinta); transition: width 1s linear; }
+  .ahora__acciones { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+
+  .fila { margin-top: 24px; }
+  .fila__cabeza { display: flex; justify-content: space-between; align-items: baseline; padding-bottom: 8px; border-bottom: 2px solid var(--tinta); }
+  .fila__cabeza h3 { font-size: var(--t-2); }
+  .fila li {
+    display: grid;
+    grid-template-columns: 2.2rem 1fr auto;
+    gap: 4px 12px;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--linea);
+    animation: entra 220ms var(--curva);
+  }
+  @keyframes entra { from { opacity: 0; transform: translateY(-4px); } }
+  .fila li.es-mocion { background: var(--ambar-fondo); box-shadow: inset 5px 0 0 var(--ambar); padding-left: 12px; border-bottom-color: transparent; margin-bottom: 2px; }
+  .fila__pos { font-stretch: 70%; font-weight: 800; font-size: var(--t-2); color: var(--tinta-suave); }
+  .es-mocion .fila__pos { color: var(--ambar-texto); }
+  .fila__nombre { font-weight: 650; }
+  .fila__facultad { color: var(--tinta-suave); }
+  .fila .mocion { margin-right: 6px; }
+  .fila .boton { min-height: 44px; padding-inline: 12px; font-size: 0.95rem; border-width: 1.5px; border-color: var(--borde-control); }
+  .vacia { padding: 16px 0; color: var(--tinta-suave); }
+
+  .votacion { background: var(--superficie); border: 2px solid var(--tinta); border-radius: var(--r-hoja); padding: 18px 20px 20px; }
+  .votacion__estado { display: flex; gap: 10px; align-items: center; font-size: var(--t-0); }
+  .chip { padding: 2px 8px; border-radius: var(--r-control); font-weight: 700; }
+  .chip--abierta { background: var(--si); color: var(--sobre-color); }
+  .chip--cerrada { background: var(--tinta); color: var(--sobre-tinta); }
+  .votacion__pregunta { font-size: var(--t-3); margin-top: 10px; }
+  .avance { margin-top: 16px; }
+  .avance__texto { display: flex; align-items: baseline; gap: 6px; }
+  .avance__texto strong { font-stretch: 70%; font-weight: 800; font-size: var(--t-4); line-height: 1; }
+  .avance .barra { height: 10px; margin-top: 8px; background: color-mix(in srgb, var(--tinta) 12%, transparent); }
+  .avance .barra div { height: 100%; background: var(--tinta); transition: width 600ms var(--curva); }
+  .votacion__nota { font-size: var(--t-0); color: var(--tinta-suave); margin-top: 8px; }
+  .votacion__acciones { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+
+  .conteo { margin-top: 16px; display: grid; gap: 8px; }
+  .conteo[hidden] { display: none; }
+  .conteo li { display: grid; grid-template-columns: 7.5rem 1fr 3.5rem; gap: 10px; align-items: center; }
+  .conteo__barra { height: 18px; background: var(--color); }
+  .conteo__num { font-stretch: 75%; font-weight: 800; font-size: var(--t-2); text-align: right; }
+  .conteo__veredicto { margin-top: 6px; font-weight: 650; color: var(--si-texto); }
+
+  .asistencia { margin-top: 28px; }
+  .asistencia h3 { font-size: var(--t-2); padding-bottom: 8px; border-bottom: 2px solid var(--tinta); }
+  .asistencia dl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin: 14px 0 0; }
+  .asistencia dt { font-size: var(--t-0); color: var(--tinta-suave); }
+  .asistencia dd { margin: 0; font-stretch: 70%; font-weight: 800; font-size: var(--t-4); line-height: 1.1; }
+  .asistencia dd.ok { color: var(--si-texto); font-size: var(--t-3); }
+
+  .pie { padding: 20px 16px 32px; display: flex; flex-wrap: wrap; gap: 12px 24px; justify-content: space-between; align-items: center; border-top: 1px solid var(--linea); font-size: var(--t-0); }
+
+  @media (max-width: 959px) {
+    .tablero { grid-template-columns: 1fr; }
+    .columna { padding: 20px 16px 32px; }
+    .columna + .columna { border-left: 0; }
+    .columna[hidden-movil] { display: none; }
+    .pestanas {
+      display: grid; grid-template-columns: 1fr 1fr;
+      position: sticky; top: var(--alto-cabecera, 0); z-index: 4;
+      background: var(--papel); border-bottom: 1px solid var(--linea);
+    }
+    .pestanas button {
+      appearance: none; border: 0; background: transparent; font: inherit; font-weight: 600;
+      color: var(--tinta-suave); min-height: 48px; cursor: pointer; position: relative;
+    }
+    .pestanas button[aria-selected="true"] { color: var(--tinta); }
+    .pestanas button[aria-selected="true"]::after { content: ""; position: absolute; left: 16px; right: 16px; bottom: -1px; height: 4px; background: var(--tinta); }
+    .pestanas button:focus-visible { outline-offset: -4px; }
+    .columna__titulo { display: none; }
+  }
+  @media (max-width: 520px) {
+    .cabecera { padding-block: 10px; }
+    .pantalla { width: 100%; justify-content: space-between; }
+    .segmento { flex: 1; }
+    .segmento button { flex: 1; padding: 0 6px; font-size: 0.9rem; }
+    .pantalla__abrir { display: none; }
+    .fila li { grid-template-columns: 2rem 1fr; }
+    .fila li .boton { grid-column: 2; justify-self: start; }
+    .ahora__reloj { font-size: 3rem; }
+    .asistencia dl { grid-template-columns: 1fr 1fr; }
+    .conteo li { grid-template-columns: 6.5rem 1fr 3rem; }
+  }
+</style>
+</head>
+<body>
+<header class="cabecera" id="cabecera">
+  <div class="cabecera__titulo">
+    <h1 class="titular cabecera__mesa">Mesa</h1>
+    <p class="cabecera__sesion">Asamblea General de Estudiantes</p>
+    <p class="cabecera__sala">Sala <strong>K7F2</strong></p>
+  </div>
+  <div class="pantalla">
+    <span class="pantalla__rotulo" id="rotulo-pantalla">En pantalla</span>
+    <div class="segmento" role="group" aria-labelledby="rotulo-pantalla">
+      <button type="button" data-pantalla="votacion" aria-pressed="true">Votación</button>
+      <button type="button" data-pantalla="resultados" aria-pressed="false">Resultados</button>
+      <button type="button" data-pantalla="palabra" aria-pressed="false">Palabra</button>
+    </div>
+    <a class="boton pantalla__abrir" href="proyeccion.html" target="_blank" rel="noopener">Abrir la proyección</a>
+  </div>
+</header>
+
+<div class="pestanas" role="tablist" aria-label="Secciones de la mesa">
+  <button type="button" role="tab" id="tab-palabra" aria-controls="col-palabra" aria-selected="true">Palabra</button>
+  <button type="button" role="tab" id="tab-votacion" aria-controls="col-votacion" aria-selected="false" tabindex="-1">Votación</button>
+</div>
+
+<main class="tablero">
+  <section class="columna" id="col-palabra" aria-labelledby="titulo-palabra">
+    <h2 class="titular columna__titulo" id="titulo-palabra">Palabra</h2>
+    <div class="ahora" aria-live="polite">
+      <p class="ahora__rotulo">Tiene la palabra</p>
+      <p class="titular ahora__nombre" id="ahora-nombre">Valentina Ríos</p>
+      <p class="ahora__facultad" id="ahora-facultad">Ingeniería</p>
+      <p class="ahora__reloj num" id="reloj" aria-label="Tiempo restante">1:22</p>
+      <div class="barra" aria-hidden="true"><div id="barra-reloj" style="width:54%"></div></div>
+      <div class="ahora__acciones">
+        <button type="button" class="boton boton--tinta" id="siguiente">Siguiente</button>
+        <button type="button" class="boton" id="saltar" title="Pasa a la segunda persona de la fila">Saltar</button>
+        <button type="button" class="boton boton--plano" id="mas-tiempo">Dar un minuto más</button>
+      </div>
+    </div>
+
+    <div class="fila">
+      <div class="fila__cabeza">
+        <h3 class="titular">Fila</h3>
+        <p class="suave num" id="fila-cuenta">5 personas</p>
+      </div>
+      <ol id="fila"></ol>
+    </div>
+  </section>
+
+  <section class="columna" id="col-votacion" aria-labelledby="titulo-votacion">
+    <h2 class="titular columna__titulo" id="titulo-votacion">Votación</h2>
+    <div class="votacion">
+      <p class="votacion__estado"><span class="chip chip--abierta" id="chip">Abierta</span><span class="suave">Voto secreto, mayoría simple</span></p>
+      <p class="titular votacion__pregunta">¿Aprueba la asamblea el pliego de exigencias de bienestar para presentarlo al Consejo Superior?</p>
+      <div class="avance">
+        <p class="avance__texto"><strong class="num" id="emitidos">812</strong> de <span class="num">1.284</span> votaron</p>
+        <div class="barra" aria-hidden="true"><div id="barra-votos" style="width:63.2%"></div></div>
+      </div>
+      <p class="votacion__nota" id="nota-voto">El conteo se ve al cerrar la votación.</p>
+      <ul class="conteo" id="conteo" hidden>
+        <li><span>Sí</span><span class="conteo__barra" style="--color:var(--si); width:100%"></span><span class="conteo__num num">742</span></li>
+        <li><span>No</span><span class="conteo__barra" style="--color:var(--no); width:42.9%"></span><span class="conteo__num num">318</span></li>
+        <li><span>Me abstengo</span><span class="conteo__barra" style="--color:var(--ambar); width:12.9%"></span><span class="conteo__num num">96</span></li>
+        <li style="display:block"><p class="conteo__veredicto">Aprobada. Sí supera a No por 424 votos.</p></li>
+      </ul>
+      <div class="votacion__acciones">
+        <button type="button" class="boton boton--peligro" id="cerrar">Cerrar votación</button>
+        <button type="button" class="boton" id="abrir" hidden>Abrir de nuevo</button>
+        <button type="button" class="boton boton--tinta" id="proyectar" aria-disabled="true" aria-describedby="nota-voto">Proyectar resultados</button>
+      </div>
+    </div>
+
+    <div class="asistencia">
+      <h3 class="titular">Asistencia</h3>
+      <dl>
+        <div><dt>Presentes</dt><dd class="num">1.284</dd></div>
+        <div><dt>Quórum mínimo</dt><dd class="num">1.000</dd></div>
+        <div><dt>Estado</dt><dd class="ok">Hay quórum</dd></div>
+      </dl>
+    </div>
+  </section>
+</main>
+
+<footer class="pie">
+  <a href="index.html">Volver a las maquetas</a>
+  <div data-tema-control></div>
+</footer>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var estatico = new URLSearchParams(location.search).has("quieto");
+
+  // Lo que se ve en la proyección. Si la proyección está abierta en otra pestaña, cambia con esto.
+  var CLAVE = "kuorum-maqueta-pantalla";
+  var segmentos = document.querySelectorAll("[data-pantalla]");
+  function proyectar(valor) {
+    segmentos.forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.pantalla === valor)); });
+    try { localStorage.setItem(CLAVE, valor); } catch (e) {}
+  }
+  segmentos.forEach(function (b) { b.addEventListener("click", function () { proyectar(b.dataset.pantalla); }); });
+
+  // Altura de la cabecera para que las pestañas queden pegadas debajo
+  function medir() { document.documentElement.style.setProperty("--alto-cabecera", $("cabecera").offsetHeight + "px"); }
+  medir(); window.addEventListener("resize", medir);
+
+  // Pestañas en celular
+  var tabs = [$("tab-palabra"), $("tab-votacion")];
+  function elegir(tab) {
+    tabs.forEach(function (t) {
+      var activa = t === tab;
+      t.setAttribute("aria-selected", String(activa)); t.tabIndex = activa ? 0 : -1;
+      var col = $(t.getAttribute("aria-controls"));
+      if (activa) col.removeAttribute("hidden-movil"); else col.setAttribute("hidden-movil", "");
+    });
+  }
+  tabs.forEach(function (t, i) {
+    t.addEventListener("click", function () { elegir(t); });
+    t.addEventListener("keydown", function (e) {
+      if (e.key === "ArrowRight" || e.key === "ArrowLeft") { var o = tabs[(i + 1) % 2]; o.focus(); elegir(o); }
+    });
+  });
+  elegir(tabs[0]);
+
+  // Fila de la palabra: las mociones siempre van primero
+  var fila = [
+    { nombre: "Juan Pablo Arango", facultad: "Derecho", mocion: "Moción de orden" },
+    { nombre: "Sara Mejía", facultad: "Medicina", mocion: "Moción de suficiente ilustración" },
+    { nombre: "Andrés Cardona", facultad: "Artes" },
+    { nombre: "Laura Henao", facultad: "Ciencias Exactas" },
+    { nombre: "Mateo Zapata", facultad: "Educación" }
+  ];
+  function ordenar() {
+    fila = fila.filter(function (p) { return p.mocion; }).concat(fila.filter(function (p) { return !p.mocion; }));
+  }
+  function pintarFila() {
+    ordenar();
+    var ol = $("fila"); ol.textContent = "";
+    if (!fila.length) {
+      var v = document.createElement("li"); v.className = "vacia"; v.style.display = "block";
+      v.textContent = "Nadie pidió la palabra. Las solicitudes aparecen aquí.";
+      ol.appendChild(v);
+    }
+    fila.forEach(function (p, i) {
+      var li = document.createElement("li");
+      if (p.mocion) li.className = "es-mocion";
+      var pos = document.createElement("span"); pos.className = "fila__pos num"; pos.textContent = i + 1;
+      var quien = document.createElement("div");
+      if (p.mocion) { var m = document.createElement("span"); m.className = "mocion"; m.textContent = p.mocion; quien.appendChild(m); quien.appendChild(document.createElement("br")); }
+      var n = document.createElement("span"); n.className = "fila__nombre"; n.textContent = p.nombre;
+      var f = document.createElement("span"); f.className = "fila__facultad"; f.textContent = " " + p.facultad;
+      quien.appendChild(n); quien.appendChild(f);
+      var b = document.createElement("button"); b.type = "button"; b.className = "boton"; b.textContent = "Dar la palabra";
+      b.setAttribute("aria-label", "Dar la palabra a " + p.nombre);
+      b.addEventListener("click", function () { darPalabra(i); });
+      li.appendChild(pos); li.appendChild(quien); li.appendChild(b);
+      ol.appendChild(li);
+    });
+    $("fila-cuenta").textContent = fila.length === 1 ? "1 persona" : fila.length + " personas";
+    $("siguiente").disabled = !fila.length; $("saltar").disabled = fila.length < 2;
+  }
+
+  var limite = 180, usados = 98;
+  function pintarReloj() {
+    var quedan = Math.max(0, limite - usados);
+    $("reloj").textContent = Math.floor(quedan / 60) + ":" + String(quedan % 60).padStart(2, "0");
+    $("reloj").dataset.aviso = quedan === 0 ? "fin" : quedan <= 30 ? "pronto" : "";
+    $("barra-reloj").style.width = Math.min(100, usados / limite * 100).toFixed(1) + "%";
+  }
+  function darPalabra(i) {
+    var p = fila.splice(i, 1)[0];
+    $("ahora-nombre").textContent = p.nombre;
+    $("ahora-facultad").textContent = p.mocion ? p.mocion + ", " + p.facultad : p.facultad;
+    limite = p.mocion ? 60 : 180; usados = 0;
+    pintarReloj(); pintarFila();
+  }
+  $("siguiente").addEventListener("click", function () { if (fila.length) darPalabra(0); });
+  $("saltar").addEventListener("click", function () { if (fila.length > 1) darPalabra(1); });
+  $("mas-tiempo").addEventListener("click", function () { limite += 60; pintarReloj(); });
+  pintarFila(); pintarReloj();
+  if (!estatico) setInterval(function () { if (usados < limite) { usados++; pintarReloj(); } }, 1000);
+
+  // Votación
+  var abierta = true, emitidos = 812;
+  function pintarVotacion() {
+    $("chip").textContent = abierta ? "Abierta" : "Cerrada";
+    $("chip").className = "chip " + (abierta ? "chip--abierta" : "chip--cerrada");
+    $("cerrar").hidden = !abierta; $("abrir").hidden = abierta;
+    $("conteo").hidden = abierta;
+    $("proyectar").setAttribute("aria-disabled", String(abierta));
+    $("nota-voto").textContent = abierta ? "El conteo se ve al cerrar la votación." : "Votación cerrada con " + emitidos.toLocaleString("es-CO") + " votos.";
+  }
+  $("cerrar").addEventListener("click", function () { abierta = false; emitidos = 1156; $("emitidos").textContent = "1.156"; $("barra-votos").style.width = "90%"; pintarVotacion(); $("abrir").focus(); });
+  $("abrir").addEventListener("click", function () { abierta = true; pintarVotacion(); $("cerrar").focus(); });
+  $("proyectar").addEventListener("click", function () { if (!abierta) proyectar("resultados"); });
+  if (!estatico) setInterval(function () {
+    if (!abierta || emitidos >= 1156) return;
+    emitidos = Math.min(1156, emitidos + 1 + Math.floor(Math.random() * 5));
+    $("emitidos").textContent = emitidos.toLocaleString("es-CO");
+    $("barra-votos").style.width = (emitidos / 1284 * 100).toFixed(1) + "%";
+  }, 1500);
+
+  var vista = new URLSearchParams(location.search).get("vista");
+  if (vista === "cerrada" || vista === "votacion") elegir(tabs[1]);
+  if (vista === "cerrada") $("cerrar").click();
+})();
+</script>
+</body>
+</html>

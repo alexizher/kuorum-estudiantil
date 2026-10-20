@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Participante en la asamblea</title>
+<script src="tema.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap">
+<link rel="stylesheet" href="estilos.css">
+<style>
+  :root { --ancho-app: 440px; --alto-pestanas: 64px; }
+  body { background: color-mix(in srgb, var(--tinta) 7%, var(--papel)); }
+  .app {
+    max-width: var(--ancho-app);
+    min-height: 100vh;
+    min-height: 100dvh;
+    margin-inline: auto;
+    background: var(--papel);
+    padding-bottom: calc(var(--alto-pestanas) + 96px + env(safe-area-inset-bottom));
+  }
+  @media (min-width: 480px) {
+    .app { border-inline: 1px solid var(--linea); }
+  }
+
+  .cabecera {
+    padding: 14px 16px 12px;
+    border-bottom: 2px solid var(--tinta);
+  }
+  .cabecera__sesion { font-weight: 650; line-height: 1.25; }
+  .cabecera__lugar { font-size: var(--t-0); color: var(--tinta-suave); margin-top: 2px; }
+  .cabecera__fila {
+    display: flex; justify-content: space-between; align-items: center; gap: 8px;
+    margin-top: 10px; flex-wrap: wrap;
+  }
+  .sala { font-size: var(--t-0); color: var(--tinta-suave); }
+  .sala strong { color: var(--tinta); font-stretch: 75%; font-weight: 800; font-size: 1.25em; letter-spacing: 0.03em; }
+
+  .panel { padding: 20px 16px 8px; }
+  .panel[hidden] { display: none; }
+
+  .estado {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px;
+    font-size: var(--t-0);
+  }
+  .estado__abierta { color: var(--si-texto); font-weight: 650; }
+  .estado__secreto { display: inline-flex; align-items: center; gap: 4px; color: var(--tinta-suave); }
+  .pregunta { font-size: var(--t-4); margin-top: 10px; }
+
+  .opciones { border: 0; padding: 0; margin: 22px 0 0; display: grid; gap: 10px; }
+  .opcion {
+    position: relative;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    min-height: 64px;
+    padding: 12px 18px;
+    border: 2px solid var(--linea);
+    border-radius: var(--r-hoja);
+    background: var(--superficie);
+    font-size: var(--t-2);
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color var(--dur) var(--curva), border-color var(--dur) var(--curva), color var(--dur) var(--curva);
+  }
+  .opcion input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .opcion__marca {
+    width: 26px; height: 26px; flex: none;
+    border: 2px solid var(--borde-control);
+    border-radius: 50%;
+    display: grid; place-items: center;
+    transition: inherit;
+  }
+  .opcion__marca::after {
+    content: ""; width: 12px; height: 12px; border-radius: 50%;
+    background: var(--tinta); transform: scale(0); transition: transform var(--dur) var(--curva);
+  }
+  .opcion:hover { border-color: var(--borde-control); }
+  .opcion:has(input:checked) { background: var(--tinta); border-color: var(--tinta); color: var(--sobre-tinta); }
+  .opcion:has(input:checked) .opcion__marca { border-color: var(--sobre-tinta); }
+  .opcion:has(input:checked) .opcion__marca::after { background: var(--sobre-tinta); transform: scale(1); }
+  .opcion:has(input:focus-visible) { outline: 3px solid var(--foco); outline-offset: 3px; }
+
+  .accion-fija {
+    position: fixed;
+    left: 50%; transform: translateX(-50%);
+    bottom: calc(var(--alto-pestanas) + env(safe-area-inset-bottom));
+    width: min(100%, var(--ancho-app));
+    padding: 12px 16px;
+    background: var(--papel);
+    border-top: 1px solid var(--linea);
+  }
+  .accion-fija[hidden] { display: none; }
+  .accion-fija .boton { min-height: 56px; font-size: var(--t-2); }
+  .accion-fija__ayuda { font-size: var(--t-0); color: var(--tinta-suave); margin-bottom: 6px; }
+
+  .confirmado { padding-top: 12px; animation: aparece 260ms var(--curva); }
+  .confirmado__sello {
+    width: 64px; height: 64px; border-radius: 50%;
+    background: var(--si); color: var(--sobre-color);
+    display: grid; place-items: center;
+  }
+  .confirmado__sello .icono { width: 34px; height: 34px; stroke-width: 2.25; }
+  .confirmado h2 { font-size: var(--t-5); margin-top: 18px; }
+  .confirmado p { margin-top: 12px; max-width: 34ch; }
+  @keyframes aparece { from { opacity: 0; transform: translateY(8px); } }
+
+  /* Palabra */
+  .orador {
+    display: grid; grid-template-columns: 1fr auto; align-items: end; gap: 4px 12px;
+    padding-bottom: 16px; border-bottom: 1px solid var(--linea);
+  }
+  .orador__rotulo { grid-column: 1 / -1; font-size: var(--t-0); color: var(--tinta-suave); }
+  .orador__nombre { font-size: var(--t-3); }
+  .orador__facultad { font-size: var(--t-0); color: var(--tinta-suave); }
+  .orador__reloj { grid-row: 2 / span 2; grid-column: 2; font-stretch: 65%; font-weight: 800; font-size: var(--t-5); line-height: 0.9; }
+
+  .pedir {
+    margin-top: 22px;
+    min-height: 76px;
+    font-size: var(--t-3);
+    font-stretch: 85%;
+    font-weight: 700;
+    border-radius: var(--r-hoja);
+  }
+  .pedir .icono { width: 30px; height: 30px; }
+
+  .turno {
+    margin-top: 22px;
+    padding: 18px;
+    background: var(--superficie);
+    border: 2px solid var(--tinta);
+    border-radius: var(--r-hoja);
+    animation: aparece 260ms var(--curva);
+  }
+  .turno[hidden] { display: none; }
+  .turno__fila { display: flex; align-items: baseline; gap: 12px; }
+  .turno__lugar { font-stretch: 62%; font-weight: 850; font-size: 4.5rem; line-height: 0.85; }
+  .turno__texto { font-weight: 600; }
+  .turno__detalle { color: var(--tinta-suave); font-size: var(--t-0); margin-top: 8px; }
+  .turno .boton { margin-top: 12px; }
+  .turno .mocion { margin-bottom: 8px; }
+
+  .secundaria { margin-top: 12px; min-height: 56px; border-radius: var(--r-hoja); }
+  .nota { font-size: var(--t-0); color: var(--tinta-suave); margin-top: 8px; }
+
+  /* Hoja inferior */
+  .hoja {
+    border: 0; padding: 0; margin: 0;
+    margin-top: auto;
+    width: min(100%, var(--ancho-app));
+    max-width: 100%;
+    max-height: 92dvh;
+    margin-inline: auto;
+    background: var(--papel);
+    color: var(--tinta);
+    border-radius: var(--r-hoja) var(--r-hoja) 0 0;
+    border-top: 2px solid var(--tinta);
+  }
+  .hoja[open] { animation: hoja-sube 240ms var(--curva); }
+  .hoja::backdrop { background: color-mix(in srgb, #0B1020 55%, transparent); }
+  @keyframes hoja-sube { from { transform: translateY(40px); opacity: 0; } }
+  .hoja form { padding: 10px 16px calc(16px + env(safe-area-inset-bottom)); }
+  .hoja__asa { width: 40px; height: 4px; border-radius: 2px; background: var(--linea); margin: 0 auto 12px; }
+  .hoja h2 { font-size: var(--t-4); }
+  .hoja__intro { color: var(--tinta-suave); margin-top: 6px; font-size: 0.95rem; }
+  .tipos { border: 0; padding: 0; margin: 16px 0 0; display: grid; gap: 8px; }
+  .tipo {
+    display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; align-items: start;
+    padding: 12px 14px; min-height: 64px;
+    border: 2px solid var(--linea); border-radius: var(--r-hoja);
+    background: var(--superficie);
+    cursor: pointer;
+    transition: border-color var(--dur) var(--curva), background-color var(--dur) var(--curva);
+  }
+  .tipo input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .tipo .opcion__marca { grid-row: 1 / span 2; margin-top: 2px; }
+  .tipo__nombre { font-weight: 650; }
+  .tipo__desc { font-size: 0.9rem; color: var(--tinta-suave); line-height: 1.35; }
+  .tipo:has(input:checked) { border-color: var(--ambar); background: var(--ambar-fondo); }
+  .tipo:has(input:checked) .opcion__marca { border-color: var(--tinta); }
+  .tipo:has(input:checked) .opcion__marca::after { transform: scale(1); }
+  .tipo:has(input:focus-visible) { outline: 3px solid var(--foco); outline-offset: 3px; }
+  .hoja__acciones { display: grid; gap: 8px; margin-top: 16px; }
+  .hoja__acciones .boton { min-height: 52px; }
+
+  /* Pestañas */
+  .pestanas {
+    position: fixed;
+    left: 50%; transform: translateX(-50%);
+    bottom: 0;
+    width: min(100%, var(--ancho-app));
+    display: grid; grid-template-columns: 1fr 1fr;
+    background: var(--superficie);
+    border-top: 2px solid var(--tinta);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .pestanas button {
+    appearance: none; border: 0; background: transparent; color: var(--tinta-suave);
+    font: inherit; font-weight: 600; font-size: var(--t-1);
+    min-height: var(--alto-pestanas);
+    cursor: pointer;
+    position: relative;
+  }
+  .pestanas button[aria-selected="true"] { color: var(--tinta); font-weight: 750; }
+  .pestanas button[aria-selected="true"]::before {
+    content: ""; position: absolute; top: -2px; left: 20%; right: 20%; height: 5px; background: var(--tinta);
+  }
+  .pestanas button:focus-visible { outline-offset: -4px; }
+  .pestanas__aviso {
+    display: inline-block; margin-left: 6px; min-width: 22px; padding: 0 6px;
+    border-radius: 11px; background: var(--ambar); color: var(--sobre-ambar);
+    font-size: 0.75rem; font-weight: 700; line-height: 22px;
+  }
+  .pestanas__aviso[hidden] { display: none; }
+
+  .volver { display: block; margin-top: 28px; font-size: var(--t-0); color: var(--tinta-suave); }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="cabecera">
+    <p class="cabecera__sesion">Asamblea General de Estudiantes</p>
+    <p class="cabecera__lugar">Teatro Camilo Torres, 22 de octubre</p>
+    <div class="cabecera__fila">
+      <p class="sala">Sala <strong>K7F2</strong></p>
+      <div data-tema-control></div>
+    </div>
+  </header>
+
+  <main>
+    <section class="panel" id="panel-votar" role="tabpanel" aria-labelledby="tab-votar">
+      <form id="form-voto">
+        <div id="votando">
+          <p class="estado">
+            <span class="estado__abierta">Votación abierta</span>
+            <span class="estado__secreto">
+              <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="1.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+              Voto secreto
+            </span>
+          </p>
+          <h1 class="titular pregunta" id="pregunta">¿Aprueba la asamblea el pliego de exigencias de bienestar para presentarlo al Consejo Superior?</h1>
+          <fieldset class="opciones" aria-labelledby="pregunta">
+            <label class="opcion"><input type="radio" name="voto" value="si">Sí<span class="opcion__marca" aria-hidden="true"></span></label>
+            <label class="opcion"><input type="radio" name="voto" value="no">No<span class="opcion__marca" aria-hidden="true"></span></label>
+            <label class="opcion"><input type="radio" name="voto" value="abstencion">Me abstengo<span class="opcion__marca" aria-hidden="true"></span></label>
+          </fieldset>
+        </div>
+
+        <div class="confirmado" id="confirmado" hidden tabindex="-1">
+          <div class="confirmado__sello" aria-hidden="true">
+            <svg class="icono" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+          </div>
+          <h2 class="titular">Tu voto quedó registrado</h2>
+          <p>Los resultados salen en la proyección cuando la mesa cierre la votación.</p>
+          <p class="suave">Nadie puede ver qué elegiste, ni la mesa.</p>
+          <button type="button" class="boton boton--plano" id="reiniciar-voto" style="margin-top:16px; padding-inline:0">Reiniciar la maqueta</button>
+        </div>
+
+        <div class="accion-fija" id="accion-votar">
+          <p class="accion-fija__ayuda" id="ayuda-voto">Elige una opción para votar.</p>
+          <button type="submit" class="boton boton--tinta boton--ancho" id="votar" aria-describedby="ayuda-voto" aria-disabled="true">Votar</button>
+        </div>
+      </form>
+      <a class="volver" href="index.html">Volver a las maquetas</a>
+    </section>
+
+    <section class="panel" id="panel-palabra" role="tabpanel" aria-labelledby="tab-palabra" hidden>
+      <div class="orador">
+        <p class="orador__rotulo">Ahora habla</p>
+        <p class="titular orador__nombre">Valentina Ríos</p>
+        <p class="orador__facultad">Facultad de Ingeniería</p>
+        <p class="orador__reloj num" id="reloj" aria-label="Tiempo restante">1:22</p>
+      </div>
+
+      <button type="button" class="boton boton--tinta boton--ancho pedir" id="pedir">
+        <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 13V5.5a1.5 1.5 0 0 1 3 0V11"/><path d="M11 10.5V4a1.5 1.5 0 0 1 3 0v6.5"/><path d="M14 10.5V5.5a1.5 1.5 0 0 1 3 0V12"/><path d="M17 11a1.5 1.5 0 0 1 3 0v3.5a6.5 6.5 0 0 1-6.5 6.5h-1.2a6 6 0 0 1-4.6-2.2L4.4 15.9a1.5 1.5 0 0 1 2.2-2L8 15.3"/></svg>
+        Pedir la palabra
+      </button>
+
+      <div class="turno" id="turno" hidden tabindex="-1">
+        <div class="turno__fila">
+          <span class="turno__lugar num" id="turno-lugar">6</span>
+          <div>
+            <p class="turno__texto">Es tu lugar en la fila</p>
+            <p class="suave" style="font-size:var(--t-0)">de <span id="turno-total">6</span> personas</p>
+          </div>
+        </div>
+        <p class="turno__detalle">Las mociones pasan primero. Te avisamos cuando te toque.</p>
+        <button type="button" class="boton boton--peligro boton--ancho" id="salir">Salir de la fila</button>
+      </div>
+
+      <div class="turno" id="turno-mocion" hidden tabindex="-1">
+        <span class="mocion" id="mocion-nombre">Moción de orden</span>
+        <div class="turno__fila">
+          <span class="turno__lugar num">3</span>
+          <div>
+            <p class="turno__texto">Tu moción está en la fila</p>
+            <p class="suave" style="font-size:var(--t-0)">Pasa después de las otras dos mociones</p>
+          </div>
+        </div>
+        <button type="button" class="boton boton--peligro boton--ancho" id="retirar-mocion">Retirar la moción</button>
+      </div>
+
+      <button type="button" class="boton boton--ancho secundaria" id="abrir-mocion">Presentar una moción</button>
+      <p class="nota">Una moción interrumpe el orden de la fila para tratar algo de la sesión.</p>
+      <a class="volver" href="index.html">Volver a las maquetas</a>
+    </section>
+  </main>
+
+  <nav class="pestanas" role="tablist" aria-label="Secciones">
+    <button type="button" role="tab" id="tab-votar" aria-controls="panel-votar" aria-selected="true">Votar</button>
+    <button type="button" role="tab" id="tab-palabra" aria-controls="panel-palabra" aria-selected="false" tabindex="-1">Palabra<span class="pestanas__aviso num" id="aviso-palabra" hidden aria-label="Lugar en la fila">6</span></button>
+  </nav>
+</div>
+
+<dialog class="hoja" id="hoja-mocion" aria-labelledby="hoja-titulo">
+  <form method="dialog" id="form-mocion">
+    <div class="hoja__asa" aria-hidden="true"></div>
+    <h2 class="titular" id="hoja-titulo">Presentar una moción</h2>
+    <p class="hoja__intro">Elige el tipo. La mesa la atiende antes que las intervenciones.</p>
+    <fieldset class="tipos" aria-labelledby="hoja-titulo">
+      <label class="tipo"><input type="radio" name="tipo" value="Moción de orden"><span class="opcion__marca" aria-hidden="true"></span><span class="tipo__nombre">De orden</span><span class="tipo__desc">Pide que se respete el reglamento o el orden del día.</span></label>
+      <label class="tipo"><input type="radio" name="tipo" value="Moción de procedimiento"><span class="opcion__marca" aria-hidden="true"></span><span class="tipo__nombre">De procedimiento</span><span class="tipo__desc">Propone otra forma de llevar la discusión o la votación.</span></label>
+      <label class="tipo"><input type="radio" name="tipo" value="Moción de aclaración"><span class="opcion__marca" aria-hidden="true"></span><span class="tipo__nombre">De aclaración</span><span class="tipo__desc">Pide que se explique un dato o qué se está votando.</span></label>
+      <label class="tipo"><input type="radio" name="tipo" value="Moción de suficiente ilustración"><span class="opcion__marca" aria-hidden="true"></span><span class="tipo__nombre">De suficiente ilustración</span><span class="tipo__desc">Propone cerrar el debate y pasar a votar.</span></label>
+    </fieldset>
+    <div class="hoja__acciones">
+      <button type="submit" value="presentar" class="boton boton--tinta" id="presentar" aria-disabled="true">Presentar moción</button>
+      <button type="submit" value="cancelar" class="boton" formnovalidate>Cancelar</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+
+  // Pestañas
+  var tabs = [$("tab-votar"), $("tab-palabra")];
+  function elegirTab(tab) {
+    tabs.forEach(function (t) {
+      var activa = t === tab;
+      t.setAttribute("aria-selected", String(activa));
+      t.tabIndex = activa ? 0 : -1;
+      $(t.getAttribute("aria-controls")).hidden = !activa;
+    });
+    $("accion-votar").hidden = tab !== tabs[0] || votado;
+    window.scrollTo(0, 0);
+  }
+  tabs.forEach(function (t, i) {
+    t.addEventListener("click", function () { elegirTab(t); });
+    t.addEventListener("keydown", function (e) {
+      if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+        var otra = tabs[(i + 1) % 2]; otra.focus(); elegirTab(otra);
+      }
+    });
+  });
+
+  // Votar
+  var votado = false;
+  var form = $("form-voto"), boton = $("votar");
+  form.addEventListener("change", function () {
+    boton.setAttribute("aria-disabled", "false");
+    $("ayuda-voto").textContent = "Puedes cambiar la opción hasta que votes.";
+  });
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    if (!form.querySelector("input:checked")) { $("ayuda-voto").textContent = "Elige una opción antes de votar."; return; }
+    votado = true;
+    $("votando").hidden = true;
+    $("accion-votar").hidden = true;
+    $("confirmado").hidden = false;
+    $("confirmado").focus();
+  });
+  $("reiniciar-voto").addEventListener("click", function () {
+    votado = false; form.reset();
+    boton.setAttribute("aria-disabled", "true");
+    $("ayuda-voto").textContent = "Elige una opción para votar.";
+    $("votando").hidden = false; $("confirmado").hidden = true; $("accion-votar").hidden = false;
+  });
+
+  // Pedir la palabra
+  function enFila(si) {
+    $("pedir").hidden = si;
+    $("turno").hidden = !si;
+    $("aviso-palabra").hidden = !si;
+    if (si) $("turno").focus();
+  }
+  $("pedir").addEventListener("click", function () { enFila(true); });
+  $("salir").addEventListener("click", function () { enFila(false); $("pedir").focus(); });
+
+  // Moción
+  var hoja = $("hoja-mocion"), formMocion = $("form-mocion"), presentar = $("presentar");
+  $("abrir-mocion").addEventListener("click", function () {
+    formMocion.reset(); presentar.setAttribute("aria-disabled", "true");
+    if (hoja.showModal) hoja.showModal(); else hoja.setAttribute("open", "");
+  });
+  formMocion.addEventListener("change", function () { presentar.setAttribute("aria-disabled", "false"); });
+  formMocion.addEventListener("submit", function (e) {
+    var quien = e.submitter && e.submitter.value;
+    var elegido = formMocion.querySelector("input:checked");
+    if (quien === "presentar" && !elegido) { e.preventDefault(); return; }
+    if (quien === "presentar") {
+      $("mocion-nombre").textContent = elegido.value;
+      $("turno-mocion").hidden = false;
+      $("abrir-mocion").hidden = true;
+      setTimeout(function () { $("turno-mocion").focus(); }, 0);
+    }
+  });
+  hoja.addEventListener("click", function (e) { if (e.target === hoja) hoja.close(); });
+  $("retirar-mocion").addEventListener("click", function () {
+    $("turno-mocion").hidden = true; $("abrir-mocion").hidden = false; $("abrir-mocion").focus();
+  });
+
+  // Cronómetro de quien habla
+  var quedan = 82, reloj = $("reloj");
+  var estatico = new URLSearchParams(location.search).has("quieto");
+  if (!estatico) setInterval(function () {
+    if (quedan <= 0) return; quedan--;
+    reloj.textContent = Math.floor(quedan / 60) + ":" + String(quedan % 60).padStart(2, "0");
+  }, 1000);
+
+  // Atajos para revisar estados desde la URL (?vista=palabra, ?vista=hoja, ?vista=votado)
+  var vista = new URLSearchParams(location.search).get("vista");
+  if (vista === "palabra" || vista === "hoja" || vista === "fila") elegirTab(tabs[1]);
+  if (vista === "fila") enFila(true);
+  if (vista === "hoja") { $("abrir-mocion").click(); var r = formMocion.querySelector("input"); r.checked = true; presentar.setAttribute("aria-disabled", "false"); }
+  if (vista === "elegido") { form.querySelector("input").checked = true; form.dispatchEvent(new Event("change")); }
+  if (vista === "votado") { form.querySelector("input").checked = true; form.requestSubmit(); }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,239 @@
+/* Kuorum Estudiantil, maquetas desechables para elegir dirección visual.
+   Claro: papel reciclado y tinta de serigrafía. Oscuro: tablero. */
+
+:root {
+  color-scheme: light;
+  --papel: #E8EBE4;
+  --superficie: #F6F7F3;
+  --tinta: #1B2242;
+  --tinta-suave: #4A5270;
+  --linea: #C9CEC3;
+  --borde-control: #7C8299;
+  --si: #1E7A4C;
+  --si-texto: #17663F;
+  --no: #C4302A;
+  --no-texto: #A82822;
+  --ambar: #E2A11B;
+  --ambar-texto: #7A4E00;
+  --ambar-fondo: #F3E3BC;
+  --sobre-tinta: #E8EBE4;
+  --sobre-color: #FFFFFF;
+  --sobre-ambar: #1B2242;
+  --mezcla: multiply;
+  --foco: #1B2242;
+
+  --f-ancho-titular: 68%;
+  --r-control: 2px;
+  --r-hoja: 10px;
+  --r-tinta: 0;
+
+  --t-0: 0.8rem;
+  --t-1: 1rem;
+  --t-2: 1.25rem;
+  --t-3: 1.563rem;
+  --t-4: 1.953rem;
+  --t-5: 2.441rem;
+  --t-6: 3.052rem;
+
+  --dur: 180ms;
+  --curva: cubic-bezier(.2, .7, .2, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-tema="claro"]) {
+    color-scheme: dark;
+    --papel: #121831;
+    --superficie: #1A2142;
+    --tinta: #E6E9E1;
+    --tinta-suave: #A9B0C8;
+    --linea: #2E3762;
+    --borde-control: #6B7495;
+    --si: #3DBE7E;
+    --si-texto: #3DBE7E;
+    --no: #F0574F;
+    --no-texto: #FF6B62;
+    --ambar: #F2B640;
+    --ambar-texto: #F2B640;
+    --ambar-fondo: #3A2F14;
+    --sobre-tinta: #121831;
+    --sobre-color: #121831;
+    --sobre-ambar: #121831;
+    --mezcla: normal;
+    --foco: #F2B640;
+  }
+}
+
+:root[data-tema="oscuro"] {
+  color-scheme: dark;
+  --papel: #121831;
+  --superficie: #1A2142;
+  --tinta: #E6E9E1;
+  --tinta-suave: #A9B0C8;
+  --linea: #2E3762;
+  --borde-control: #6B7495;
+  --si: #3DBE7E;
+  --si-texto: #3DBE7E;
+  --no: #F0574F;
+  --no-texto: #FF6B62;
+  --ambar: #F2B640;
+  --ambar-texto: #F2B640;
+  --ambar-fondo: #3A2F14;
+  --sobre-tinta: #121831;
+  --sobre-color: #121831;
+  --sobre-ambar: #121831;
+  --mezcla: normal;
+  --foco: #F2B640;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--papel);
+  color: var(--tinta);
+  font-family: "Archivo", system-ui, sans-serif;
+  font-stretch: 100%;
+  font-size: var(--t-1);
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+h1, h2, h3, p, ol, ul { margin: 0; }
+ol, ul { padding: 0; list-style: none; }
+
+.titular {
+  font-stretch: var(--f-ancho-titular);
+  font-weight: 750;
+  line-height: 1.02;
+  letter-spacing: -0.005em;
+  word-spacing: 0.1em;
+  text-wrap: balance;
+}
+
+.num { font-variant-numeric: tabular-nums; }
+
+.suave { color: var(--tinta-suave); }
+
+a { color: inherit; text-underline-offset: 0.18em; text-decoration-thickness: 1px; }
+a:hover { text-decoration-thickness: 2px; }
+
+:focus-visible {
+  outline: 3px solid var(--foco);
+  outline-offset: 3px;
+}
+
+[hidden] { display: none !important; }
+[tabindex="-1"]:focus { outline: none; }
+
+.oculto {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Botones */
+
+.boton {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+  min-height: 44px;
+  padding: 0.6em 1.1em;
+  border: 2px solid var(--tinta);
+  border-radius: var(--r-control);
+  background: transparent;
+  color: var(--tinta);
+  font: inherit;
+  font-weight: 600;
+  line-height: 1.15;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color var(--dur) var(--curva), color var(--dur) var(--curva), transform 90ms var(--curva);
+}
+.boton:hover { background: color-mix(in srgb, var(--tinta) 8%, transparent); }
+.boton:active { transform: translateY(1px); }
+.boton[disabled], .boton[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+.boton--tinta { background: var(--tinta); color: var(--sobre-tinta); }
+.boton--tinta:hover { background: color-mix(in srgb, var(--tinta) 88%, var(--papel)); }
+.boton--si { background: var(--si); border-color: var(--si); color: var(--sobre-color); }
+.boton--si:hover { background: color-mix(in srgb, var(--si) 88%, var(--tinta)); }
+.boton--peligro { border-color: var(--no-texto); color: var(--no-texto); }
+.boton--peligro:hover { background: color-mix(in srgb, var(--no) 10%, transparent); }
+.boton--ancho { width: 100%; }
+.boton--plano { border-color: transparent; text-decoration: underline; text-underline-offset: 0.2em; padding-inline: 0.4em; }
+.boton--plano:hover { background: transparent; text-decoration-thickness: 2px; }
+
+.icono {
+  width: 1.25em;
+  height: 1.25em;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Selector de tema */
+
+.tema {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: var(--t-0);
+  color: var(--tinta-suave);
+}
+.tema__grupo {
+  display: inline-flex;
+  border: 1px solid var(--borde-control);
+  border-radius: var(--r-control);
+  overflow: hidden;
+}
+.tema button {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--tinta-suave);
+  font: inherit;
+  min-height: 32px;
+  min-width: 44px;
+  padding: 0.3rem 0.55rem;
+  cursor: pointer;
+  position: relative;
+}
+.tema button + button { border-left: 1px solid var(--borde-control); }
+.tema button[aria-pressed="true"] { background: var(--tinta); color: var(--sobre-tinta); }
+.tema button:focus-visible { outline-offset: -3px; }
+/* zona táctil de 44 px aunque el control se vea más bajo */
+.tema button::after { content: ""; position: absolute; inset: -6px 0; }
+
+/* Etiqueta de moción */
+
+.mocion {
+  display: inline-block;
+  padding: 0.12em 0.5em;
+  border-radius: var(--r-control);
+  background: var(--ambar);
+  color: var(--sobre-ambar);
+  font-weight: 650;
+  font-size: 0.86em;
+  line-height: 1.35;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+}

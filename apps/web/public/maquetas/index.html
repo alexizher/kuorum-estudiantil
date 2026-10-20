@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maquetas de Kuorum</title>
+<script src="tema.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap">
+<link rel="stylesheet" href="estilos.css">
+<style>
+  .pagina { max-width: 880px; margin-inline: auto; padding: clamp(24px, 6vw, 72px) 16px 48px; }
+  .marca { font-size: clamp(3rem, 11vw, 6.5rem); line-height: 0.85; }
+  .marca span { display: block; color: var(--tinta-suave); font-size: 0.42em; font-stretch: 75%; margin-top: 0.25em; }
+  .intro { margin-top: 24px; max-width: 46ch; font-size: var(--t-2); line-height: 1.45; }
+  .vistas { margin-top: 40px; border-top: 2px solid var(--tinta); }
+  .vistas li { border-bottom: 1px solid var(--linea); }
+  .vistas a {
+    display: grid; grid-template-columns: 3.2rem 1fr; gap: 2px 16px;
+    padding: 20px 0; text-decoration: none; min-height: 44px;
+  }
+  .vistas a:hover .vistas__nombre { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 0.15em; }
+  .vistas__num { grid-row: 1 / span 2; font-stretch: 62%; font-weight: 850; font-size: 3rem; line-height: 0.9; color: var(--tinta-suave); }
+  .vistas__nombre { font-size: var(--t-4); }
+  .vistas__desc { color: var(--tinta-suave); max-width: 52ch; }
+  .muestras { display: flex; gap: 6px; margin-top: 40px; }
+  .muestras i { width: 28px; height: 28px; background: var(--c); }
+  .pie { margin-top: 32px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; align-items: center; font-size: var(--t-0); color: var(--tinta-suave); }
+</style>
+</head>
+<body>
+<main class="pagina">
+  <h1 class="titular marca">Kuorum Estudiantil <span>Maquetas</span></h1>
+  <p class="intro">Son maquetas navegables con datos de ejemplo, no la aplicación. Sirven para elegir la dirección visual antes de construir.</p>
+  <ol class="vistas">
+    <li><a href="proyeccion.html"><span class="vistas__num num">1</span><span class="titular vistas__nombre">Proyección</span><span class="vistas__desc">Lo que ve el auditorio en el videobeam. Cambia de estado con las teclas 1, 2 y 3.</span></a></li>
+    <li><a href="participante.html"><span class="vistas__num num">2</span><span class="titular vistas__nombre">Participante</span><span class="vistas__desc">El celular de cada estudiante: votar, pedir la palabra y presentar mociones.</span></a></li>
+    <li><a href="mesa.html"><span class="vistas__num num">3</span><span class="titular vistas__nombre">Mesa</span><span class="vistas__desc">El panel de quien modera. Si abres la proyección en otra pestaña, la mesa decide qué se ve.</span></a></li>
+  </ol>
+  <div class="muestras" aria-hidden="true"><i style="--c:var(--tinta)"></i><i style="--c:var(--si)"></i><i style="--c:var(--no)"></i><i style="--c:var(--ambar)"></i></div>
+  <div class="pie">
+    <p>Datos ficticios. Asamblea General de Estudiantes, Universidad de Antioquia.</p>
+    <div data-tema-control></div>
+  </div>
+</main>
+</body>
+</html>

@@ -1,0 +1,497 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Proyección de la asamblea</title>
+<script src="tema.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap">
+<link rel="stylesheet" href="estilos.css">
+<style>
+  /* La proyección escala con el ancho de la pantalla: 1 u = 1/100 del ancho, con topes. */
+  body {
+    --u: clamp(5px, min(1vw, 1.7vh), 24px);
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    font-size: calc(var(--u) * 1.35);
+    overflow-x: hidden;
+  }
+
+  .cabecera {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: calc(var(--u) * 0.6) calc(var(--u) * 2);
+    padding: calc(var(--u) * 2.2) calc(var(--u) * 4) calc(var(--u) * 1.6);
+    border-bottom: 2px solid var(--tinta);
+    margin-inline: calc(var(--u) * 4);
+    padding-inline: 0;
+  }
+  .cabecera__sesion { font-weight: 650; font-size: calc(var(--u) * 1.7); }
+  .cabecera__sesion span { font-weight: 400; color: var(--tinta-suave); }
+  .cabecera__asistentes { font-size: calc(var(--u) * 1.7); }
+  .cabecera__asistentes strong {
+    font-stretch: var(--f-ancho-titular);
+    font-weight: 800;
+    font-size: 1.35em;
+    margin-left: 0.25em;
+  }
+
+  .escena { padding: calc(var(--u) * 3) calc(var(--u) * 4); display: none; }
+  .escena.activa { display: grid; animation: entra 260ms var(--curva); }
+  @keyframes entra { from { opacity: 0; transform: translateY(calc(var(--u) * 0.6)); } }
+
+  /* Votación abierta */
+  #votacion {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: 1fr auto;
+    gap: calc(var(--u) * 3) calc(var(--u) * 5);
+  }
+  .pregunta-grande {
+    font-size: clamp(1.9rem, calc(var(--u) * 4.9), 7.5rem);
+    max-width: 20ch;
+  }
+  .opciones-lista {
+    display: flex;
+    flex-wrap: wrap;
+    gap: calc(var(--u) * 1);
+    margin-top: calc(var(--u) * 3);
+  }
+  .opciones-lista { gap: calc(var(--u) * 1) calc(var(--u) * 3.4); }
+  .opciones-lista li {
+    display: flex;
+    align-items: center;
+    gap: calc(var(--u) * 0.8);
+    font-stretch: 80%;
+    font-weight: 700;
+    font-size: calc(var(--u) * 2.6);
+  }
+  /* Muestra de tinta: el mismo color que tendrá el bloque en los resultados */
+  .opciones-lista li::before {
+    content: "";
+    width: calc(var(--u) * 1.6);
+    height: calc(var(--u) * 1.6);
+    background: var(--color);
+  }
+  .entrada {
+    grid-row: 1 / span 2;
+    grid-column: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: calc(var(--u) * 1.2);
+  }
+  .qr {
+    width: clamp(160px, calc(var(--u) * 23), 480px);
+    aspect-ratio: 1;
+    background: #F6F7F3;
+    padding: calc(var(--u) * 1.4);
+    border: 2px solid var(--tinta);
+  }
+  .qr svg { display: block; width: 100%; height: 100%; }
+  .entrada__texto { font-size: calc(var(--u) * 1.5); color: var(--tinta-suave); }
+  .entrada__url { font-size: calc(var(--u) * 2); font-weight: 600; }
+  .codigo {
+    font-stretch: 62%;
+    font-weight: 800;
+    font-size: calc(var(--u) * 7);
+    line-height: 0.85;
+    letter-spacing: 0.04em;
+  }
+  .avance { align-self: end; max-width: calc(var(--u) * 60); }
+  .avance__texto { font-size: calc(var(--u) * 1.9); display: flex; gap: 0.4em; align-items: baseline; flex-wrap: wrap; }
+  .avance__texto strong {
+    font-stretch: var(--f-ancho-titular);
+    font-weight: 800;
+    font-size: 2em;
+    line-height: 1;
+  }
+  .barra {
+    margin-top: calc(var(--u) * 1);
+    height: calc(var(--u) * 1.4);
+    min-height: 10px;
+    background: color-mix(in srgb, var(--tinta) 12%, transparent);
+  }
+  .barra__llena { height: 100%; background: var(--tinta); transition: width 600ms var(--curva); }
+
+  /* Resultados: el elemento memorable */
+  #resultados {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.9fr);
+    grid-template-rows: auto 1fr;
+    gap: calc(var(--u) * 2) calc(var(--u) * 5);
+  }
+  .pregunta-chica {
+    grid-column: 1 / -1;
+    font-size: calc(var(--u) * 2);
+    max-width: 52ch;
+    color: var(--tinta-suave);
+    font-weight: 500;
+  }
+  .veredicto { align-self: end; padding-bottom: calc(var(--u) * 1); }
+  .veredicto__palabra {
+    font-size: calc(var(--u) * 7.5);
+    color: var(--si-texto);
+    line-height: 0.88;
+  }
+  .veredicto__regla {
+    margin-top: calc(var(--u) * 1.6);
+    font-size: calc(var(--u) * 1.6);
+    max-width: 30ch;
+  }
+  .veredicto__total { margin-top: calc(var(--u) * 1.2); font-size: calc(var(--u) * 1.6); color: var(--tinta-suave); }
+
+  .cartel {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: calc(var(--u) * 2.4);
+    height: calc(var(--u) * 30);
+    border-bottom: calc(var(--u) * 0.5) solid var(--tinta);
+  }
+  .columna {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    text-align: center;
+    min-width: 0;
+  }
+  .columna__pct {
+    font-stretch: 75%;
+    font-weight: 700;
+    font-size: calc(var(--u) * 2.2);
+    line-height: 1;
+    margin-bottom: calc(var(--u) * 0.6);
+  }
+  .columna__cifra {
+    position: relative;
+    z-index: 1;
+    font-stretch: 62%;
+    font-weight: 850;
+    font-size: calc(var(--u) * 12);
+    line-height: 0.74;
+    color: var(--tinta);
+    mix-blend-mode: var(--mezcla);
+    margin-bottom: calc(var(--u) * -4.2);
+  }
+  /* La tinta: bloque plano más una segunda pasada corrida, como en la serigrafía */
+  .columna__tinta {
+    position: relative;
+    flex: none;
+    height: max(calc(var(--u) * 5), calc(var(--alto) * 0.66));
+  }
+  .columna__bloque, .columna__pasada {
+    position: absolute;
+    inset: 0;
+    background: var(--color);
+    border-radius: var(--r-tinta);
+    transform-origin: bottom;
+  }
+  .columna__bloque { filter: url(#tinta); }
+  .columna__pasada {
+    inset: calc(var(--u) * -0.5) calc(var(--u) * -0.4) 0 calc(var(--u) * 0.6);
+    opacity: 0.3;
+    mix-blend-mode: var(--mezcla);
+  }
+  #resultados.activa .columna__tinta { animation: sube 700ms var(--curva) both; transform-origin: bottom; }
+  #resultados.activa .columna:nth-child(2) .columna__tinta { animation-delay: 90ms; }
+  #resultados.activa .columna:nth-child(3) .columna__tinta { animation-delay: 180ms; }
+  @keyframes sube { from { transform: scaleY(0.04); } }
+
+  .rotulos {
+    grid-column: 2;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: calc(var(--u) * 2.4);
+    margin-top: calc(var(--u) * 0.8);
+  }
+  .rotulos li {
+    text-align: center;
+    font-stretch: 80%;
+    font-weight: 700;
+    font-size: calc(var(--u) * 2.4);
+  }
+  .derecha { grid-column: 2; grid-row: 2; display: flex; flex-direction: column; }
+
+  /* En oscuro la cifra no se sobreimprime: va encima del bloque */
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-tema="claro"]) .columna__cifra { margin-bottom: calc(var(--u) * 1.2); }
+    :root:not([data-tema="claro"]) .columna__pasada { opacity: 0.22; }
+  }
+  :root[data-tema="oscuro"] .columna__cifra { margin-bottom: calc(var(--u) * 1.2); }
+  :root[data-tema="oscuro"] .columna__pasada { opacity: 0.22; }
+
+  /* Palabra */
+  #palabra {
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+    gap: calc(var(--u) * 6);
+  }
+  .orador__rotulo { font-size: calc(var(--u) * 2); color: var(--tinta-suave); }
+  .orador__nombre { font-size: calc(var(--u) * 7); margin-top: calc(var(--u) * 0.8); }
+  .orador__facultad { font-size: calc(var(--u) * 2.2); margin-top: calc(var(--u) * 1); }
+  .reloj {
+    margin-top: calc(var(--u) * 3.5);
+    display: flex;
+    align-items: baseline;
+    gap: calc(var(--u) * 2);
+    flex-wrap: wrap;
+  }
+  .reloj__cifra {
+    font-stretch: 62%;
+    font-weight: 850;
+    font-size: calc(var(--u) * 16);
+    line-height: 0.8;
+    transition: color 300ms var(--curva);
+  }
+  .reloj__cifra[data-aviso="pronto"] { color: var(--ambar-texto); }
+  .reloj__cifra[data-aviso="fin"] { color: var(--no-texto); }
+  .reloj__detalle { font-size: calc(var(--u) * 1.9); color: var(--tinta-suave); }
+  .reloj .barra { flex-basis: 100%; height: calc(var(--u) * 0.9); }
+  .reloj .barra__llena { transition: width 1s linear; }
+
+  .fila__titulo { font-size: calc(var(--u) * 2.6); padding-bottom: calc(var(--u) * 1); border-bottom: 2px solid var(--tinta); }
+  .fila li {
+    display: grid;
+    grid-template-columns: calc(var(--u) * 3) 1fr;
+    gap: calc(var(--u) * 0.6) calc(var(--u) * 1);
+    padding: calc(var(--u) * 1.3) 0;
+    border-bottom: 1px solid var(--linea);
+    font-size: calc(var(--u) * 1.9);
+    align-items: baseline;
+  }
+  .fila__pos { font-stretch: 70%; font-weight: 800; font-size: 1.3em; color: var(--tinta-suave); }
+  .fila__nombre { font-weight: 650; }
+  .fila__facultad { color: var(--tinta-suave); }
+  .fila li.es-mocion { border-left: calc(var(--u) * 0.6) solid var(--ambar); padding-left: calc(var(--u) * 1); margin-left: calc(var(--u) * -1.6); background: var(--ambar-fondo); border-bottom-color: transparent; margin-bottom: 2px; }
+  .fila li.es-mocion .fila__pos { color: var(--ambar-texto); }
+  .fila .mocion { margin-bottom: 0.3em; }
+
+  /* Pie con cambio de estado y tema */
+  .pie {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem 1.5rem;
+    padding: 0.75rem calc(var(--u) * 4) 1rem;
+    font-size: 0.875rem;
+    opacity: 0.55;
+    transition: opacity var(--dur) var(--curva);
+  }
+  .pie:hover, .pie:focus-within { opacity: 1; }
+  @media (hover: none) { .pie { opacity: 1; } }
+  .estados { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
+  .estados button {
+    appearance: none;
+    font: inherit;
+    min-height: 44px;
+    padding: 0 0.8rem;
+    border: 1px solid var(--borde-control);
+    border-radius: var(--r-control);
+    background: transparent;
+    color: var(--tinta);
+    cursor: pointer;
+  }
+  .estados button[aria-pressed="true"] { background: var(--tinta); color: var(--sobre-tinta); border-color: var(--tinta); }
+  .estados kbd { font: inherit; font-weight: 700; margin-right: 0.35em; }
+
+  @media (max-width: 900px) {
+    body { --u: clamp(6px, 1.6vw, 24px); }
+    .cabecera { margin-inline: 16px; }
+    .escena { padding-inline: 16px; }
+    .pie { padding-inline: 16px; }
+    #votacion, #palabra { grid-template-columns: 1fr; }
+    #votacion { grid-template-rows: auto; }
+    .entrada { grid-row: auto; grid-column: auto; }
+    #resultados { grid-template-columns: 1fr; }
+    .derecha { grid-column: 1; grid-row: auto; }
+    .cartel { height: 60vw; }
+    .fila li.es-mocion { margin-left: 0; }
+  }
+  @media (max-width: 600px) {
+    body { --u: clamp(9px, 2.6vw, 24px); }
+    .columna__cifra { font-size: calc(var(--u) * 7); margin-bottom: calc(var(--u) * -2.4); }
+    .reloj__cifra { font-size: calc(var(--u) * 10); }
+    .qr { width: min(70vw, 260px); }
+  }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <!-- Borde de tinta irregular, como una plancha de serigrafía -->
+  <filter id="tinta" x="-2%" y="-2%" width="104%" height="104%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="7" result="ruido"/>
+    <feDisplacementMap in="SourceGraphic" in2="ruido" scale="3" xChannelSelector="R" yChannelSelector="G" result="borde"/>
+    <feColorMatrix in="ruido" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -0.9 1.1" result="grano"/>
+    <feComposite in="borde" in2="grano" operator="in"/>
+  </filter>
+</svg>
+
+<header class="cabecera">
+  <p class="cabecera__sesion">Asamblea General de Estudiantes <span>Universidad de Antioquia</span></p>
+  <p class="cabecera__asistentes">Asistentes <strong class="num">1.284</strong></p>
+</header>
+
+<main>
+  <section id="votacion" class="escena activa" aria-labelledby="pregunta-votacion">
+    <div>
+      <h1 id="pregunta-votacion" class="titular pregunta-grande">¿Aprueba la asamblea el pliego de exigencias de bienestar para presentarlo al Consejo Superior?</h1>
+      <ul class="opciones-lista" aria-label="Opciones">
+        <li style="--color: var(--si)">Sí</li>
+        <li style="--color: var(--no)">No</li>
+        <li style="--color: var(--ambar)">Me abstengo</li>
+      </ul>
+    </div>
+    <aside class="entrada" aria-label="Cómo votar">
+      <div class="qr" id="qr" role="img" aria-label="Código QR de ejemplo para entrar a la sala"></div>
+      <p class="entrada__texto">Escanea o entra a <span class="entrada__url">kuo.rum</span> con el código</p>
+      <p class="codigo">K7F2</p>
+    </aside>
+    <div class="avance" aria-live="polite">
+      <p class="avance__texto">Votos emitidos <strong class="num" id="emitidos">812</strong> de <span class="num">1.284</span></p>
+      <div class="barra" aria-hidden="true"><div class="barra__llena" id="barra-votos" style="width: 63.2%"></div></div>
+    </div>
+  </section>
+
+  <section id="resultados" class="escena" aria-labelledby="pregunta-resultados">
+    <h1 id="pregunta-resultados" class="pregunta-chica">¿Aprueba la asamblea el pliego de exigencias de bienestar para presentarlo al Consejo Superior?</h1>
+    <div class="veredicto">
+      <p class="titular veredicto__palabra">Aprobada</p>
+      <p class="veredicto__regla">Regla: mayoría simple de votos emitidos. Sí supera a No por <span class="num">424</span> votos.</p>
+      <p class="veredicto__total"><span class="num">1.156</span> votos emitidos de <span class="num">1.284</span> asistentes</p>
+    </div>
+    <div class="derecha">
+      <div class="cartel" role="list">
+        <div class="columna" role="listitem" style="--color: var(--si); --alto: 100%" aria-label="Sí: 742 votos, 64,2 por ciento">
+          <span class="columna__pct num" aria-hidden="true">64,2 %</span>
+          <span class="columna__cifra num" aria-hidden="true">742</span>
+          <span class="columna__tinta" aria-hidden="true"><span class="columna__pasada"></span><span class="columna__bloque"></span></span>
+        </div>
+        <div class="columna" role="listitem" style="--color: var(--no); --alto: 42.9%" aria-label="No: 318 votos, 27,5 por ciento">
+          <span class="columna__pct num" aria-hidden="true">27,5 %</span>
+          <span class="columna__cifra num" aria-hidden="true">318</span>
+          <span class="columna__tinta" aria-hidden="true"><span class="columna__pasada"></span><span class="columna__bloque"></span></span>
+        </div>
+        <div class="columna" role="listitem" style="--color: var(--ambar); --alto: 12.9%" aria-label="Me abstengo: 96 votos, 8,3 por ciento">
+          <span class="columna__pct num" aria-hidden="true">8,3 %</span>
+          <span class="columna__cifra num" aria-hidden="true">96</span>
+          <span class="columna__tinta" aria-hidden="true"><span class="columna__pasada"></span><span class="columna__bloque"></span></span>
+        </div>
+      </div>
+      <ul class="rotulos" aria-hidden="true">
+        <li>Sí</li>
+        <li>No</li>
+        <li>Me abstengo</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="palabra" class="escena" aria-labelledby="orador-nombre">
+    <div class="orador">
+      <p class="orador__rotulo">Tiene la palabra</p>
+      <h1 id="orador-nombre" class="titular orador__nombre">Valentina Ríos</h1>
+      <p class="orador__facultad">Facultad de Ingeniería</p>
+      <div class="reloj">
+        <p class="reloj__cifra num" id="reloj" aria-label="Tiempo restante">1:22</p>
+        <p class="reloj__detalle">quedan de <span class="num">3:00</span></p>
+        <div class="barra" aria-hidden="true"><div class="barra__llena" id="barra-reloj" style="width: 54.4%"></div></div>
+      </div>
+    </div>
+    <div class="fila">
+      <h2 class="titular fila__titulo">Fila</h2>
+      <ol>
+        <li class="es-mocion"><span class="fila__pos num">1</span><div><span class="mocion">Moción de orden</span><br><span class="fila__nombre">Juan Pablo Arango</span> <span class="fila__facultad">Derecho</span></div></li>
+        <li class="es-mocion"><span class="fila__pos num">2</span><div><span class="mocion">Moción de suficiente ilustración</span><br><span class="fila__nombre">Sara Mejía</span> <span class="fila__facultad">Medicina</span></div></li>
+        <li><span class="fila__pos num">3</span><div><span class="fila__nombre">Andrés Cardona</span> <span class="fila__facultad">Artes</span></div></li>
+        <li><span class="fila__pos num">4</span><div><span class="fila__nombre">Laura Henao</span> <span class="fila__facultad">Ciencias Exactas</span></div></li>
+        <li><span class="fila__pos num">5</span><div><span class="fila__nombre">Mateo Zapata</span> <span class="fila__facultad">Educación</span></div></li>
+      </ol>
+    </div>
+  </section>
+</main>
+
+<footer class="pie">
+  <nav class="estados" aria-label="Estado de la proyección">
+    <button type="button" data-estado="votacion" aria-pressed="true"><kbd>1</kbd>Votación abierta</button>
+    <button type="button" data-estado="resultados" aria-pressed="false"><kbd>2</kbd>Resultados</button>
+    <button type="button" data-estado="palabra" aria-pressed="false"><kbd>3</kbd>Palabra</button>
+    <a href="index.html" style="margin-left:0.6rem">Volver a las maquetas</a>
+  </nav>
+  <div data-tema-control></div>
+</footer>
+
+<script>
+(function () {
+  // QR de relleno: patrón determinista con los tres cuadros de posición. No se puede escanear.
+  var N = 29, s = 1234567;
+  function azar() { s = (s * 16807) % 2147483647; return s / 2147483647; }
+  var d = "";
+  function cuadro(x, y) { d += "M" + x + " " + y + "h1v1h-1z"; }
+  function esPosicion(x, y) {
+    return (x < 8 && y < 8) || (x > N - 9 && y < 8) || (x < 8 && y > N - 9);
+  }
+  for (var y = 0; y < N; y++) for (var x = 0; x < N; x++) {
+    if (esPosicion(x, y)) continue;
+    if (y === 6 || x === 6) { if ((x + y) % 2 === 0) cuadro(x, y); continue; }
+    if (azar() > 0.52) cuadro(x, y);
+  }
+  function posicion(x, y) {
+    d += "M" + x + " " + y + "h7v7h-7zM" + (x + 1) + " " + (y + 1) + "v5h5v-5z" + "M" + (x + 2) + " " + (y + 2) + "h3v3h-3z";
+  }
+  posicion(0, 0); posicion(N - 7, 0); posicion(0, N - 7);
+  document.getElementById("qr").innerHTML =
+    '<svg viewBox="0 0 ' + N + " " + N + '" shape-rendering="crispEdges" aria-hidden="true"><path fill="#1B2242" fill-rule="evenodd" d="' + d + '"/></svg>';
+
+  // Cambio de estado: botones, teclas 1/2/3 y lo que mande la mesa desde otra pestaña.
+  var CLAVE = "kuorum-maqueta-pantalla";
+  var botones = document.querySelectorAll("[data-estado]");
+  function mostrar(estado) {
+    if (!document.getElementById(estado)) return;
+    document.querySelectorAll(".escena").forEach(function (e) { e.classList.toggle("activa", e.id === estado); });
+    botones.forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.estado === estado)); });
+  }
+  botones.forEach(function (b) { b.addEventListener("click", function () { mostrar(b.dataset.estado); }); });
+  document.addEventListener("keydown", function (e) {
+    if (e.altKey || e.ctrlKey || e.metaKey) return;
+    var mapa = { "1": "votacion", "2": "resultados", "3": "palabra" };
+    if (mapa[e.key]) mostrar(mapa[e.key]);
+  });
+  try {
+    var inicial = new URLSearchParams(location.search).get("estado") || localStorage.getItem(CLAVE);
+    if (inicial) mostrar(inicial);
+  } catch (e) {}
+  window.addEventListener("storage", function (e) { if (e.key === CLAVE && e.newValue) mostrar(e.newValue); });
+
+  var quieto = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var estatico = new URLSearchParams(location.search).has("quieto");
+
+  // Votos que van llegando
+  var emitidos = 812, total = 1284, tope = 1156;
+  var nEmitidos = document.getElementById("emitidos"), barraVotos = document.getElementById("barra-votos");
+  function fmt(n) { return n.toLocaleString("es-CO"); }
+  if (!estatico) setInterval(function () {
+    if (emitidos >= tope) return;
+    emitidos = Math.min(tope, emitidos + 1 + Math.floor(Math.random() * 6));
+    nEmitidos.textContent = fmt(emitidos);
+    barraVotos.style.width = (emitidos / total * 100).toFixed(1) + "%";
+  }, quieto ? 4000 : 1400);
+
+  // Cronómetro de la intervención
+  var limite = 180, usados = 98;
+  var reloj = document.getElementById("reloj"), barraReloj = document.getElementById("barra-reloj");
+  function pintarReloj() {
+    var quedan = Math.max(0, limite - usados);
+    reloj.textContent = Math.floor(quedan / 60) + ":" + String(quedan % 60).padStart(2, "0");
+    reloj.dataset.aviso = quedan === 0 ? "fin" : quedan <= 30 ? "pronto" : "";
+    barraReloj.style.width = (usados / limite * 100).toFixed(1) + "%";
+  }
+  pintarReloj();
+  if (!estatico) setInterval(function () { if (usados < limite) { usados++; pintarReloj(); } }, 1000);
+})();
+</script>
+</body>
+</html>
