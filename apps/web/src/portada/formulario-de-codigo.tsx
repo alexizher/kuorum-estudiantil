@@ -6,6 +6,9 @@ import type { FormEvent } from "react";
 import { LARGO_DE_CODIGO_DE_SALA } from "./codigo-de-sala";
 import { useCodigoDeSala } from "./use-codigo-de-sala";
 
+// Deja pegar un código con espacio o guion antes de que el campo lo normalice.
+const HOLGURA_PARA_PEGAR = 4;
+
 interface Propiedades {
   /** Para pruebas; por defecto navega con el router de Next. */
   irA?: (ruta: string) => void;
@@ -34,7 +37,7 @@ export function FormularioDeCodigo({ irA }: Propiedades) {
         autoCapitalize="characters"
         spellCheck={false}
         inputMode="text"
-        maxLength={LARGO_DE_CODIGO_DE_SALA + 4}
+        maxLength={LARGO_DE_CODIGO_DE_SALA + HOLGURA_PARA_PEGAR}
       />
       <Boton type="submit" variante="tinta" ancho>
         Entrar a la sala

@@ -103,7 +103,7 @@
   background: transparent;
   color: var(--tinta-suave);
   font: inherit;
-  min-height: 32px;
+  min-height: 44px;
   min-width: 44px;
   padding: 0.3rem 0.55rem;
   cursor: pointer;
@@ -118,12 +118,6 @@
 }
 .tema button:focus-visible {
   outline-offset: -3px;
-}
-/* zona táctil de 44 px aunque el control se vea más bajo */
-.tema button::after {
-  content: "";
-  position: absolute;
-  inset: -6px 0;
 }
 
 /* Etiqueta de moción */
@@ -192,6 +186,7 @@
 }
 .campo--codigo .campo__entrada::placeholder {
   color: var(--tinta-suave);
+  opacity: 1;
   text-transform: uppercase;
 }
 
