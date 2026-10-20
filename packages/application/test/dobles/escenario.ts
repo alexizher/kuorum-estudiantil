@@ -12,6 +12,7 @@ import { RelojFijo } from "./reloj-fijo.js";
 import { RepositorioDeParticipantesEnMemoria } from "./repositorio-de-participantes-en-memoria.js";
 import { RegistroDeVotosEnMemoria } from "./registro-de-votos-en-memoria.js";
 import { RepositorioDePreguntasEnMemoria } from "./repositorio-de-preguntas-en-memoria.js";
+import { RepositorioDeSolicitudesEnMemoria } from "./repositorio-de-solicitudes-en-memoria.js";
 import { RepositorioDeSesionesEnMemoria } from "./repositorio-de-sesiones-en-memoria.js";
 import { UnidadDeTrabajoInmediata } from "./unidad-de-trabajo-inmediata.js";
 
@@ -20,6 +21,7 @@ export function crearEscenario(salasFijas: string[] = []) {
     sesiones: new RepositorioDeSesionesEnMemoria(),
     participantes: new RepositorioDeParticipantesEnMemoria(),
     preguntas: new RepositorioDePreguntasEnMemoria(),
+    solicitudes: new RepositorioDeSolicitudesEnMemoria(),
     votos: new RegistroDeVotosEnMemoria(),
     unidad: new UnidadDeTrabajoInmediata(),
     hasheador: new HasheadorFalso(),
