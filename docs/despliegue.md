@@ -40,7 +40,12 @@ En una instalación ya creada:
 pnpm publicar
 ```
 
-Corre solo `despliegue` y `verificacion`, sin mirar qué pasos se completaron antes. Hace falta haber corrido `pnpm desplegar` al menos una vez en ese directorio. Si actualizas una instalación hecha antes de que existiera el ingreso de la mesa, corre `pnpm desplegar` (solo ejecuta los pasos nuevos, `secretos` y `administrador`) y después `pnpm publicar` para que el sitio tome los secretos.
+Corre `secretos`, `despliegue` y `verificacion`, sin mirar qué pasos se completaron antes. `secretos` solo agrega los que faltan, así que repetirlo no cambia nada. Hace falta haber corrido `pnpm desplegar` al menos una vez en ese directorio.
+
+Si actualizas una instalación hecha antes de que existiera el ingreso de la mesa, el orden es este:
+
+1. `pnpm publicar`: agrega los secretos nuevos y publica, y el build aplica las migraciones en producción.
+2. `pnpm desplegar`: corre los pasos pendientes, como `administrador`, que necesita las tablas que dejó el paso anterior.
 
 Para fijar el directorio raíz el asistente llama a la API de Vercel y necesita un token. Lo toma de la variable `VERCEL_TOKEN` o, si no existe, del archivo de sesión de la CLI (en Linux, `~/.local/share/com.vercel.cli/auth.json`). El token no se imprime ni se guarda.
 
@@ -104,6 +109,12 @@ La pantalla pública consulta el estado de la sesión cada 3 s mientras hay una 
 - Si superas la cuota, Vercel pausa el despliegue hasta el mes siguiente.
 
 Pon Cloudflare delante en cuanto planees asambleas generales de más de unas 300 personas, o varias sesiones grandes en el mismo mes.
+
+## Límites de tasa
+
+- Votos: tope de 1.000 por minuto por participante (la identidad de la cookie firmada), solo contra inundaciones. Nunca se limitan por IP: un auditorio entero comparte la misma.
+- Ingreso a la sala: tope por IP. La IP se lee de `cf-connecting-ip` si existe, y si no del primer valor de `x-forwarded-for` o de `x-real-ip`, para que con Cloudflare delante los usuarios no queden en un solo cupo.
+- Los contadores viven en la memoria de cada instancia: se pierden al reiniciar y no se comparten entre instancias.
 
 ## Dominio propio con Cloudflare (recomendado para asambleas grandes)
 

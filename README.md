@@ -4,7 +4,7 @@ Herramienta de código abierto para conducir asambleas estudiantiles: proyecta l
 
 Nació para la Asamblea de Estudiantes de la Universidad de Antioquia, pero no depende de ninguna institución: el nombre, los dominios de correo y las facultades se configuran al instalarla.
 
-> **Estado:** la sala en vivo (fase 1a) está completa en la rama `fase-1a`: portada, mesa, proyección y celular, con pruebas de punta a punta. Todavía no se ha usado en una asamblea real, así que pruébala antes con una sesión de ensayo.
+> **Estado:** la sala en vivo (portada, mesa, proyección y celular) tiene pruebas de punta a punta y está en pruebas en la instalación de demostración. Todavía no se ha usado en una asamblea real, así que pruébala antes con una sesión de ensayo.
 
 ## Capturas
 
@@ -41,7 +41,7 @@ La mesa elige cómo se participa en cada sala:
 - **Con códigos (recomendado para decisiones).** La mesa reparte códigos anónimos de un solo uso, impresos o desde su celular, después de revisar el carné. El voto queda atado al código y no al navegador: aunque alguien abra el código en tres navegadores, cuenta un solo voto. El sistema guarda solo un hash del código y nunca sabe a quién se le entregó.
 - **Sala abierta.** Se entra solo con el QR. Hay un voto por navegador, y por eso esas votaciones salen marcadas como "Votación indicativa".
 
-La asistencia es anónima y opcional: es el número de códigos activados, sin nombres. No se usan huellas del dispositivo ni direcciones IP para limitar votos.
+La asistencia es anónima y opcional: es el número de códigos activados, sin nombres. No se usan huellas del dispositivo ni direcciones IP para limitar votos: el tope contra inundaciones es por participante. La IP solo limita los intentos de entrar a una sala.
 
 ### Fila de intervenciones y mociones
 

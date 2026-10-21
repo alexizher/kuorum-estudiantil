@@ -4,7 +4,7 @@ Para quien vota desde su celular. No hay que instalar nada ni crear cuenta.
 
 ## 1. Entrar a la sala
 
-Escanea el QR de la proyección o de tu hoja de códigos. También puedes abrir la dirección corta que aparece en pantalla (por ejemplo `localhost:3150/s/Y3XA`, con el dominio de tu asamblea).
+Escanea el QR de la proyección o de tu hoja de códigos. También puedes abrir la dirección corta que aparece en pantalla (por ejemplo `https://tu-dominio/s/K7F2`).
 
 En una sala con códigos escribe el código que te entregó la mesa y pulsa **Entrar a la sala**. Si el QR de tu hoja ya lleva el código, entras directo. Si te equivocas, aparece un aviso y puedes intentar otra vez.
 

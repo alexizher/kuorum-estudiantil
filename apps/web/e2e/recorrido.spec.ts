@@ -36,7 +36,8 @@ test("recorrido de una sala con códigos", async ({ browser }) => {
   await expect(a.page.getByRole("heading", { name: "Tu voto quedó registrado" })).toBeVisible();
   await b.page.getByRole("radio", { name: "No" }).check({ force: true });
   await b.page.getByRole("button", { name: "Votar" }).click();
-  // El segundo navegador ve la confirmación, pero el servidor lo rechaza como voto repetido.
+  // El servidor lo rechaza como voto repetido (YA_VOTO) y el navegador B muestra la confirmación.
+  await expect(b.page.getByRole("heading", { name: "Tu voto quedó registrado" })).toBeVisible();
 
   // Un tercero vota con otro código.
   const c = await nuevoCelular(browser);
@@ -72,6 +73,7 @@ test("recorrido de una sala con códigos", async ({ browser }) => {
   const proyeccion = await browser.newContext({ viewport: { width: 1280, height: 720 } });
   const pantalla = await proyeccion.newPage();
   await pantalla.goto(`/proyeccion/${sala}`);
+  // Solo cuentan el voto de A y el de C: el intento repetido de B no suma.
   await expect(pantalla.getByText(/^2\s+votos emitidos/)).toBeVisible();
   await expect(pantalla.getByRole("list", { name: "Votos por opción" })).toBeVisible();
 });
