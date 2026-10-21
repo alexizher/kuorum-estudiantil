@@ -312,4 +312,31 @@ describe("FuenteDeEstadoPorConsulta", () => {
     await vaciar();
     expect(alIntentar.mock.calls).toEqual([[false], [true], [true]]);
   });
+
+  it("reprogramar cambia la espera pendiente con el contexto de ahora", async () => {
+    const programadas: number[] = [];
+    const temporizador: Temporizador = {
+      programar(_accion, ms) {
+        programadas.push(ms);
+        return () => undefined;
+      },
+    };
+    let activo = false;
+    const fuente = new FuenteDeEstadoPorConsulta(
+      vi.fn().mockResolvedValue(ok(1)),
+      new PoliticaAdaptativa(),
+      temporizador,
+      undefined,
+      () => ({ votacionAbierta: activo, enFilaDePalabra: false }),
+    );
+    const cancelar = fuente.suscribir("K7F2", vi.fn());
+    await vaciar();
+    expect(programadas).toEqual([12_000]);
+    activo = true;
+    fuente.reprogramar();
+    expect(programadas).toEqual([12_000, 3000]);
+    cancelar();
+    fuente.reprogramar();
+    expect(programadas).toEqual([12_000, 3000]);
+  });
 });

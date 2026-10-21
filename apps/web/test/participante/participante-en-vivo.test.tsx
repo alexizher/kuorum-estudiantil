@@ -149,8 +149,7 @@ describe("ParticipanteEnVivo", () => {
       const s = servidor(salaVacia({ pregunta: preguntaAbierta() }));
       pintar(s);
       await pasar(0);
-      // La primera espera se programó antes de saber que había votación: 12 s.
-      await pasar(12_000);
+      // El contexto se actualiza al llegar el primer estado: ya no espera 12 s.
       const antes = s.consultasDeEstado();
       await pasar(3_000);
       expect(s.consultasDeEstado()).toBe(antes + 1);

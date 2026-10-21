@@ -59,7 +59,8 @@ export function ParticipanteEnVivo({ codigo, codigoInicial, dependencias }: Prop
   const siguiente = contextoDeIntervalo(votacion, palabra);
   useEffect(() => {
     contexto.current = siguiente;
-  }, [siguiente.votacionAbierta, siguiente.enFilaDePalabra]);
+    fuente.reprogramar();
+  }, [fuente, siguiente.votacionAbierta, siguiente.enFilaDePalabra]);
 
   // El código de acceso ya cumplió su trabajo: fuera de la barra de direcciones.
   useEffect(() => {

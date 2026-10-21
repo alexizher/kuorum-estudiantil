@@ -1,7 +1,7 @@
 "use client";
 
 import type { EstadoDeSala } from "@kuorum/contracts";
-import { Pestanas, SelectorDeTema, type ElementoDePestana } from "@kuorum/ui";
+import { Boton, Pestanas, SelectorDeTema, type ElementoDePestana } from "@kuorum/ui";
 import { useState, type ReactNode } from "react";
 import { PanelDePalabra } from "./panel-de-palabra";
 import { PanelDeVoto } from "./panel-de-voto";
@@ -12,7 +12,6 @@ import type { Ingreso } from "./use-ingreso";
 import type { EstadoDeLaSala } from "./use-estado-de-sala";
 import type { Palabra } from "./use-palabra";
 import type { Votacion } from "./use-votacion";
-import { Boton } from "@kuorum/ui";
 
 export interface PropiedadesDeParticipante {
   codigo: string;

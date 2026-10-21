@@ -160,4 +160,37 @@ describe("useIngreso", () => {
     expect(cliente.ingresar).toHaveBeenCalledTimes(2);
     expect(cliente.ingresar).toHaveBeenLastCalledWith("K7F2", { tokenNavegador: TOKEN });
   });
+
+  it("?c= con ingreso previo y cookie vencida cae al código del QR", async () => {
+    const almacen = new AlmacenEnMemoria();
+    almacen.escribir("kuorum-ingresado-K7F2", "1");
+    const cliente = clienteFalso();
+    cliente.ingresar.mockRejectedValueOnce(new ErrorDeAccion(422, "MODO_REQUIERE_CODIGO"));
+    const { result } = montar(cliente, almacen, "abcd-efgh");
+    await waitFor(() => expect(result.current.fase).toBe("dentro"));
+    expect(cliente.ingresar).toHaveBeenCalledTimes(2);
+    expect(cliente.ingresar).toHaveBeenLastCalledWith("K7F2", { codigo: "ABCD-EFGH" });
+  });
+
+  it("el código del QR no se prueba dos veces", async () => {
+    const cliente = clienteFalso();
+    cliente.ingresar.mockRejectedValue(
+      new ErrorDeAccion(422, "CODIGO_NO_EXISTE", "No es de esta sala."),
+    );
+    const { result } = montar(cliente, new AlmacenEnMemoria(), "ABCD-EFGH");
+    await waitFor(() => expect(result.current.fase).toBe("pide-codigo"));
+    cliente.ingresar.mockRejectedValue(new ErrorDeAccion(422, "MODO_REQUIERE_CODIGO"));
+    await act(() => result.current.reintentar());
+    expect(cliente.ingresar).toHaveBeenCalledTimes(2);
+  });
+
+  it("tras un 401 en una sala con códigos el formulario explica que venció", async () => {
+    const cliente = clienteFalso();
+    const { result } = montar(cliente);
+    await waitFor(() => expect(result.current.fase).toBe("dentro"));
+    cliente.ingresar.mockRejectedValueOnce(new ErrorDeAccion(422, "MODO_REQUIERE_CODIGO"));
+    act(() => result.current.perderIngreso());
+    await waitFor(() => expect(result.current.fase).toBe("pide-codigo"));
+    expect(result.current.error).toBe("Tu ingreso a la sala venció. Escribe tu código otra vez.");
+  });
 });

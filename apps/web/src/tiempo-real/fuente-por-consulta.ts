@@ -12,6 +12,8 @@ import {
 } from "./intervalo-adaptativo";
 
 export class FuenteDeEstadoPorConsulta implements FuenteDeEstado {
+  private readonly reprogramadores = new Set<() => void>();
+
   constructor(
     private readonly fetch: typeof globalThis.fetch,
     private readonly politica: PoliticaDeIntervalo,
@@ -29,10 +31,13 @@ export class FuenteDeEstadoPorConsulta implements FuenteDeEstado {
     let activa = true;
     let etiqueta: string | undefined;
     let cancelarEspera: (() => void) | undefined;
+    let consultando = false;
 
     const consultar = async () => {
       if (!activa) return;
+      consultando = true;
       if (typeof document !== "undefined" && document.visibilityState === "hidden") {
+        consultando = false;
         esperar();
         return;
       }
@@ -68,6 +73,7 @@ export class FuenteDeEstadoPorConsulta implements FuenteDeEstado {
           alIntentar?.(false);
         }
       }
+      consultando = false;
       esperar();
     };
     const esperar = () => {
@@ -78,10 +84,24 @@ export class FuenteDeEstadoPorConsulta implements FuenteDeEstado {
         );
     };
 
+    // El contexto cambió: la espera ya programada usó el de antes.
+    const reprogramar = () => {
+      if (!activa || consultando || cancelarEspera === undefined) return;
+      cancelarEspera();
+      esperar();
+    };
+    this.reprogramadores.add(reprogramar);
+
     void consultar();
     return () => {
       activa = false;
       cancelarEspera?.();
+      this.reprogramadores.delete(reprogramar);
     };
+  }
+
+  /** Vuelve a programar la próxima consulta con el contexto de ahora. */
+  reprogramar(): void {
+    for (const reprogramar of this.reprogramadores) reprogramar();
   }
 }

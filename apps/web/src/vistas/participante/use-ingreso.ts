@@ -2,7 +2,12 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Almacen } from "./almacen";
-import { comoErrorDeAccion, type ClienteDeSala, type EntradaDeIngreso } from "./cliente-de-sala";
+import {
+  ErrorDeAccion,
+  comoErrorDeAccion,
+  type ClienteDeSala,
+  type EntradaDeIngreso,
+} from "./cliente-de-sala";
 
 /**
  * verificando: probando si ya hay ingreso. pide-codigo: sala con códigos, falta el código.
@@ -38,12 +43,14 @@ export function useIngreso(
   const [error, setError] = useState<string | undefined>(undefined);
   const [enviando, setEnviando] = useState(false);
   const arrancado = useRef(false);
+  const codigoProbado = useRef(false);
 
   const claveDelToken = `kuorum-token-${codigo}`;
   const claveDeIngreso = `kuorum-ingresado-${codigo}`;
 
   const intentar = useCallback(
-    async (entrada: EntradaDeIngreso): Promise<void> => {
+    async (entrada: EntradaDeIngreso, avisoDeVencido = false): Promise<void> => {
+      if ("codigo" in entrada) codigoProbado.current = true;
       setEnviando(true);
       try {
         await cliente.ingresar(codigo, entrada);
@@ -55,8 +62,19 @@ export function useIngreso(
         const conCodigo = "codigo" in entrada;
         if (fallo.codigo === "SALA_NO_DISPONIBLE") {
           setFase("no-disponible");
+        } else if (
+          !conCodigo &&
+          fallo.codigo === "MODO_REQUIERE_CODIGO" &&
+          codigoInicial !== undefined &&
+          codigoInicial !== "" &&
+          !codigoProbado.current
+        ) {
+          // Cookie vencida pero el QR trae un código sin usar: se entra con él.
+          codigoProbado.current = true;
+          await intentar({ codigo: normalizar(codigoInicial) });
+          return;
         } else if (!conCodigo && fallo.codigo === "MODO_REQUIERE_CODIGO") {
-          setError(undefined);
+          setError(avisoDeVencido ? new ErrorDeAccion(401, "SIN_INGRESO").message : undefined);
           setFase("pide-codigo");
         } else if (!conCodigo) {
           setError(fallo.message);
@@ -69,17 +87,20 @@ export function useIngreso(
         setEnviando(false);
       }
     },
-    [almacen, claveDeIngreso, cliente, codigo],
+    [almacen, claveDeIngreso, cliente, codigo, codigoInicial],
   );
 
-  const conElToken = useCallback((): Promise<void> => {
-    let token = almacen.leer(claveDelToken);
-    if (token === null) {
-      token = generarToken();
-      almacen.escribir(claveDelToken, token);
-    }
-    return intentar({ tokenNavegador: token });
-  }, [almacen, claveDelToken, generarToken, intentar]);
+  const conElToken = useCallback(
+    (avisoDeVencido = false): Promise<void> => {
+      let token = almacen.leer(claveDelToken);
+      if (token === null) {
+        token = generarToken();
+        almacen.escribir(claveDelToken, token);
+      }
+      return intentar({ tokenNavegador: token }, avisoDeVencido);
+    },
+    [almacen, claveDelToken, generarToken, intentar],
+  );
 
   useEffect(() => {
     if (arrancado.current) return;
@@ -115,7 +136,7 @@ export function useIngreso(
     setError(undefined);
     setFase("verificando");
     // En una sala abierta el token basta para recuperar la cookie sin molestar a nadie.
-    void conElToken();
+    void conElToken(true);
   }, [almacen, claveDeIngreso, conElToken]);
 
   return { fase, error, enviando, enviarCodigo, reintentar, perderIngreso };
