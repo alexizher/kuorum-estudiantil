@@ -1,5 +1,33 @@
 # Arquitectura
 
+Monorepo de TypeScript con pnpm y Turborepo. El código se reparte en capas y una regla de CI (dependency-cruiser) impide que se mezclen.
+
+## Capas
+
+```
+domain  <-  application  <-  infrastructure  <-  apps/web
+                 ^                                  |
+              contracts  <------------------------- +
+```
+
+| Paquete                   | Responsabilidad                                                                                                                   | Puede importar          |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
+| `packages/domain`         | Reglas de la asamblea: sesión, preguntas, fila de intervenciones. TypeScript puro.                                                | Nada fuera de sí mismo  |
+| `packages/application`    | Un caso de uso por clase (`EmitirVoto`, `DarLaPalabra`, `ConsultarEstadoDeSala`). Define los puertos (repositorios, reloj, hash). | `domain`                |
+| `packages/infrastructure` | Implementa los puertos: Postgres con Prisma 7 (adaptadores `pg` y Neon), hash SHA-256 de códigos, autenticación de la mesa.       | `domain`, `application` |
+| `packages/contracts`      | Esquemas zod de lo que entra y sale por la API.                                                                                   | Solo zod                |
+| `packages/ui`             | Tokens, tema claro y oscuro, componentes de presentación sin reglas de negocio.                                                   | React                   |
+| `apps/web`                | Next.js 16: rutas de la API, las vistas y la composición (`composicion.ts`), el único lugar donde se instancian las dependencias. | Todos los anteriores    |
+
+Los nombres del dominio van en español (`Sesion`, `Pregunta`, `SolicitudDeLaPalabra`) y el resto en inglés. Los errores del dominio llevan un `codigo` estable (`YA_VOTO`, `CIERRE_OCUPADO`) y la API los traduce con `respuestaDeError`.
+
+## Agregados
+
+- **Sesion.** Una asamblea con su código de sala, su modo (`CON_CODIGOS` o `SALA_ABIERTA`), su estado (`PROGRAMADA`, `EN_CURSO`, `CERRADA`, entre otros) y una `version` que sube con cada cambio de la sala, dentro de la misma transacción. Esa versión es el ETag del estado público.
+- **Pregunta.** Pertenece a una sesión, tiene sus opciones y pasa de `BORRADOR` a `ABIERTA` y `CERRADA`, o a `ANULADA`. El resultado se calcula al cerrar y la mesa decide cuándo proyectarlo.
+- **Participante y código de acceso.** El código se genera una vez, se muestra una vez y se guarda solo como hash. Activarlo crea un participante anónimo, que es lo que cuenta como un voto.
+- **Cola de intervenciones.** Solicitudes de palabra y mociones. Las mociones pasan adelante según su prioridad, y quien habla tiene un tiempo que la mesa puede ampliar.
+
 ## Cómo se guarda el voto secreto
 
 Toda pregunta es secreta. El voto se reparte en dos tablas que no se pueden unir:
@@ -24,3 +52,17 @@ Todos requieren acceso a la base de datos:
 - El `participanteId` es un código anónimo, no una persona. Solo identifica a alguien si fuera del sistema se vincula ese código con su dueño (por ejemplo, al entregar las papeletas con códigos).
 
 La mitigación es confiar en quien opera la base de datos y limitar quién tiene ese acceso.
+
+## Tiempo real
+
+Proyección, celulares y mesa consultan un solo endpoint público, `GET /api/public/v1/salas/{codigoDeSala}/estado`. Responde con `Cache-Control: public, max-age=0, s-maxage=2, stale-while-revalidate=2` y un ETag derivado de `Sesion.version`, así que el borde de Vercel absorbe casi todas las consultas y devuelve 304 cuando nada cambió. La decisión y las mediciones están en [el ADR 0001](adr/0001-transporte-de-tiempo-real.md).
+
+En el cliente, la fuente de estado (`FuenteDeEstadoPorConsulta`) recibe una política de intervalo: la proyección y la mesa consultan cada 3 s, y el celular adapta el intervalo según haya votación abierta o fila.
+
+Nada por participante se consulta de forma periódica. "Ya voté" y "mi lugar en la fila" los calcula el celular con lo que devolvió su última acción y con el estado público. Así el endpoint puede ser público y cacheado sin filtrar datos de nadie.
+
+## Pruebas
+
+- `pnpm test`: unitarias de cada capa y de los componentes, sin base de datos.
+- `pnpm test:int`: contra Postgres real (`podman compose up -d`), incluida la concurrencia de votos y cierres.
+- `pnpm e2e`: Playwright sobre la aplicación construida y una base real. Recorre una sala con códigos entre varios navegadores y comprueba que ninguna pantalla desborde en 360, 768, 1280 y 1920 px. Las capturas de `docs/uso/capturas` las genera `pnpm --filter @kuorum/web capturas` contra una instalación local.

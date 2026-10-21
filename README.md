@@ -4,7 +4,19 @@ Herramienta de código abierto para conducir asambleas estudiantiles: proyecta l
 
 Nació para la Asamblea de Estudiantes de la Universidad de Antioquia, pero no depende de ninguna institución: el nombre, los dominios de correo y las facultades se configuran al instalarla.
 
-> **Estado:** en construcción. La sala en vivo (fase 1a) está en desarrollo en la rama `fase-1a`. Todavía no la uses para una votación real.
+> **Estado:** la sala en vivo (fase 1a) está completa en la rama `fase-1a`: portada, mesa, proyección y celular, con pruebas de punta a punta. Todavía no se ha usado en una asamblea real, así que pruébala antes con una sesión de ensayo.
+
+## Capturas
+
+| Proyección con una votación abierta                                 | Mesa                                                  |
+| ------------------------------------------------------------------- | ----------------------------------------------------- |
+| ![Proyección](docs/uso/capturas/proyeccion-votacion-1280-claro.png) | ![Mesa](docs/uso/capturas/mesa-sesion-1440-claro.png) |
+
+| Celular, votar                                          | Celular, en la fila                                      | Resultado, modo oscuro                                                 |
+| ------------------------------------------------------- | -------------------------------------------------------- | ---------------------------------------------------------------------- |
+| ![Votar](docs/uso/capturas/celular-votar-360-claro.png) | ![Fila](docs/uso/capturas/celular-en-fila-360-claro.png) | ![Resultados](docs/uso/capturas/proyeccion-resultados-1280-oscuro.png) |
+
+Guías paso a paso: [la mesa](docs/uso/mesa.md), [el participante](docs/uso/participante.md) y [la proyección](docs/uso/proyeccion.md).
 
 ## Qué hace
 
@@ -97,6 +109,7 @@ pnpm install
 podman compose up -d   # o docker compose up -d: Postgres en el puerto 54329
 pnpm test              # pruebas unitarias
 pnpm test:int          # pruebas contra Postgres
+pnpm e2e               # Playwright; instala el navegador con: pnpm --filter @kuorum/web exec playwright install chromium
 pnpm lint && pnpm typecheck && pnpm depcheck && pnpm build
 ```
 
