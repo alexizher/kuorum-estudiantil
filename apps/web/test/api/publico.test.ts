@@ -7,7 +7,7 @@ import { POST as palabra } from "../../src/app/api/public/v1/salas/[codigo]/pala
 import { DELETE as retirar } from "../../src/app/api/public/v1/salas/[codigo]/solicitudes/[id]/route";
 import { POST as votos } from "../../src/app/api/public/v1/salas/[codigo]/votos/route";
 import { contenedor } from "../../src/composicion";
-import { limitesPublicos } from "../../src/http/limite-de-tasa";
+import { limitesDeVotos, limitesPublicos } from "../../src/http/limite-de-tasa";
 import { firmar, nombreDeCookie } from "../../src/http/sesion-de-participante";
 
 vi.mock("../../src/composicion", () => ({ contenedor: vi.fn() }));
@@ -82,6 +82,7 @@ beforeEach(() => {
   casos.sesiones.porCodigoDeSala.mockResolvedValue({ id: "s1" });
   vi.mocked(contenedor).mockReturnValue(casos as unknown as ReturnType<typeof contenedor>);
   limitesPublicos.reiniciar();
+  limitesDeVotos.reiniciar();
 });
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -288,11 +289,23 @@ describe("POST votos", () => {
     expect(r.status).toBe(400);
   });
 
-  it("429 después del techo por minuto desde la misma IP", async () => {
-    const o = { cookie: cookieValida(), ip: "203.0.113.6" };
-    limitesPublicos.reiniciar(3);
+  it("429 al pasar del techo por minuto del mismo participante", async () => {
+    const o = { cookie: cookieValida("part-1") };
+    limitesDeVotos.reiniciar(3);
     for (let i = 0; i < 3; i += 1) await votos(peticion("POST", cuerpo, o), sala());
     expect((await votos(peticion("POST", cuerpo, o), sala())).status).toBe(429);
+  });
+
+  it("nunca limita por IP: varios participantes desde la misma IP votan", async () => {
+    limitesPublicos.reiniciar(1);
+    limitesDeVotos.reiniciar(3);
+    for (let i = 0; i < 5; i += 1) {
+      const r = await votos(
+        peticion("POST", cuerpo, { cookie: cookieValida(`part-${i}`), ip: "203.0.113.6" }),
+        sala(),
+      );
+      expect(r.status).toBe(201);
+    }
   });
 });
 

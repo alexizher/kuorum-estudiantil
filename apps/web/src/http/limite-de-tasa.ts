@@ -4,7 +4,8 @@ const MAXIMO = 1000;
 /**
  * Ventana fija por clave, en memoria del proceso. Es un paliativo contra abusos obvios:
  * cada instancia serverless lleva su propia cuenta y se pierde al reiniciar. El techo es
- * alto a propósito: un auditorio entero comparte una IP de NAT, así que solo frena inundaciones. La clave vive solo en memoria, nunca se guarda.
+ * alto a propósito: un auditorio entero comparte una IP de NAT, así que solo frena inundaciones.
+ * La clave vive solo en memoria, nunca se guarda.
  */
 export class LimiteDeTasa {
   private readonly ventanas = new Map<string, { cuenta: number; vence: number }>();
@@ -47,18 +48,31 @@ export class LimiteDeTasa {
   }
 }
 
-/** Un solo valor de x-forwarded-for (el primero) o x-real-ip. */
+/**
+ * IP del cliente, solo para limitar `ingresar`. Detrás de Cloudflare llega en
+ * `cf-connecting-ip`; si no, un solo valor de x-forwarded-for (el primero) o x-real-ip.
+ */
 export function ipDe(solicitud: Request): string | null {
+  const cloudflare = solicitud.headers.get("cf-connecting-ip")?.trim();
+  if (cloudflare) return cloudflare;
   const reenviada = solicitud.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
   if (reenviada) return reenviada;
   const real = solicitud.headers.get("x-real-ip")?.trim();
   return real ? real : null;
 }
 
+/** Límite de `ingresar` por IP. Los votos nunca se limitan por IP (ver `limitesDeVotos`). */
 export const limitesPublicos = new LimiteDeTasa();
 
+/** Límite de votos por participante (id de la cookie firmada), contra inundaciones. */
+export const limitesDeVotos = new LimiteDeTasa();
+
 /** Sin IP legible no se limita: es mejor que bloquear a todos en un mismo cupo. */
-export function excedeElLimite(solicitud: Request, accion: "ingresar" | "votos"): boolean {
+export function excedeElLimiteDeIngreso(solicitud: Request): boolean {
   const ip = ipDe(solicitud);
-  return ip !== null && !limitesPublicos.permite(`${accion}|${ip}`);
+  return ip !== null && !limitesPublicos.permite(`ingresar|${ip}`);
+}
+
+export function excedeElLimiteDeVotos(participanteId: string): boolean {
+  return !limitesDeVotos.permite(participanteId);
 }

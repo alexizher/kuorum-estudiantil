@@ -1,7 +1,7 @@
 import { esquemaIngresar } from "@kuorum/contracts";
 import { contenedor } from "../../../../../../../composicion";
 import { leerCuerpo } from "../../../../../../../http/cuerpo";
-import { excedeElLimite } from "../../../../../../../http/limite-de-tasa";
+import { excedeElLimiteDeIngreso } from "../../../../../../../http/limite-de-tasa";
 import { respuestaDeError } from "../../../../../../../http/respuesta-de-error";
 import {
   accion,
@@ -22,7 +22,7 @@ export async function POST(
   contexto: { params: Promise<{ codigo: string }> },
 ): Promise<Response> {
   try {
-    if (excedeElLimite(request, "ingresar")) return demasiadasSolicitudes();
+    if (excedeElLimiteDeIngreso(request)) return demasiadasSolicitudes();
     const codigo = codigoDeSalaDeLaUrl((await contexto.params).codigo);
     const cuerpo = await leerCuerpo(request, esquemaIngresar);
     if (cuerpo === undefined) return solicitudInvalida();

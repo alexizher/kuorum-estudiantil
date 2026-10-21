@@ -1,6 +1,6 @@
 import { CodigoDeSala, ErrorDeDominio } from "@kuorum/domain";
 import { contenedor } from "../composicion";
-import { excedeElLimite } from "./limite-de-tasa";
+import { excedeElLimiteDeVotos } from "./limite-de-tasa";
 import { respuestaDeError } from "./respuesta-de-error";
 import { demasiadasSolicitudes } from "./respuestas";
 import { codigoDeSalaDeLaUrl, exigirParticipante } from "./sesion-de-participante";
@@ -30,12 +30,12 @@ export async function accionDeParticipante(
   limitar?: "votos",
 ): Promise<Response> {
   try {
-    if (limitar !== undefined && excedeElLimite(solicitud, limitar)) {
-      return demasiadasSolicitudes();
-    }
     const codigo = codigoDeSalaDeLaUrl((await contexto.params).codigo);
     const participanteId = exigirParticipante(solicitud, codigo);
     if (participanteId instanceof Response) return participanteId;
+    if (limitar === "votos" && excedeElLimiteDeVotos(participanteId)) {
+      return demasiadasSolicitudes();
+    }
     return await trabajo({ codigo, participanteId });
   } catch (error) {
     return respuestaDeError(error);

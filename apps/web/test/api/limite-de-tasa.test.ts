@@ -35,6 +35,12 @@ describe("ipDe", () => {
     const r = new Request("http://x.test/", { headers: { "x-forwarded-for": "9.9.9.9, 8.8.8.8" } });
     expect(ipDe(r)).toBe("9.9.9.9");
   });
+  it("prefiere cf-connecting-ip a x-forwarded-for", () => {
+    const r = new Request("http://x.test/", {
+      headers: { "cf-connecting-ip": "5.5.5.5", "x-forwarded-for": "172.70.0.1" },
+    });
+    expect(ipDe(r)).toBe("5.5.5.5");
+  });
   it("cae a x-real-ip y luego a null", () => {
     expect(ipDe(new Request("http://x.test/", { headers: { "x-real-ip": "7.7.7.7" } }))).toBe(
       "7.7.7.7",
