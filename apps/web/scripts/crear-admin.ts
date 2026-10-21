@@ -8,14 +8,18 @@ export interface DependenciasDeCrearAdmin {
   stdout: (texto: string) => void;
   stderr: (texto: string) => void;
   crearCuenta: (datos: DatosDeCuenta) => Promise<void>;
+  /** Cambia la contraseña y el rol de una cuenta existente. */
+  actualizarCuenta: (datos: DatosDeCuenta) => Promise<void>;
 }
 
 const ROLES: readonly RolDeMesa[] = ["SUPERADMIN", "MESA", "DEMO"];
 
-const USO = `Uso: pnpm --filter @kuorum/web crear-admin --correo <correo> --nombre <nombre> [--rol SUPERADMIN|MESA|DEMO] [--generar]
+const USO = `Uso: pnpm --filter @kuorum/web crear-admin --correo <correo> --nombre <nombre> [--rol SUPERADMIN|MESA|DEMO] [--generar] [--actualizar]
 
   --rol: SUPERADMIN (por defecto) y MESA ven todas las sesiones. DEMO es la cuenta de prueba
   pública y solo ve las sesiones que crea.
+
+  --actualizar: la cuenta ya existe; cambia su contraseña y su rol y cierra sus sesiones.
 
   Sin --generar, lee la contraseña de stdin (mínimo ${LARGO_MINIMO_DE_CONTRASENA} caracteres).
   Con --generar, crea una contraseña fuerte y la imprime una sola vez por stdout.
@@ -35,6 +39,7 @@ export async function ejecutarCrearAdmin(
     nombre?: string | undefined;
     generar?: boolean | undefined;
     rol?: string | undefined;
+    actualizar?: boolean | undefined;
   };
   try {
     valores = parseArgs({
@@ -44,6 +49,7 @@ export async function ejecutarCrearAdmin(
         nombre: { type: "string" },
         generar: { type: "boolean" },
         rol: { type: "string" },
+        actualizar: { type: "boolean" },
       },
     }).values;
   } catch {
@@ -64,13 +70,15 @@ export async function ejecutarCrearAdmin(
     return 1;
   }
   try {
-    await deps.crearCuenta({ correo, nombre, contrasena, rol });
+    const datos = { correo, nombre, contrasena, rol };
+    if (valores.actualizar) await deps.actualizarCuenta(datos);
+    else await deps.crearCuenta(datos);
   } catch (error) {
     deps.stderr(`${error instanceof Error ? error.message : String(error)}\n`);
     return 1;
   }
   if (generar) deps.stdout(`${contrasena}\n`);
-  deps.stderr(`Cuenta creada para ${correo}.\n`);
+  deps.stderr(`Cuenta ${valores.actualizar ? "actualizada" : "creada"} para ${correo}.\n`);
   return 0;
 }
 
@@ -83,12 +91,13 @@ async function leerStdin(): Promise<string> {
 async function principal(): Promise<number> {
   // Import dinámico: las pruebas importan este archivo sin tocar la base ni el entorno.
   const { contenedor } = await import("../src/composicion");
-  const { crearCuentaDeMesa } = await import("../src/auth/crear-cuenta");
+  const { actualizarCuentaDeMesa, crearCuentaDeMesa } = await import("../src/auth/crear-cuenta");
   return ejecutarCrearAdmin(process.argv.slice(2), {
     leerStdin,
     stdout: (texto) => process.stdout.write(texto),
     stderr: (texto) => process.stderr.write(texto),
     crearCuenta: (datos) => crearCuentaDeMesa(contenedor().autenticacion(), datos),
+    actualizarCuenta: (datos) => actualizarCuentaDeMesa(contenedor().autenticacion(), datos),
   });
 }
 

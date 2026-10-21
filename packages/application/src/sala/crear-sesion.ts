@@ -9,7 +9,10 @@ import {
 import type { RepositorioDeSesiones } from "../puertos/repositorio-de-sesiones.js";
 import type { UnidadDeTrabajo } from "../puertos/unidad-de-trabajo.js";
 import type { Actor } from "./actor.js";
-import { LIMITE_DE_SESIONES_ACTIVAS_DE_DEMO } from "./limites-de-demo.js";
+import {
+  LIMITE_DE_SESIONES_ACTIVAS_DE_DEMO,
+  MAXIMO_DE_SESIONES_DE_DEMO,
+} from "./limites-de-demo.js";
 
 const INTENTOS_DE_CODIGO = 5;
 
@@ -34,6 +37,12 @@ export class CrearSesion {
         (await this.sesiones.contarActivasDe(actor.id)) >= LIMITE_DE_SESIONES_ACTIVAS_DE_DEMO
       ) {
         throw new ErrorDeDominio("LIMITE_DE_DEMO");
+      }
+      if (
+        actor.rol === "DEMO" &&
+        (await this.sesiones.contarDe(actor.id)) >= MAXIMO_DE_SESIONES_DE_DEMO
+      ) {
+        throw new ErrorDeDominio("LIMITE_DE_SESIONES_DE_DEMO");
       }
       for (let intento = 0; intento < INTENTOS_DE_CODIGO; intento += 1) {
         const sesion = Sesion.nueva(

@@ -16,6 +16,10 @@ const RUTAS_BLOQUEADAS_A_LA_CUENTA_DE_PRUEBA: readonly string[] = [
   "/update-user",
   "/set-password",
   "/delete-user",
+  // Una sola cuenta compartida: una persona no debe sacar a las demás.
+  "/revoke-sessions",
+  "/revoke-other-sessions",
+  "/revoke-session",
 ];
 
 export const MENSAJE_DE_CUENTA_DE_PRUEBA = "La cuenta de prueba no puede cambiar sus datos.";

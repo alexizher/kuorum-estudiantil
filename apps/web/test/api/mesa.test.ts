@@ -311,7 +311,25 @@ describe("API de la mesa", () => {
   it("GET sesiones pasa el actor a la lista, que decide qué ve cada rol", async () => {
     rolActual = "DEMO";
     await listar(pedir("GET"));
-    expect(casos.listarSesionesDeLaMesa.ejecutar).toHaveBeenCalledWith({ ...ACTOR, rol: "DEMO" });
+    expect(casos.listarSesionesDeLaMesa.ejecutar).toHaveBeenCalledWith(
+      { ...ACTOR, rol: "DEMO" },
+      { incluirCuentaDePrueba: false },
+    );
+  });
+
+  it("GET sesiones solo pide las de la cuenta de prueba con ?incluirPrueba=1", async () => {
+    await listar(pedir("GET"));
+    expect(casos.listarSesionesDeLaMesa.ejecutar).toHaveBeenLastCalledWith(ACTOR, {
+      incluirCuentaDePrueba: false,
+    });
+    await listar(new Request("http://localhost/api/mesa/v1/sesiones?incluirPrueba=1"));
+    expect(casos.listarSesionesDeLaMesa.ejecutar).toHaveBeenLastCalledWith(ACTOR, {
+      incluirCuentaDePrueba: true,
+    });
+    await listar(new Request("http://localhost/api/mesa/v1/sesiones?incluirPrueba=si"));
+    expect(casos.listarSesionesDeLaMesa.ejecutar).toHaveBeenLastCalledWith(ACTOR, {
+      incluirCuentaDePrueba: false,
+    });
   });
 
   it("todas las rutas con sesión o pregunta pasan el actor con su rol a los casos de uso", async () => {

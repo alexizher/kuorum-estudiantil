@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { createPrismaClient, crearAdaptadorDeAutenticacion } from "@kuorum/infrastructure";
 import { crearAuth, type Autenticacion } from "../src/auth/crear-auth";
-import { crearCuentaDeMesa } from "../src/auth/crear-cuenta";
+import { actualizarCuentaDeMesa, crearCuentaDeMesa } from "../src/auth/crear-cuenta";
 import { contenedor } from "../src/composicion";
 import { exigirMesa } from "../src/http/exigir-mesa";
 
@@ -287,6 +287,9 @@ describe("roles de la mesa (Postgres local)", () => {
     ["/change-email", { newEmail: "nuevo@ejemplo.test" }],
     ["/update-user", { name: "Otro nombre" }],
     ["/delete-user", { password: CONTRASENA }],
+    ["/revoke-sessions", {}],
+    ["/revoke-other-sessions", {}],
+    ["/revoke-session", { token: "cualquiera" }],
   ])("la cuenta de prueba no puede usar %s (403)", async (ruta, cuerpo) => {
     const cookie = await conCookie(CORREO_DEMO);
     const respuesta = await llamarConCookie(ruta, cookie, cuerpo);
@@ -317,5 +320,41 @@ describe("roles de la mesa (Postgres local)", () => {
     expect((await ingresar(CORREO_SUPER, "otra-contrasena-larga-9", "198.51.100.78")).status).toBe(
       200,
     );
+  });
+
+  it("actualizar la cuenta de prueba cambia su contraseña y su rol, y cierra sus sesiones", async () => {
+    const cookie = await conCookie(CORREO_DEMO);
+    await actualizarCuentaDeMesa(auth, {
+      correo: CORREO_DEMO,
+      nombre: "Demo",
+      contrasena: "contrasena-rotada-123",
+      rol: "DEMO",
+    });
+
+    expect((await ingresar(CORREO_DEMO, CONTRASENA, "198.51.100.80")).status).toBe(401);
+    expect((await ingresar(CORREO_DEMO, "contrasena-rotada-123", "198.51.100.81")).status).toBe(
+      200,
+    );
+    const actor = await exigirMesa(new Request(`${URL_BASE}/api/mesa/x`, { headers: { cookie } }));
+    expect(actor).toBeInstanceOf(Response);
+
+    await actualizarCuentaDeMesa(auth, {
+      correo: CORREO_DEMO,
+      nombre: "Demo",
+      contrasena: "contrasena-rotada-123",
+      rol: "MESA",
+    });
+    expect(await rolEnLaBase(CORREO_DEMO)).toBe("MESA");
+  });
+
+  it("actualizar una cuenta que no existe falla", async () => {
+    await expect(
+      actualizarCuentaDeMesa(auth, {
+        correo: "nadie@ejemplo.test",
+        nombre: "X",
+        contrasena: CONTRASENA,
+        rol: "DEMO",
+      }),
+    ).rejects.toThrow(/no existe/i);
   });
 });

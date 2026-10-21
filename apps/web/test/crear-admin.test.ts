@@ -1,7 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 import { ejecutarCrearAdmin, type DependenciasDeCrearAdmin } from "../scripts/crear-admin";
 
-function dependencias(stdin: string, crear = vi.fn(async () => undefined)) {
+function dependencias(
+  stdin: string,
+  crear = vi.fn(async () => undefined),
+  actualizar = vi.fn(async () => undefined),
+) {
   const salida: string[] = [];
   const errores: string[] = [];
   const deps: DependenciasDeCrearAdmin = {
@@ -9,8 +13,9 @@ function dependencias(stdin: string, crear = vi.fn(async () => undefined)) {
     stdout: (texto) => salida.push(texto),
     stderr: (texto) => errores.push(texto),
     crearCuenta: crear,
+    actualizarCuenta: actualizar,
   };
-  return { deps, salida, errores, crear };
+  return { deps, salida, errores, crear, actualizar };
 }
 
 describe("crear-admin", () => {
@@ -109,5 +114,62 @@ describe("crear-admin", () => {
       rol: "DEMO",
     });
     expect([...salida, ...errores].join("\n")).not.toContain("contrasena-de-demo-1234");
+  });
+
+  describe("--actualizar", () => {
+    it("cambia la contraseña y el rol de una cuenta que ya existe, sin crear otra", async () => {
+      const { deps, crear, actualizar, salida, errores } = dependencias("nueva-contrasena-1234\n");
+      expect(
+        await ejecutarCrearAdmin(
+          [
+            "--correo",
+            "demo@b.test",
+            "--nombre",
+            "Cuenta de prueba",
+            "--rol",
+            "DEMO",
+            "--actualizar",
+          ],
+          deps,
+        ),
+      ).toBe(0);
+      expect(crear).not.toHaveBeenCalled();
+      expect(actualizar).toHaveBeenCalledWith({
+        correo: "demo@b.test",
+        nombre: "Cuenta de prueba",
+        contrasena: "nueva-contrasena-1234",
+        rol: "DEMO",
+      });
+      expect([...salida, ...errores].join("\n")).not.toContain("nueva-contrasena-1234");
+    });
+
+    it("con --generar imprime la contraseña nueva una sola vez", async () => {
+      const { deps, actualizar, salida } = dependencias("");
+      await ejecutarCrearAdmin(
+        ["--correo", "demo@b.test", "--nombre", "X", "--rol", "DEMO", "--actualizar", "--generar"],
+        deps,
+      );
+      expect(salida).toHaveLength(1);
+      expect(actualizar).toHaveBeenCalledWith(
+        expect.objectContaining({ contrasena: salida[0]?.trim() }),
+      );
+    });
+
+    it("si la cuenta no existe falla sin imprimir la contraseña generada", async () => {
+      const { deps, salida } = dependencias(
+        "",
+        undefined,
+        vi.fn(async () => {
+          throw new Error("No existe una cuenta con el correo demo@b.test.");
+        }),
+      );
+      expect(
+        await ejecutarCrearAdmin(
+          ["--correo", "demo@b.test", "--nombre", "X", "--actualizar", "--generar"],
+          deps,
+        ),
+      ).toBe(1);
+      expect(salida).toHaveLength(0);
+    });
   });
 });

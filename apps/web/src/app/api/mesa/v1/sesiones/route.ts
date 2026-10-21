@@ -29,7 +29,11 @@ function aVista(sesion: SesionVista) {
 
 export function GET(request: Request): Promise<Response> {
   return accionDeMesa(request, async (actor) => {
-    const sesiones = await contenedor().listarSesionesDeLaMesa.ejecutar(actor);
+    // Solo SUPERADMIN consigue algo con esto: el caso de uso lo ignora para los demás roles.
+    const incluirCuentaDePrueba = new URL(request.url).searchParams.get("incluirPrueba") === "1";
+    const sesiones = await contenedor().listarSesionesDeLaMesa.ejecutar(actor, {
+      incluirCuentaDePrueba,
+    });
     return accion({ sesiones: sesiones.map(aVista) });
   });
 }

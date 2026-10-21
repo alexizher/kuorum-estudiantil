@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { AbrirPregunta, CrearPregunta } from "../../src/index.js";
+import {
+  AbrirPregunta,
+  CrearPregunta,
+  MAXIMO_DE_PREGUNTAS_POR_SESION_DE_DEMO,
+} from "../../src/index.js";
 import { crearEscenario, sembrarPregunta, sembrarSesion } from "../dobles/escenario.js";
-import { superadmin } from "../dobles/actores.js";
+import { demo, superadmin } from "../dobles/actores.js";
 
 function crear(e: ReturnType<typeof crearEscenario>) {
   return new CrearPregunta(e.sesiones, e.preguntas, e.ids, e.unidad);
@@ -9,6 +13,37 @@ function crear(e: ReturnType<typeof crearEscenario>) {
 function abrir(e: ReturnType<typeof crearEscenario>) {
   return new AbrirPregunta(e.sesiones, e.preguntas, e.reloj, e.unidad);
 }
+
+describe("CrearPregunta: tope de la cuenta de prueba", () => {
+  it("permite 20 preguntas por sesión y rechaza la 21", async () => {
+    const e = crearEscenario();
+    expect(MAXIMO_DE_PREGUNTAS_POR_SESION_DE_DEMO).toBe(20);
+    const sesion = await sembrarSesion(e, { creadaPorId: demo.id, estado: "EN_CURSO" });
+    for (let i = 0; i < 20; i += 1) await sembrarPregunta(e, sesion.id, "ANULADA");
+
+    await expect(
+      crear(e).ejecutar(demo, sesion.id, "¿Una más?", ["Sí", "No"]),
+    ).rejects.toMatchObject({ codigo: "LIMITE_DE_PREGUNTAS_DE_DEMO" });
+    expect(await e.preguntas.deSesion(sesion.id)).toHaveLength(20);
+  });
+
+  it("es por sesión y no limita a SUPERADMIN", async () => {
+    const e = crearEscenario();
+    const llena = await sembrarSesion(e, { creadaPorId: demo.id, estado: "EN_CURSO" });
+    const otra = await sembrarSesion(e, { creadaPorId: demo.id, estado: "EN_CURSO" });
+    const deJefe = await sembrarSesion(e, { creadaPorId: superadmin.id, estado: "EN_CURSO" });
+    for (let i = 0; i < 20; i += 1) {
+      await sembrarPregunta(e, llena.id, "ANULADA");
+      await sembrarPregunta(e, deJefe.id, "ANULADA");
+    }
+    await expect(
+      crear(e).ejecutar(demo, otra.id, "¿Aprobamos?", ["Sí", "No"]),
+    ).resolves.toBeDefined();
+    await expect(
+      crear(e).ejecutar(superadmin, deJefe.id, "¿Aprobamos?", ["Sí", "No"]),
+    ).resolves.toBeDefined();
+  });
+});
 
 describe("CrearPregunta", () => {
   it.each(["PROGRAMADA", "ABIERTA", "EN_CURSO"] as const)(

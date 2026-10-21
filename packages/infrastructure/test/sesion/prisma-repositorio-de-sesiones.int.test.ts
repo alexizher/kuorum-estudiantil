@@ -173,4 +173,28 @@ describe("PrismaRepositorioDeSesiones", () => {
 
     expect((await banco.sesiones.porId(sesion.id))?.creadaPorId).toBeNull();
   });
+
+  it("sinCuentaDePrueba deja fuera lo de cuentas DEMO y conserva lo de las demás y lo sin dueño", async () => {
+    const demo = await usuarioDePrueba(banco, "DEMO");
+    const jefe = await usuarioDePrueba(banco, "SUPERADMIN");
+    const mesa = await usuarioDePrueba(banco, "MESA");
+    const deDemo = sesionDePrueba({ creadaPorId: demo });
+    const deJefe = sesionDePrueba({ creadaPorId: jefe });
+    const deMesa = sesionDePrueba({ creadaPorId: mesa });
+    const sinDueno = sesionDePrueba();
+    for (const s of [deDemo, deJefe, deMesa, sinDueno]) await banco.sesiones.guardar(s);
+
+    const visibles = (await banco.sesiones.listar({ sinCuentaDePrueba: true })).map((s) => s.id);
+    expect(visibles.sort()).toEqual([deJefe.id, deMesa.id, sinDueno.id].sort());
+    expect(await banco.sesiones.listar({})).toHaveLength(4);
+  });
+
+  it("contarDe cuenta todas las del creador, en cualquier estado", async () => {
+    const demo = await usuarioDePrueba(banco, "DEMO");
+    for (const estado of ["PROGRAMADA", "CERRADA", "CANCELADA"] as const) {
+      await banco.sesiones.guardar(sesionDePrueba({ creadaPorId: demo, estado }));
+    }
+    expect(await banco.sesiones.contarDe(demo)).toBe(3);
+    expect(await banco.sesiones.contarDe("nadie")).toBe(0);
+  });
 });

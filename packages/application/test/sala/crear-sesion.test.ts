@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { CrearSesion, LIMITE_DE_SESIONES_ACTIVAS_DE_DEMO } from "../../src/index.js";
+import {
+  CrearSesion,
+  LIMITE_DE_SESIONES_ACTIVAS_DE_DEMO,
+  MAXIMO_DE_SESIONES_DE_DEMO,
+} from "../../src/index.js";
 import { crearEscenario, sembrarSesion } from "../dobles/escenario.js";
 import { demo, mesa, otraDemo, superadmin } from "../dobles/actores.js";
 
@@ -82,6 +86,21 @@ describe("CrearSesion", () => {
       for (let i = 0; i < 4; i += 1) await sembrarSesion(e, { creadaPorId: demo.id });
       await expect(
         casoDeUso(e).ejecutar(demo, "La quinta activa", "SALA_ABIERTA"),
+      ).resolves.toBeDefined();
+    });
+
+    it("tampoco puede tener más de 20 sesiones en total, aunque estén terminadas", async () => {
+      const e = crearEscenario();
+      expect(MAXIMO_DE_SESIONES_DE_DEMO).toBe(20);
+      for (let i = 0; i < 20; i += 1) {
+        await sembrarSesion(e, { creadaPorId: demo.id, estado: "CERRADA" });
+      }
+      await expect(
+        casoDeUso(e).ejecutar(demo, "Crear y terminar sin fin", "SALA_ABIERTA"),
+      ).rejects.toMatchObject({ codigo: "LIMITE_DE_SESIONES_DE_DEMO" });
+      expect(await e.sesiones.contarDe(demo.id)).toBe(20);
+      await expect(
+        casoDeUso(e).ejecutar(superadmin, "Sin tope para la mesa", "SALA_ABIERTA"),
       ).resolves.toBeDefined();
     });
 

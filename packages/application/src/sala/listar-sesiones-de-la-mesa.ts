@@ -2,11 +2,21 @@ import type { Sesion } from "@kuorum/domain";
 import type { RepositorioDeSesiones } from "../puertos/repositorio-de-sesiones.js";
 import type { Actor } from "./actor.js";
 
-/** La cuenta de prueba solo ve sus sesiones; SUPERADMIN y MESA ven todas. */
+export interface OpcionesDeLaLista {
+  /** Solo SUPERADMIN: incluye también las sesiones de la cuenta de prueba. */
+  incluirCuentaDePrueba?: boolean;
+}
+
+/**
+ * La cuenta de prueba solo ve sus sesiones. SUPERADMIN y MESA ven las demás, sin las de la cuenta
+ * de prueba (que se llenan de ensayos públicos); SUPERADMIN puede pedirlas con la opción.
+ */
 export class ListarSesionesDeLaMesa {
   constructor(private readonly sesiones: RepositorioDeSesiones) {}
 
-  ejecutar(actor: Actor): Promise<Sesion[]> {
-    return this.sesiones.listar(actor.rol === "DEMO" ? { creadaPorId: actor.id } : {});
+  ejecutar(actor: Actor, opciones: OpcionesDeLaLista = {}): Promise<Sesion[]> {
+    if (actor.rol === "DEMO") return this.sesiones.listar({ creadaPorId: actor.id });
+    const incluir = actor.rol === "SUPERADMIN" && opciones.incluirCuentaDePrueba === true;
+    return this.sesiones.listar(incluir ? {} : { sinCuentaDePrueba: true });
   }
 }

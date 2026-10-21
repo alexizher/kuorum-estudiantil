@@ -82,15 +82,49 @@ describe("familia sala: la cuenta de prueba solo toca sus sesiones", () => {
 });
 
 describe("ListarSesionesDeLaMesa", () => {
-  it("la cuenta de prueba solo ve las suyas; SUPERADMIN y MESA ven todas", async () => {
+  async function montarLista() {
     const { e, propia, deSuper } = await montar();
+    e.sesiones.cuentasDeDemo.add(demo.id);
+    e.sesiones.cuentasDeDemo.add(otraDemo.id);
+    const deOtraDemo = await sembrarSesion(e, { creadaPorId: otraDemo.id });
+    const deMesa = await sembrarSesion(e, { creadaPorId: mesa.id });
     const sinDueno = await sembrarSesion(e);
-    const caso = new ListarSesionesDeLaMesa(e.sesiones);
+    return {
+      e,
+      propia,
+      deSuper,
+      deOtraDemo,
+      deMesa,
+      sinDueno,
+      caso: new ListarSesionesDeLaMesa(e.sesiones),
+    };
+  }
 
+  it("la cuenta de prueba solo ve las suyas, con o sin la opción", async () => {
+    const { propia, caso } = await montarLista();
     expect((await caso.ejecutar(demo)).map((s) => s.id)).toEqual([propia.id]);
-    expect(await caso.ejecutar(otraDemo)).toEqual([]);
-    const todas = [propia.id, deSuper.id, sinDueno.id];
-    expect((await caso.ejecutar(superadmin)).map((s) => s.id)).toEqual(todas);
-    expect((await caso.ejecutar(mesa)).map((s) => s.id)).toEqual(todas);
+    expect((await caso.ejecutar(demo, { incluirCuentaDePrueba: true })).map((s) => s.id)).toEqual([
+      propia.id,
+    ]);
+  });
+
+  it("SUPERADMIN y MESA no ven las de la cuenta de prueba por defecto", async () => {
+    const { deSuper, deMesa, sinDueno, caso } = await montarLista();
+    const esperadas = [deSuper.id, deMesa.id, sinDueno.id];
+    expect((await caso.ejecutar(superadmin)).map((s) => s.id)).toEqual(esperadas);
+    expect((await caso.ejecutar(mesa)).map((s) => s.id)).toEqual(esperadas);
+  });
+
+  it("solo SUPERADMIN puede pedir también las de la cuenta de prueba", async () => {
+    const { propia, deSuper, deOtraDemo, deMesa, sinDueno, caso } = await montarLista();
+    const todas = [propia.id, deSuper.id, deOtraDemo.id, deMesa.id, sinDueno.id];
+    expect(
+      (await caso.ejecutar(superadmin, { incluirCuentaDePrueba: true })).map((s) => s.id),
+    ).toEqual(todas);
+    expect((await caso.ejecutar(mesa, { incluirCuentaDePrueba: true })).map((s) => s.id)).toEqual([
+      deSuper.id,
+      deMesa.id,
+      sinDueno.id,
+    ]);
   });
 });

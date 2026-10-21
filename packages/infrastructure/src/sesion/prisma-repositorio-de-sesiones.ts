@@ -37,12 +37,23 @@ export class PrismaRepositorioDeSesiones implements RepositorioDeSesiones {
     return fila === null ? null : this.recordar(aDominio(fila));
   }
 
-  async listar(filtro: { creadaPorId?: string } = {}): Promise<Sesion[]> {
+  async listar(
+    filtro: { creadaPorId?: string; sinCuentaDePrueba?: boolean } = {},
+  ): Promise<Sesion[]> {
     const filas = await this.contexto.cliente().sesion.findMany({
-      where: filtro.creadaPorId === undefined ? {} : { creadaPorId: filtro.creadaPorId },
+      where: {
+        ...(filtro.creadaPorId === undefined ? {} : { creadaPorId: filtro.creadaPorId }),
+        ...(filtro.sinCuentaDePrueba === true
+          ? { OR: [{ creadaPorId: null }, { creadaPor: { rol: { not: "DEMO" as const } } }] }
+          : {}),
+      },
       orderBy: { creadaEn: "asc" },
     });
     return filas.map((fila) => this.recordar(aDominio(fila)));
+  }
+
+  contarDe(creadaPorId: string): Promise<number> {
+    return this.contexto.cliente().sesion.count({ where: { creadaPorId } });
   }
 
   contarActivasDe(creadaPorId: string): Promise<number> {

@@ -40,3 +40,33 @@ export async function crearCuentaDeMesa(
     throw error;
   }
 }
+
+/**
+ * Cambia la contraseña y el rol de una cuenta que ya existe y cierra sus sesiones abiertas.
+ * Sirve para rotar la contraseña de la cuenta de prueba sin borrarla: borrarla y crearla de nuevo
+ * dejaría sus sesiones sin dueño.
+ */
+export async function actualizarCuentaDeMesa(
+  auth: Autenticacion,
+  { correo, contrasena, rol }: DatosDeCuenta,
+): Promise<void> {
+  if (contrasena.length < LARGO_MINIMO_DE_CONTRASENA) {
+    throw new Error(`La contraseña debe tener al menos ${LARGO_MINIMO_DE_CONTRASENA} caracteres.`);
+  }
+  const contexto = await auth.$context;
+  const correoNormal = correo.trim().toLowerCase();
+  const encontrado = await contexto.internalAdapter.findUserByEmail(correoNormal, {
+    includeAccounts: false,
+  });
+  if (encontrado === null) throw new Error(`No existe una cuenta con el correo ${correoNormal}.`);
+  const usuario = encontrado.user;
+  await contexto.internalAdapter.updatePassword(
+    usuario.id,
+    await contexto.password.hash(contrasena),
+  );
+  await contexto.internalAdapter.updateUser(usuario.id, { rol });
+  await contexto.adapter.deleteMany({
+    model: "session",
+    where: [{ field: "userId", value: usuario.id }],
+  });
+}

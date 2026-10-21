@@ -2,6 +2,8 @@ import {
   CODIGOS_MAXIMOS_POR_SESION_DE_DEMO,
   CODIGOS_MAXIMOS_POR_SOLICITUD_DE_DEMO,
   LIMITE_DE_SESIONES_ACTIVAS_DE_DEMO,
+  MAXIMO_DE_PREGUNTAS_POR_SESION_DE_DEMO,
+  MAXIMO_DE_SESIONES_DE_DEMO,
 } from "@kuorum/application";
 import { ErrorDeDominio, SesionNoEncontrada } from "@kuorum/domain";
 
@@ -26,6 +28,8 @@ const ESTADO_POR_CODIGO: Readonly<Record<string, number>> = {
   SESION_CON_VOTACION_ABIERTA: 409,
   LIMITE_DE_DEMO: 409,
   LIMITE_DE_CODIGOS_DE_DEMO: 409,
+  LIMITE_DE_SESIONES_DE_DEMO: 409,
+  LIMITE_DE_PREGUNTAS_DE_DEMO: 409,
   PARTICIPANTE_AJENO: 403,
   NO_ES_TUYA: 403,
 };
@@ -38,6 +42,8 @@ const MENSAJE_POR_CODIGO: Readonly<Record<string, string>> = {
   CODIGO_NO_EXISTE: "Ese código no es de esta sala.",
   SESION_CON_VOTACION_ABIERTA: "Cierra la votación abierta antes de terminar la sesión.",
   LIMITE_DE_DEMO: `La cuenta de prueba puede tener hasta ${LIMITE_DE_SESIONES_ACTIVAS_DE_DEMO} sesiones activas. Termina una para crear otra.`,
+  LIMITE_DE_SESIONES_DE_DEMO: `La cuenta de prueba puede crear hasta ${MAXIMO_DE_SESIONES_DE_DEMO} sesiones al día. Mañana se borran y podrás crear más.`,
+  LIMITE_DE_PREGUNTAS_DE_DEMO: `La cuenta de prueba puede tener hasta ${MAXIMO_DE_PREGUNTAS_POR_SESION_DE_DEMO} preguntas por sesión.`,
   LIMITE_DE_CODIGOS_DE_DEMO: `La cuenta de prueba puede generar hasta ${CODIGOS_MAXIMOS_POR_SOLICITUD_DE_DEMO} códigos por vez y ${CODIGOS_MAXIMOS_POR_SESION_DE_DEMO} por sesión.`,
 };
 

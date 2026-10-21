@@ -75,6 +75,10 @@ test("la cuenta de prueba trabaja con lo suyo, lo ve marcado, y la superadminist
   const jefe = await mesaAutenticada(browser);
   await jefe.page.goto("/mesa");
   await expect(jefe.page.getByRole("banner")).not.toContainText("Cuenta de prueba");
+  // Su lista no se llena con ensayos públicos: aparecen solo al pedirlo.
+  await expect(jefe.page.getByRole("heading", { name: "Sesiones" })).toBeVisible();
+  await expect(jefe.page.getByText(/Prueba pública/)).toHaveCount(0);
+  await jefe.page.getByLabel("Mostrar sesiones de la cuenta de prueba").check();
   await expect(jefe.page.getByText(/Prueba pública/).first()).toBeVisible();
   await jefe.page.goto(ruta);
   await expect(jefe.page.getByRole("button", { name: "Terminar sesión" })).toBeVisible();

@@ -104,6 +104,23 @@ describe("MesaEnVivo", () => {
     expect(screen.getByRole("banner").textContent).toContain("Cuenta de prueba");
   });
 
+  it("solo la superadministración ve el interruptor de la cuenta de prueba, y lo usa", async () => {
+    const llamadas: string[] = [];
+    const fetchConRegistro = vi.fn<typeof fetch>(async (url) => {
+      llamadas.push(String(url));
+      return Response.json({ sesiones: [] });
+    });
+    const interruptor = () => screen.queryByLabelText("Mostrar sesiones de la cuenta de prueba");
+
+    const { rerender } = render(<MesaEnVivo dependencias={{ fetch: fetchConRegistro }} />);
+    await screen.findByText(/Todavía no hay sesiones/);
+    expect(interruptor()).toBeNull();
+
+    rerender(<MesaEnVivo puedeVerCuentaDePrueba dependencias={{ fetch: fetchConRegistro }} />);
+    await userEvent.click(await screen.findByLabelText("Mostrar sesiones de la cuenta de prueba"));
+    await waitFor(() => expect(llamadas).toContain("/api/mesa/v1/sesiones?incluirPrueba=1"));
+  });
+
   it("sin título muestra el error", async () => {
     render(<MesaEnVivo dependencias={{ fetch: fetchDeLaLista() }} />);
     await screen.findByRole("link", { name: /Asamblea/ });

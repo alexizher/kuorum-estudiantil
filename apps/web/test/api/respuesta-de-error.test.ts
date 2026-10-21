@@ -17,6 +17,8 @@ describe("respuestaDeError", () => {
     ["SESION_CON_VOTACION_ABIERTA", 409],
     ["LIMITE_DE_DEMO", 409],
     ["LIMITE_DE_CODIGOS_DE_DEMO", 409],
+    ["LIMITE_DE_SESIONES_DE_DEMO", 409],
+    ["LIMITE_DE_PREGUNTAS_DE_DEMO", 409],
     ["PARTICIPANTE_AJENO", 403],
     ["NO_ES_TUYA", 403],
     ["OPCION_INVALIDA", 422],
@@ -93,5 +95,16 @@ describe("respuestaDeError", () => {
       error: "LIMITE_DE_CODIGOS_DE_DEMO",
       mensaje: "La cuenta de prueba puede generar hasta 50 códigos por vez y 200 por sesión.",
     });
+  });
+
+  it("los topes totales de la cuenta de prueba también llevan mensaje en español", async () => {
+    const cuerpo = async (c: string) =>
+      (await respuestaDeError(new ErrorDeDominio(c)).json()).mensaje;
+    expect(await cuerpo("LIMITE_DE_SESIONES_DE_DEMO")).toBe(
+      "La cuenta de prueba puede crear hasta 20 sesiones al día. Mañana se borran y podrás crear más.",
+    );
+    expect(await cuerpo("LIMITE_DE_PREGUNTAS_DE_DEMO")).toBe(
+      "La cuenta de prueba puede tener hasta 20 preguntas por sesión.",
+    );
   });
 });
