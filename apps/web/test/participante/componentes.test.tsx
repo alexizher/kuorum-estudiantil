@@ -246,6 +246,12 @@ describe("Participante: pestaña Palabra", () => {
     expect(p.palabra.pedirPalabra).toHaveBeenCalledOnce();
   });
 
+  it("sugiere un seudónimo a quien quiera anonimato total", async () => {
+    pintar(propiedades());
+    await irAPalabra();
+    expect(screen.getByText(/Si quieres anonimato total, usa un seudónimo\./)).toBeTruthy();
+  });
+
   it("con el nombre recordado no vuelve a preguntarlo y deja cambiarlo", async () => {
     pintar(propiedades({ palabra: { nombre: "Ana Gómez", nombreRecordado: true } }));
     await irAPalabra();

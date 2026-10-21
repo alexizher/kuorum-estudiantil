@@ -107,7 +107,7 @@ export function PanelDePalabra({ palabra, orador }: Propiedades) {
           {pideNombre ? (
             <CampoDeTexto
               etiqueta="Cómo quieres que te anuncien"
-              ayuda="Nombre y, si quieres, tu facultad. Lo ve la mesa y sale en la proyección."
+              ayuda="Nombre y, si quieres, tu facultad. Lo ve la mesa y sale en la proyección. Si quieres anonimato total, usa un seudónimo."
               value={palabra.nombre}
               onChange={(evento) => palabra.escribirNombre(evento.target.value)}
               maxLength={200}
