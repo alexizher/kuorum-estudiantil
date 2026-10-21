@@ -9,9 +9,9 @@ export async function POST(
   request: Request,
   contexto: { params: Promise<{ id: string }> },
 ): Promise<Response> {
-  return accionDeMesa(request, async () => {
+  return accionDeMesa(request, async (actor) => {
     const { id } = await contexto.params;
-    await contenedor().terminarIntervencion.ejecutar(id);
+    await contenedor().terminarIntervencion.ejecutar(actor, id);
     return sinContenido();
   });
 }

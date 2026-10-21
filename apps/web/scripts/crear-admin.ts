@@ -1,5 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { parseArgs } from "node:util";
+import type { RolDeMesa } from "@kuorum/application";
 import { LARGO_MINIMO_DE_CONTRASENA, type DatosDeCuenta } from "../src/auth/crear-cuenta";
 
 export interface DependenciasDeCrearAdmin {
@@ -9,11 +10,20 @@ export interface DependenciasDeCrearAdmin {
   crearCuenta: (datos: DatosDeCuenta) => Promise<void>;
 }
 
-const USO = `Uso: pnpm --filter @kuorum/web crear-admin --correo <correo> --nombre <nombre> [--generar]
+const ROLES: readonly RolDeMesa[] = ["SUPERADMIN", "MESA", "DEMO"];
+
+const USO = `Uso: pnpm --filter @kuorum/web crear-admin --correo <correo> --nombre <nombre> [--rol SUPERADMIN|MESA|DEMO] [--generar]
+
+  --rol: SUPERADMIN (por defecto) y MESA ven todas las sesiones. DEMO es la cuenta de prueba
+  pública y solo ve las sesiones que crea.
 
   Sin --generar, lee la contraseña de stdin (mínimo ${LARGO_MINIMO_DE_CONTRASENA} caracteres).
   Con --generar, crea una contraseña fuerte y la imprime una sola vez por stdout.
 `;
+
+function esRol(valor: string): valor is RolDeMesa {
+  return ROLES.some((rol) => rol === valor);
+}
 
 // Nunca escribe la contraseña recibida por stdin; la generada va solo a stdout y solo si la cuenta se creó.
 export async function ejecutarCrearAdmin(
@@ -24,6 +34,7 @@ export async function ejecutarCrearAdmin(
     correo?: string | undefined;
     nombre?: string | undefined;
     generar?: boolean | undefined;
+    rol?: string | undefined;
   };
   try {
     valores = parseArgs({
@@ -32,6 +43,7 @@ export async function ejecutarCrearAdmin(
         correo: { type: "string" },
         nombre: { type: "string" },
         generar: { type: "boolean" },
+        rol: { type: "string" },
       },
     }).values;
   } catch {
@@ -39,7 +51,8 @@ export async function ejecutarCrearAdmin(
     return 2;
   }
   const { correo, nombre, generar } = valores;
-  if (!correo || !nombre) {
+  const rol = valores.rol ?? "SUPERADMIN";
+  if (!correo || !nombre || !esRol(rol)) {
     deps.stderr(USO);
     return 2;
   }
@@ -51,7 +64,7 @@ export async function ejecutarCrearAdmin(
     return 1;
   }
   try {
-    await deps.crearCuenta({ correo, nombre, contrasena });
+    await deps.crearCuenta({ correo, nombre, contrasena, rol });
   } catch (error) {
     deps.stderr(`${error instanceof Error ? error.message : String(error)}\n`);
     return 1;

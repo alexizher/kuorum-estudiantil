@@ -10,7 +10,10 @@ import {
   GenerarCodigosDeAcceso,
   IngresarASala,
   IniciarSesion,
+  LimpiarSesionesDeDemo,
   ListarPreguntasDeSesion,
+  ListarSesionesDeLaMesa,
+  ObtenerSesionDeLaMesa,
   PedirLaPalabra,
   PresentarMocion,
   ProyectarResultado,
@@ -27,6 +30,7 @@ import {
   GeneradorDeCodigosAleatorio,
   GeneradorDeIdsUuid,
   HasheadorSha256,
+  PrismaLimpiezaDeDemo,
   PrismaRegistroDeVotos,
   PrismaRepositorioDeParticipantes,
   PrismaRepositorioDePreguntas,
@@ -45,6 +49,8 @@ export interface Contenedor {
   iniciarSesion: IniciarSesion;
   terminarSesion: TerminarSesion;
   generarCodigosDeAcceso: GenerarCodigosDeAcceso;
+  listarSesionesDeLaMesa: ListarSesionesDeLaMesa;
+  obtenerSesionDeLaMesa: ObtenerSesionDeLaMesa;
   // Votación
   crearPregunta: CrearPregunta;
   listarPreguntasDeSesion: ListarPreguntasDeSesion;
@@ -61,10 +67,12 @@ export interface Contenedor {
   terminarIntervencion: TerminarIntervencion;
   rechazarMocion: RechazarMocion;
   sumarMinuto: SumarMinuto;
+  // Mantenimiento
+  limpiarSesionesDeDemo: LimpiarSesionesDeDemo;
   // Participante
   ingresarASala: IngresarASala;
   consultarEstadoDeSala: ConsultarEstadoDeSala;
-  /** Solo lectura: lista de la mesa y resolución de código de sala a sesión. */
+  /** Solo lectura: resolución de código de sala a sesión para las rutas públicas. */
   sesiones: RepositorioDeSesiones;
   verificarBaseDeDatos: () => Promise<boolean>;
   /** Se construye en el primer uso: exige BETTER_AUTH_SECRET solo a quien la pide. */
@@ -106,6 +114,9 @@ export function contenedor(): Contenedor {
         codigos,
         hasheador,
       ),
+      listarSesionesDeLaMesa: new ListarSesionesDeLaMesa(sesiones),
+      obtenerSesionDeLaMesa: new ObtenerSesionDeLaMesa(sesiones),
+      limpiarSesionesDeDemo: new LimpiarSesionesDeDemo(new PrismaLimpiezaDeDemo(contexto), unidad),
       crearPregunta: new CrearPregunta(sesiones, preguntas, ids, unidad),
       listarPreguntasDeSesion: new ListarPreguntasDeSesion(sesiones, preguntas, votos),
       abrirPregunta: new AbrirPregunta(sesiones, preguntas, reloj, unidad),

@@ -30,3 +30,34 @@
   align-items: center;
   min-height: 44px;
 }
+
+.cuentaDePrueba {
+  display: grid;
+  gap: 12px;
+  border: 1px dashed var(--tinta);
+  border-radius: var(--r-control);
+  padding: 16px;
+}
+.tituloDeCuentaDePrueba {
+  font-size: var(--t-2);
+}
+.datosDeCuentaDePrueba {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+.datosDeCuentaDePrueba dt {
+  font-size: var(--t-0);
+  color: var(--tinta-suave);
+}
+.datosDeCuentaDePrueba dd {
+  margin: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+.notaDeCuentaDePrueba {
+  margin: 0;
+  font-size: var(--t-0);
+  color: var(--tinta-suave);
+}

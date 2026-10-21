@@ -1,3 +1,14 @@
+export type { Actor, RolDeMesa } from "./sala/actor.js";
+export { exigirAccesoASesion } from "./sala/acceso-a-sesion.js";
+export {
+  CODIGOS_MAXIMOS_POR_SESION_DE_DEMO,
+  CODIGOS_MAXIMOS_POR_SOLICITUD_DE_DEMO,
+  LIMITE_DE_SESIONES_ACTIVAS_DE_DEMO,
+} from "./sala/limites-de-demo.js";
+export { ListarSesionesDeLaMesa } from "./sala/listar-sesiones-de-la-mesa.js";
+export { ObtenerSesionDeLaMesa } from "./sala/obtener-sesion-de-la-mesa.js";
+export { LimpiarSesionesDeDemo } from "./sala/limpiar-sesiones-de-demo.js";
+export type { LimpiezaDeDemo } from "./puertos/limpieza-de-demo.js";
 export { CrearSesion } from "./sala/crear-sesion.js";
 export { IniciarSesion } from "./sala/iniciar-sesion.js";
 export { TerminarSesion } from "./sala/terminar-sesion.js";

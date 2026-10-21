@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { GenerarCodigosDeAcceso, IngresarASala } from "../../src/index.js";
 import { crearEscenario, sembrarSesion, type Escenario } from "../dobles/escenario.js";
+import { superadmin } from "../dobles/actores.js";
 
 const TOKEN = "3f2b8c1e-5d4a-4b7e-9c0a-1d2e3f4a5b6c";
 
@@ -17,7 +18,7 @@ async function salaConCodigos(e: Escenario, estado: "PROGRAMADA" | "EN_CURSO" = 
     e.codigos,
     e.hasheador,
   );
-  const [primero = "", segundo = ""] = await generar.ejecutar(sesion.id, 2);
+  const [primero = "", segundo = ""] = await generar.ejecutar(superadmin, sesion.id, 2);
   return { sesion, codigos: [primero, segundo] as const };
 }
 

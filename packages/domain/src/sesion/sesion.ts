@@ -16,6 +16,8 @@ export interface DatosDeNuevaSesion {
   modo: ModoDeParticipacion;
   segundosPorIntervencion?: number;
   creadaEn: Date;
+  /** Quién la creó; null si no se sabe. */
+  creadaPorId?: string | null;
 }
 
 export interface PropiedadesDeSesion {
@@ -27,6 +29,7 @@ export interface PropiedadesDeSesion {
   segundosPorIntervencion: number;
   version: number;
   creadaEn: Date;
+  creadaPorId?: string | null;
 }
 
 export class Sesion {
@@ -42,6 +45,7 @@ export class Sesion {
     readonly segundosPorIntervencion: number,
     version: number,
     readonly creadaEn: Date,
+    readonly creadaPorId: string | null,
   ) {
     this._estado = estado;
     this._version = version;
@@ -57,6 +61,7 @@ export class Sesion {
       segundosPorIntervencion: datos.segundosPorIntervencion ?? SEGUNDOS_POR_DEFECTO,
       version: 0,
       creadaEn: datos.creadaEn,
+      creadaPorId: datos.creadaPorId ?? null,
     });
   }
 
@@ -85,6 +90,7 @@ export class Sesion {
       segundosPorIntervencion,
       props.version,
       props.creadaEn,
+      props.creadaPorId ?? null,
     );
   }
 
@@ -94,6 +100,13 @@ export class Sesion {
 
   get version(): number {
     return this._version;
+  }
+
+  /** Una sesión terminada (cerrada, con acta final o cancelada) ya no cuenta como activa. */
+  get activa(): boolean {
+    return (
+      this._estado !== "CERRADA" && this._estado !== "ACTA_FINAL" && this._estado !== "CANCELADA"
+    );
   }
 
   iniciar(): void {

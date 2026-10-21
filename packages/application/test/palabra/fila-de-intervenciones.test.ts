@@ -9,6 +9,7 @@ import {
   TerminarIntervencion,
 } from "../../src/index.js";
 import { crearEscenario, sembrarSesion } from "../dobles/escenario.js";
+import { superadmin } from "../dobles/actores.js";
 
 async function montar(estado: "PROGRAMADA" | "EN_CURSO" | "CERRADA" = "EN_CURSO") {
   const e = crearEscenario();
@@ -163,7 +164,7 @@ describe("casos de la mesa", () => {
     const { e, sesion, pedir, mocion, dar } = await montar();
     await pedir.ejecutar("ana", sesion.id, "Ana");
     const idMocion = await mocion.ejecutar("beto", sesion.id, "Beto", "ORDEN");
-    await dar.ejecutar(sesion.id, null);
+    await dar.ejecutar(superadmin, sesion.id, null);
     expect((await e.solicitudes.porId(idMocion))?.estado).toBe("CON_LA_PALABRA");
     expect(sesion.version).toBe(3);
   });
@@ -172,29 +173,31 @@ describe("casos de la mesa", () => {
     const { e, sesion, pedir, dar } = await montar();
     const a = await pedir.ejecutar("ana", sesion.id, "Ana");
     const b = await pedir.ejecutar("beto", sesion.id, "Beto");
-    await dar.ejecutar(sesion.id, a);
-    await dar.ejecutar(sesion.id, b);
+    await dar.ejecutar(superadmin, sesion.id, a);
+    await dar.ejecutar(superadmin, sesion.id, b);
     expect((await e.solicitudes.porId(a))?.estado).toBe("TERMINADA");
     expect((await e.solicitudes.porId(b))?.estado).toBe("CON_LA_PALABRA");
   });
 
   it("DarLaPalabra con fila vacía da FILA_VACIA", async () => {
     const { sesion, dar } = await montar();
-    await expect(dar.ejecutar(sesion.id, null)).rejects.toMatchObject({ codigo: "FILA_VACIA" });
+    await expect(dar.ejecutar(superadmin, sesion.id, null)).rejects.toMatchObject({
+      codigo: "FILA_VACIA",
+    });
     expect(sesion.version).toBe(0);
   });
 
   it("TerminarIntervencion termina a quien habla", async () => {
     const { e, sesion, pedir, dar, terminar } = await montar();
     const a = await pedir.ejecutar("ana", sesion.id, "Ana");
-    await dar.ejecutar(sesion.id, a);
-    await terminar.ejecutar(sesion.id);
+    await dar.ejecutar(superadmin, sesion.id, a);
+    await terminar.ejecutar(superadmin, sesion.id);
     expect((await e.solicitudes.porId(a))?.estado).toBe("TERMINADA");
   });
 
   it("TerminarIntervencion sin nadie da NADIE_CON_LA_PALABRA", async () => {
     const { sesion, terminar } = await montar();
-    await expect(terminar.ejecutar(sesion.id)).rejects.toMatchObject({
+    await expect(terminar.ejecutar(superadmin, sesion.id)).rejects.toMatchObject({
       codigo: "NADIE_CON_LA_PALABRA",
     });
   });
@@ -202,14 +205,14 @@ describe("casos de la mesa", () => {
   it("RechazarMocion rechaza la moción", async () => {
     const { e, sesion, mocion, rechazar } = await montar();
     const id = await mocion.ejecutar("ana", sesion.id, "Ana", "ORDEN");
-    await rechazar.ejecutar(sesion.id, id);
+    await rechazar.ejecutar(superadmin, sesion.id, id);
     expect((await e.solicitudes.porId(id))?.estado).toBe("RECHAZADA");
   });
 
   it("RechazarMocion sobre una intervención da SOLICITUD_NO_DISPONIBLE", async () => {
     const { sesion, pedir, rechazar } = await montar();
     const id = await pedir.ejecutar("ana", sesion.id, "Ana");
-    await expect(rechazar.ejecutar(sesion.id, id)).rejects.toMatchObject({
+    await expect(rechazar.ejecutar(superadmin, sesion.id, id)).rejects.toMatchObject({
       codigo: "SOLICITUD_NO_DISPONIBLE",
     });
   });
@@ -217,18 +220,18 @@ describe("casos de la mesa", () => {
   it("SumarMinuto suma 60 segundos a quien habla", async () => {
     const { e, sesion, pedir, dar, sumar } = await montar();
     const a = await pedir.ejecutar("ana", sesion.id, "Ana");
-    await dar.ejecutar(sesion.id, a);
-    await sumar.ejecutar(sesion.id);
+    await dar.ejecutar(superadmin, sesion.id, a);
+    await sumar.ejecutar(superadmin, sesion.id);
     expect((await e.solicitudes.porId(a))?.segundosExtra).toBe(60);
   });
 
   it("los casos de la mesa exigen sesión en curso", async () => {
     const { sesion, dar, terminar, rechazar, sumar } = await montar("CERRADA");
     for (const caso of [
-      () => dar.ejecutar(sesion.id, null),
-      () => terminar.ejecutar(sesion.id),
-      () => rechazar.ejecutar(sesion.id, "x"),
-      () => sumar.ejecutar(sesion.id),
+      () => dar.ejecutar(superadmin, sesion.id, null),
+      () => terminar.ejecutar(superadmin, sesion.id),
+      () => rechazar.ejecutar(superadmin, sesion.id, "x"),
+      () => sumar.ejecutar(superadmin, sesion.id),
     ]) {
       await expect(caso()).rejects.toMatchObject({ codigo: "SESION_NO_EN_CURSO" });
     }
@@ -236,7 +239,7 @@ describe("casos de la mesa", () => {
 
   it("falla si la sesión no existe", async () => {
     const { dar } = await montar();
-    await expect(dar.ejecutar("nada", null)).rejects.toMatchObject({
+    await expect(dar.ejecutar(superadmin, "nada", null)).rejects.toMatchObject({
       codigo: "SESION_NO_ENCONTRADA",
     });
   });

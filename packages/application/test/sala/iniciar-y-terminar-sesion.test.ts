@@ -1,13 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { IniciarSesion, TerminarSesion } from "../../src/index.js";
 import { crearEscenario, sembrarPregunta, sembrarSesion } from "../dobles/escenario.js";
+import { superadmin } from "../dobles/actores.js";
 
 describe("IniciarSesion", () => {
   it("pasa a EN_CURSO, sube la versión y guarda", async () => {
     const e = crearEscenario();
     const sesion = await sembrarSesion(e);
 
-    await new IniciarSesion(e.sesiones, e.unidad).ejecutar(sesion.id);
+    await new IniciarSesion(e.sesiones, e.unidad).ejecutar(superadmin, sesion.id);
 
     const guardada = await e.sesiones.porId(sesion.id);
     expect(guardada?.estado).toBe("EN_CURSO");
@@ -17,7 +18,9 @@ describe("IniciarSesion", () => {
 
   it("falla si la sesión no existe", async () => {
     const e = crearEscenario();
-    await expect(new IniciarSesion(e.sesiones, e.unidad).ejecutar("nada")).rejects.toMatchObject({
+    await expect(
+      new IniciarSesion(e.sesiones, e.unidad).ejecutar(superadmin, "nada"),
+    ).rejects.toMatchObject({
       codigo: "SESION_NO_ENCONTRADA",
     });
   });
@@ -25,9 +28,9 @@ describe("IniciarSesion", () => {
   it("falla con TRANSICION_INVALIDA si ya terminó", async () => {
     const e = crearEscenario();
     const sesion = await sembrarSesion(e, { estado: "CERRADA" });
-    await expect(new IniciarSesion(e.sesiones, e.unidad).ejecutar(sesion.id)).rejects.toMatchObject(
-      { codigo: "TRANSICION_INVALIDA" },
-    );
+    await expect(
+      new IniciarSesion(e.sesiones, e.unidad).ejecutar(superadmin, sesion.id),
+    ).rejects.toMatchObject({ codigo: "TRANSICION_INVALIDA" });
   });
 });
 
@@ -36,7 +39,7 @@ describe("TerminarSesion", () => {
     const e = crearEscenario();
     const sesion = await sembrarSesion(e, { estado: "EN_CURSO" });
 
-    await new TerminarSesion(e.sesiones, e.preguntas, e.unidad).ejecutar(sesion.id);
+    await new TerminarSesion(e.sesiones, e.preguntas, e.unidad).ejecutar(superadmin, sesion.id);
 
     const guardada = await e.sesiones.porId(sesion.id);
     expect(guardada?.estado).toBe("CERRADA");
@@ -47,7 +50,7 @@ describe("TerminarSesion", () => {
     const e = crearEscenario();
     const sesion = await sembrarSesion(e);
     await expect(
-      new TerminarSesion(e.sesiones, e.preguntas, e.unidad).ejecutar(sesion.id),
+      new TerminarSesion(e.sesiones, e.preguntas, e.unidad).ejecutar(superadmin, sesion.id),
     ).rejects.toMatchObject({ codigo: "TRANSICION_INVALIDA" });
     expect(sesion.version).toBe(0);
   });
@@ -55,7 +58,7 @@ describe("TerminarSesion", () => {
   it("falla si la sesión no existe", async () => {
     const e = crearEscenario();
     await expect(
-      new TerminarSesion(e.sesiones, e.preguntas, e.unidad).ejecutar("nada"),
+      new TerminarSesion(e.sesiones, e.preguntas, e.unidad).ejecutar(superadmin, "nada"),
     ).rejects.toMatchObject({
       codigo: "SESION_NO_ENCONTRADA",
     });
@@ -66,7 +69,7 @@ describe("TerminarSesion", () => {
     const sesion = await sembrarSesion(e, { estado: "EN_CURSO" });
     await sembrarPregunta(e, sesion.id, "ABIERTA");
     await expect(
-      new TerminarSesion(e.sesiones, e.preguntas, e.unidad).ejecutar(sesion.id),
+      new TerminarSesion(e.sesiones, e.preguntas, e.unidad).ejecutar(superadmin, sesion.id),
     ).rejects.toMatchObject({ codigo: "SESION_CON_VOTACION_ABIERTA" });
     expect(sesion.estado).toBe("EN_CURSO");
     expect(sesion.version).toBe(0);
@@ -77,7 +80,7 @@ describe("TerminarSesion", () => {
     const sesion = await sembrarSesion(e, { estado: "EN_CURSO" });
     await sembrarPregunta(e, sesion.id, "CERRADA");
     await sembrarPregunta(e, sesion.id, "BORRADOR");
-    await new TerminarSesion(e.sesiones, e.preguntas, e.unidad).ejecutar(sesion.id);
+    await new TerminarSesion(e.sesiones, e.preguntas, e.unidad).ejecutar(superadmin, sesion.id);
     expect(sesion.estado).toBe("CERRADA");
   });
 });

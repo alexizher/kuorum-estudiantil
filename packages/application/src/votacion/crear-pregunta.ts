@@ -2,7 +2,8 @@ import { ErrorDeDominio, Pregunta, type GeneradorDeIds } from "@kuorum/domain";
 import type { RepositorioDePreguntas } from "../puertos/repositorio-de-preguntas.js";
 import type { RepositorioDeSesiones } from "../puertos/repositorio-de-sesiones.js";
 import type { UnidadDeTrabajo } from "../puertos/unidad-de-trabajo.js";
-import { obtenerSesion } from "../sala/obtener-sesion.js";
+import type { Actor } from "../sala/actor.js";
+import { obtenerSesionDeLaMesa } from "../sala/obtener-sesion-de-la-mesa.js";
 
 export class CrearPregunta {
   constructor(
@@ -12,9 +13,9 @@ export class CrearPregunta {
     private readonly unidad: UnidadDeTrabajo,
   ) {}
 
-  ejecutar(sesionId: string, texto: string, opciones: string[]): Promise<Pregunta> {
+  ejecutar(actor: Actor, sesionId: string, texto: string, opciones: string[]): Promise<Pregunta> {
     return this.unidad.ejecutar(async () => {
-      const sesion = await obtenerSesion(this.sesiones, sesionId);
+      const sesion = await obtenerSesionDeLaMesa(this.sesiones, actor, sesionId);
       if (
         sesion.estado !== "PROGRAMADA" &&
         sesion.estado !== "ABIERTA" &&

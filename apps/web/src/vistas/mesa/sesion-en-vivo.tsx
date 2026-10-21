@@ -14,6 +14,7 @@ const INTERVALO_DE_LA_MESA_MS = 3000;
 
 interface Propiedades {
   sesion: { id: string; titulo: string; codigo: string; modo: ModoDeSala; estado: string };
+  esDemo?: boolean;
   /** Para pruebas; por defecto el fetch del navegador. */
   dependencias?: { fetch?: typeof globalThis.fetch };
 }
@@ -27,7 +28,7 @@ async function copiarAlPortapapeles(texto: string): Promise<boolean> {
   }
 }
 
-export function SesionEnVivo({ sesion, dependencias }: Propiedades) {
+export function SesionEnVivo({ sesion, esDemo = false, dependencias }: Propiedades) {
   const { cliente, fuente } = useMemo(() => {
     const llamar: typeof globalThis.fetch =
       dependencias?.fetch ?? ((entrada, opciones) => fetch(entrada, opciones));
@@ -44,6 +45,7 @@ export function SesionEnVivo({ sesion, dependencias }: Propiedades) {
   return (
     <PanelDeSesion
       sesion={sesion}
+      esDemo={esDemo}
       panel={panel}
       formulario={formulario}
       segundosRestantes={segundosRestantes}

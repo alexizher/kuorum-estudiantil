@@ -89,4 +89,8 @@ export class PrismaRepositorioDeParticipantes implements RepositorioDeParticipan
       .cliente()
       .codigoDeAcceso.count({ where: { sesionId, activadoEn: { not: null } } });
   }
+
+  contarCodigos(sesionId: string): Promise<number> {
+    return this.contexto.cliente().codigoDeAcceso.count({ where: { sesionId } });
+  }
 }

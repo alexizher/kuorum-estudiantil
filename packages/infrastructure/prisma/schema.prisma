@@ -46,6 +46,13 @@ enum TipoDeSolicitud {
   MOCION
 }
 
+// Quién es cada cuenta de la mesa. SUPERADMIN y MESA ven todo; DEMO solo lo que creó.
+enum RolDeMesa {
+  SUPERADMIN
+  MESA
+  DEMO
+}
+
 enum TipoDeMocion {
   ORDEN
   PROCEDIMIENTO
@@ -63,12 +70,16 @@ model Sesion {
   version                 Int                 @default(0)
   actualizadaEn           DateTime            @updatedAt
   creadaEn                DateTime            @default(now())
+  // Quién la creó. Sin dueño (null) solo la ven SUPERADMIN y MESA.
+  creadaPorId             String?
 
+  creadaPor     User?                @relation(fields: [creadaPorId], references: [id], onDelete: SetNull)
   participantes Participante[]
   codigos       CodigoDeAcceso[]
   preguntas     Pregunta[]
   solicitudes   SolicitudDePalabra[]
 
+  @@index([creadaPorId])
   @@map("sesiones")
 }
 
@@ -186,9 +197,12 @@ model User {
   image         String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @default(now()) @updatedAt
+  // Campo propio: Better Auth no deja que el cliente lo escriba (input: false).
+  rol           RolDeMesa @default(MESA)
 
   sessions Session[]
   accounts Account[]
+  sesiones Sesion[]
 
   @@map("auth_users")
 }

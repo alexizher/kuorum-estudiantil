@@ -6,12 +6,15 @@ import { useMemo } from "react";
 import { clienteDeAuth } from "../../auth/cliente-de-auth";
 import { ClienteDeMesaPorFetch } from "./cliente-de-mesa";
 import { FormularioDeSesion } from "./formulario-de-sesion";
+import { InsigniaDeCuentaDePrueba } from "./insignia-de-cuenta-de-prueba";
 import { PieDeMesa } from "./pie-de-mesa";
 import { ListaDeSesiones } from "./lista-de-sesiones";
 import estilos from "./mesa.module.css";
 import { useSesiones } from "./use-sesiones";
 
 interface Propiedades {
+  /** La cuenta es la de prueba pública: se avisa en la cabecera. */
+  esDemo?: boolean;
   /** Para pruebas. */
   dependencias?: { fetch?: typeof globalThis.fetch; salir?: () => Promise<void> };
 }
@@ -20,7 +23,7 @@ async function salirConBetterAuth(): Promise<void> {
   await clienteDeAuth.signOut();
 }
 
-export function MesaEnVivo({ dependencias }: Propiedades) {
+export function MesaEnVivo({ esDemo = false, dependencias }: Propiedades) {
   const router = useRouter();
   const cliente = useMemo(
     () =>
@@ -42,6 +45,7 @@ export function MesaEnVivo({ dependencias }: Propiedades) {
       <header role="banner" className={estilos.cabecera}>
         <h1 className={`titular ${estilos.tituloDeSesion}`}>Mesa</h1>
         <div className={estilos.accionesDeCabecera}>
+          {esDemo ? <InsigniaDeCuentaDePrueba /> : null}
           <Boton onClick={() => void salir()}>Salir</Boton>
         </div>
       </header>

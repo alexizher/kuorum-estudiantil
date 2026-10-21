@@ -15,6 +15,8 @@ describe("respuestaDeError", () => {
     ["SESION_NO_EN_CURSO", 409],
     ["SESION_NO_DISPONIBLE", 409],
     ["SESION_CON_VOTACION_ABIERTA", 409],
+    ["LIMITE_DE_DEMO", 409],
+    ["LIMITE_DE_CODIGOS_DE_DEMO", 409],
     ["PARTICIPANTE_AJENO", 403],
     ["NO_ES_TUYA", 403],
     ["OPCION_INVALIDA", 422],
@@ -70,5 +72,26 @@ describe("respuestaDeError", () => {
     expect(await r.json()).toEqual({ error: "ERROR_INTERNO" });
     expect(registro).toHaveBeenCalledOnce();
     registro.mockRestore();
+  });
+
+  it("SESION_AJENA da 404 y se ve igual que SESION_NO_ENCONTRADA, sin revelar que existe", async () => {
+    const ajena = respuestaDeError(new ErrorDeDominio("SESION_AJENA"));
+    const inexistente = respuestaDeError(new SesionNoEncontrada("x"));
+    expect(ajena.status).toBe(404);
+    expect(await ajena.json()).toEqual(await inexistente.json());
+    expect(ajena.headers.get("Cache-Control")).toBe("no-store");
+  });
+
+  it("los límites de la cuenta de prueba llevan su mensaje en español", async () => {
+    const cuerpo = async (c: string) => await respuestaDeError(new ErrorDeDominio(c)).json();
+    expect(await cuerpo("LIMITE_DE_DEMO")).toEqual({
+      error: "LIMITE_DE_DEMO",
+      mensaje:
+        "La cuenta de prueba puede tener hasta 5 sesiones activas. Termina una para crear otra.",
+    });
+    expect(await cuerpo("LIMITE_DE_CODIGOS_DE_DEMO")).toEqual({
+      error: "LIMITE_DE_CODIGOS_DE_DEMO",
+      mensaje: "La cuenta de prueba puede generar hasta 50 códigos por vez y 200 por sesión.",
+    });
   });
 });

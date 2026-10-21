@@ -19,7 +19,14 @@ export class RepositorioDeSesionesEnMemoria implements RepositorioDeSesiones {
     this.sesiones.set(sesion.id, sesion);
   }
 
-  async listar(): Promise<Sesion[]> {
-    return [...this.sesiones.values()];
+  async listar(filtro: { creadaPorId?: string } = {}): Promise<Sesion[]> {
+    return [...this.sesiones.values()].filter(
+      (s) => filtro.creadaPorId === undefined || s.creadaPorId === filtro.creadaPorId,
+    );
+  }
+
+  async contarActivasDe(creadaPorId: string): Promise<number> {
+    return [...this.sesiones.values()].filter((s) => s.creadaPorId === creadaPorId && s.activa)
+      .length;
   }
 }

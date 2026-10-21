@@ -9,6 +9,7 @@ const URL_DE_PRUEBAS =
   process.env["DATABASE_URL"] ?? "postgresql://kuorum:kuorum@localhost:54329/kuorum";
 const prisma = createPrismaClient(URL_DE_PRUEBAS);
 const TITULO = "Prueba de API de sala";
+const ID_DE_USUARIO = "u-api-int";
 let sesionId = "";
 let codigoDeSala = "";
 let preguntaId = "";
@@ -36,18 +37,30 @@ describe("API de la sala con la composición real (Postgres local)", () => {
     await prisma.sesion.deleteMany({ where: { titulo: TITULO } });
 
     const c = contenedor();
-    const sesion = await c.crearSesion.ejecutar(TITULO, "SALA_ABIERTA");
+    // creadaPorId apunta a auth_users: la sesión necesita un usuario real.
+    await prisma.user.deleteMany({ where: { id: ID_DE_USUARIO } });
+    await prisma.user.create({
+      data: {
+        id: ID_DE_USUARIO,
+        name: "Mesa",
+        email: `${ID_DE_USUARIO}@api-int.test`,
+        rol: "SUPERADMIN",
+      },
+    });
+    const actor = { id: ID_DE_USUARIO, rol: "SUPERADMIN" } as const;
+    const sesion = await c.crearSesion.ejecutar(actor, TITULO, "SALA_ABIERTA");
     sesionId = sesion.id;
     codigoDeSala = sesion.codigoDeSala.valor;
-    await c.iniciarSesion.ejecutar(sesionId);
-    const pregunta = await c.crearPregunta.ejecutar(sesionId, "¿Aprobamos?", ["Sí", "No"]);
+    await c.iniciarSesion.ejecutar(actor, sesionId);
+    const pregunta = await c.crearPregunta.ejecutar(actor, sesionId, "¿Aprobamos?", ["Sí", "No"]);
     preguntaId = pregunta.id;
     opcionId = pregunta.opciones[0]?.id ?? "";
-    await c.abrirPregunta.ejecutar(preguntaId);
+    await c.abrirPregunta.ejecutar(actor, preguntaId);
   });
 
   afterAll(async () => {
     await prisma.sesion.deleteMany({ where: { titulo: TITULO } });
+    await prisma.user.deleteMany({ where: { id: ID_DE_USUARIO } });
     await prisma.$disconnect();
   });
 

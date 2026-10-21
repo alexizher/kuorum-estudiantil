@@ -94,6 +94,16 @@ describe("MesaEnVivo", () => {
     expect((screen.getByLabelText("Título") as HTMLInputElement).value).toBe("");
   });
 
+  it("muestra la insignia de cuenta de prueba solo si la cuenta es de prueba", async () => {
+    const { rerender } = render(<MesaEnVivo dependencias={{ fetch: fetchDeLaLista() }} />);
+    await screen.findByRole("link", { name: /Asamblea/ });
+    expect(screen.queryByText("Cuenta de prueba")).toBeNull();
+
+    rerender(<MesaEnVivo esDemo dependencias={{ fetch: fetchDeLaLista() }} />);
+    expect(await screen.findByText("Cuenta de prueba")).toBeTruthy();
+    expect(screen.getByRole("banner").textContent).toContain("Cuenta de prueba");
+  });
+
   it("sin título muestra el error", async () => {
     render(<MesaEnVivo dependencias={{ fetch: fetchDeLaLista() }} />);
     await screen.findByRole("link", { name: /Asamblea/ });
@@ -149,5 +159,28 @@ describe("SesionEnVivo", () => {
     await waitFor(() => expect(llamadas).toContain("POST /api/mesa/v1/sesiones/s1/iniciar"));
     // Tras la acción vuelve a pedir el estado sin esperar el turno ni la caché.
     await waitFor(() => expect(llamadas.filter((l) => l.includes("/estado?r="))).toHaveLength(1));
+  });
+
+  it("la cabecera de la sesión muestra la insignia solo con la cuenta de prueba", async () => {
+    const fetchFalso = vi.fn<typeof fetch>(async (url) =>
+      String(url).includes("/estado")
+        ? Response.json(salaVacia())
+        : Response.json({ preguntas: [] }),
+    );
+    const sesionDePrueba = {
+      id: "s1",
+      titulo: "Asamblea",
+      codigo: "K7F2",
+      modo: "SALA_ABIERTA" as const,
+      estado: "PROGRAMADA",
+    };
+    const { rerender } = render(
+      <SesionEnVivo sesion={sesionDePrueba} dependencias={{ fetch: fetchFalso }} />,
+    );
+    await screen.findByRole("button", { name: "Iniciar sesión" });
+    expect(screen.queryByText("Cuenta de prueba")).toBeNull();
+
+    rerender(<SesionEnVivo esDemo sesion={sesionDePrueba} dependencias={{ fetch: fetchFalso }} />);
+    expect(await screen.findByText("Cuenta de prueba")).toBeTruthy();
   });
 });

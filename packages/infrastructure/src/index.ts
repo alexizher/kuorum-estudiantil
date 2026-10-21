@@ -14,3 +14,4 @@ export { PrismaRepositorioDeSolicitudes } from "./palabra/prisma-repositorio-de-
 export { HasheadorSha256 } from "./crypto/hasheador-sha256.js";
 export { GeneradorDeIdsUuid } from "./crypto/generador-de-ids-uuid.js";
 export { GeneradorDeCodigosAleatorio } from "./codigos/generador-aleatorio.js";
+export { PrismaLimpiezaDeDemo } from "./demo/prisma-limpieza-de-demo.js";

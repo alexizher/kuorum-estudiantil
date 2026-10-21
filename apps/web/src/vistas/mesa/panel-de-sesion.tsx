@@ -23,6 +23,7 @@ export interface PropiedadesDePanel {
   formulario: FormularioDePregunta;
   segundosRestantes: number | null;
   alCopiarEnlace: () => Promise<boolean>;
+  esDemo?: boolean;
 }
 
 type Pestana = "fila" | "votacion" | "sala";
@@ -34,6 +35,7 @@ export function PanelDeSesion({
   formulario,
   segundosRestantes,
   alCopiarEnlace,
+  esDemo = false,
 }: PropiedadesDePanel) {
   const [pestana, setPestana] = useState<Pestana>("fila");
   const [confirmacion, setConfirmacion] = useState<Confirmacion>(null);
@@ -78,6 +80,7 @@ export function PanelDeSesion({
         alIniciar={() => void acciones.iniciar()}
         alPedirTerminar={() => setConfirmacion({ tipo: "terminar" })}
         alCopiarEnlace={alCopiarEnlace}
+        esDemo={esDemo}
       />
 
       {panel.alerta ? (

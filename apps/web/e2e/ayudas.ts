@@ -1,9 +1,13 @@
 import { expect, type Browser, type BrowserContext, type Page } from "@playwright/test";
 
-export async function entrarALaMesa(page: Page): Promise<void> {
+export async function entrarALaMesa(
+  page: Page,
+  correo = process.env["E2E_CORREO"] ?? "",
+  contrasena = process.env["E2E_CONTRASENA"] ?? "",
+): Promise<void> {
   await page.goto("/mesa/ingresar");
-  await page.getByLabel("Correo").fill(process.env["E2E_CORREO"] ?? "");
-  await page.getByLabel("Contraseña").fill(process.env["E2E_CONTRASENA"] ?? "");
+  await page.getByLabel("Correo").fill(correo);
+  await page.getByLabel("Contraseña").fill(contrasena);
   await page.getByRole("button", { name: "Entrar" }).click();
   await page.waitForURL("**/mesa");
 }
@@ -12,6 +16,13 @@ export async function mesaAutenticada(
   browser: Browser,
 ): Promise<{ ctx: BrowserContext; page: Page }> {
   const ctx = await browser.newContext({ storageState: "test-results/mesa.json" });
+  return { ctx, page: await ctx.newPage() };
+}
+
+export async function demoAutenticada(
+  browser: Browser,
+): Promise<{ ctx: BrowserContext; page: Page }> {
+  const ctx = await browser.newContext({ storageState: "test-results/demo.json" });
   return { ctx, page: await ctx.newPage() };
 }
 

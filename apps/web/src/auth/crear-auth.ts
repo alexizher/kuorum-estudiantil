@@ -1,5 +1,6 @@
 import type { AdaptadorDeAutenticacion } from "@kuorum/infrastructure";
 import { betterAuth } from "better-auth";
+import { APIError, createAuthMiddleware, getSessionFromCtx } from "better-auth/api";
 
 export interface OpcionesDeAutenticacion {
   adaptador: AdaptadorDeAutenticacion;
@@ -8,11 +9,39 @@ export interface OpcionesDeAutenticacion {
   urlBase?: string | undefined;
 }
 
+/** Rutas con las que una cuenta cambiaría su contraseña, su correo o sus datos. */
+const RUTAS_BLOQUEADAS_A_LA_CUENTA_DE_PRUEBA: readonly string[] = [
+  "/change-password",
+  "/change-email",
+  "/update-user",
+  "/set-password",
+  "/delete-user",
+];
+
+export const MENSAJE_DE_CUENTA_DE_PRUEBA = "La cuenta de prueba no puede cambiar sus datos.";
+
 export function crearAuth({ adaptador, secreto, urlBase }: OpcionesDeAutenticacion) {
   return betterAuth({
     database: adaptador,
     secret: secreto,
     ...(urlBase !== undefined ? { baseURL: urlBase } : {}),
+    user: {
+      additionalFields: {
+        // Solo lo escribe el servidor (crear-admin); input: false impide que un cliente lo mande
+        // o lo cambie, ni al registrarse ni por update-user.
+        rol: { type: "string", required: false, defaultValue: "MESA", input: false },
+      },
+    },
+    hooks: {
+      // La cuenta de prueba es pública: cualquiera podría cambiarle la contraseña a los demás.
+      before: createAuthMiddleware(async (ctx) => {
+        if (!RUTAS_BLOQUEADAS_A_LA_CUENTA_DE_PRUEBA.includes(ctx.path)) return;
+        const sesion = await getSessionFromCtx(ctx);
+        if ((sesion?.user as { rol?: unknown } | undefined)?.rol === "DEMO") {
+          throw new APIError("FORBIDDEN", { message: MENSAJE_DE_CUENTA_DE_PRUEBA });
+        }
+      }),
+    },
     // Solo cuentas creadas por el script crear-admin o por el asistente.
     emailAndPassword: { enabled: true, disableSignUp: true, minPasswordLength: 12 },
     advanced: {

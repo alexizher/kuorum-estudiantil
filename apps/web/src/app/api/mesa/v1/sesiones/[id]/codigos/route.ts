@@ -12,11 +12,11 @@ export async function POST(
   request: Request,
   contexto: { params: Promise<{ id: string }> },
 ): Promise<Response> {
-  return accionDeMesa(request, async () => {
+  return accionDeMesa(request, async (actor) => {
     const cuerpo = await leerCuerpo(request, esquemaGenerarCodigos);
     if (cuerpo === undefined) return solicitudInvalida();
     const { id } = await contexto.params;
-    const codigos = await contenedor().generarCodigosDeAcceso.ejecutar(id, cuerpo.cantidad);
+    const codigos = await contenedor().generarCodigosDeAcceso.ejecutar(actor, id, cuerpo.cantidad);
     return accion({ codigos });
   });
 }

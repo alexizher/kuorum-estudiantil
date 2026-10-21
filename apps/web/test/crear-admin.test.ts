@@ -22,6 +22,7 @@ describe("crear-admin", () => {
       correo: "a@b.test",
       nombre: "Ana",
       contrasena: "contrasena-secreta-123",
+      rol: "SUPERADMIN",
     });
     expect([...salida, ...errores].join("\n")).not.toContain("contrasena-secreta-123");
   });
@@ -41,7 +42,12 @@ describe("crear-admin", () => {
     expect(salida).toHaveLength(1);
     const generada = salida[0]?.trim() ?? "";
     expect(generada.length).toBeGreaterThanOrEqual(24);
-    expect(crear).toHaveBeenCalledWith({ correo: "a@b.test", nombre: "Ana", contrasena: generada });
+    expect(crear).toHaveBeenCalledWith({
+      correo: "a@b.test",
+      nombre: "Ana",
+      contrasena: generada,
+      rol: "SUPERADMIN",
+    });
     expect(errores.join("\n")).not.toContain(generada);
   });
 
@@ -63,5 +69,45 @@ describe("crear-admin", () => {
       await ejecutarCrearAdmin(["--correo", "a@b.test", "--nombre", "Ana", "--generar"], deps),
     ).toBe(1);
     expect(salida).toHaveLength(0);
+  });
+
+  it.each(["SUPERADMIN", "MESA", "DEMO"])("--rol %s crea la cuenta con ese rol", async (rol) => {
+    const { deps, crear } = dependencias("contrasena-secreta-123\n");
+    expect(
+      await ejecutarCrearAdmin(["--correo", "a@b.test", "--nombre", "Ana", "--rol", rol], deps),
+    ).toBe(0);
+    expect(crear).toHaveBeenCalledWith(expect.objectContaining({ rol }));
+  });
+
+  it("sin --rol la cuenta es SUPERADMIN, como antes del asistente", async () => {
+    const { deps, crear } = dependencias("contrasena-secreta-123\n");
+    await ejecutarCrearAdmin(["--correo", "a@b.test", "--nombre", "Ana"], deps);
+    expect(crear).toHaveBeenCalledWith(expect.objectContaining({ rol: "SUPERADMIN" }));
+  });
+
+  it("rechaza un rol desconocido sin crear nada", async () => {
+    const { deps, crear, errores } = dependencias("contrasena-secreta-123\n");
+    expect(
+      await ejecutarCrearAdmin(["--correo", "a@b.test", "--nombre", "Ana", "--rol", "ROOT"], deps),
+    ).toBe(2);
+    expect(crear).not.toHaveBeenCalled();
+    expect(errores.join("")).toContain("SUPERADMIN|MESA|DEMO");
+  });
+
+  it("para DEMO la contraseña también sale de stdin y no se imprime", async () => {
+    const { deps, salida, errores, crear } = dependencias("contrasena-de-demo-1234\n");
+    expect(
+      await ejecutarCrearAdmin(
+        ["--correo", "demo@b.test", "--nombre", "Cuenta de prueba", "--rol", "DEMO"],
+        deps,
+      ),
+    ).toBe(0);
+    expect(crear).toHaveBeenCalledWith({
+      correo: "demo@b.test",
+      nombre: "Cuenta de prueba",
+      contrasena: "contrasena-de-demo-1234",
+      rol: "DEMO",
+    });
+    expect([...salida, ...errores].join("\n")).not.toContain("contrasena-de-demo-1234");
   });
 });

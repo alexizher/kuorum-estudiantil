@@ -87,7 +87,11 @@ describe("PrismaRepositorioDeParticipantes", () => {
       new GeneradorDeCodigosAleatorio(),
       hasheador,
     );
-    const [codigo = ""] = await generar.ejecutar(sesion.id, 1);
+    const [codigo = ""] = await generar.ejecutar(
+      { id: "u-super", rol: "SUPERADMIN" },
+      sesion.id,
+      1,
+    );
     const ingresar = new IngresarASala(
       banco.sesiones,
       banco.participantes,
@@ -178,5 +182,17 @@ describe("PrismaRepositorioDeParticipantes", () => {
 
       expect(await banco.participantes.contarActivos(sesion.id)).toBe(2);
     });
+  });
+
+  it("contarCodigos cuenta todos los códigos de la sesión, activados o no, y solo los suyos", async () => {
+    const sesion = await sesionGuardada("CON_CODIGOS");
+    const otra = await sesionGuardada("CON_CODIGOS");
+    await banco.participantes.guardarCodigos(sesion.id, ["a", "b", "c"]);
+    await banco.participantes.guardarCodigos(otra.id, ["a"]);
+    await banco.participantes.activarCodigo(sesion.id, "a");
+
+    expect(await banco.participantes.contarCodigos(sesion.id)).toBe(3);
+    expect(await banco.participantes.contarCodigos(otra.id)).toBe(1);
+    expect(await banco.participantes.contarCodigos("nada")).toBe(0);
   });
 });

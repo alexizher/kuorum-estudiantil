@@ -46,9 +46,11 @@ const casos = {
   terminarIntervencion: ejecutar(),
   sumarMinuto: ejecutar(),
   rechazarMocion: ejecutar(),
-  sesiones: { listar: vi.fn() },
+  listarSesionesDeLaMesa: { ejecutar: vi.fn() },
 };
 let hayMesa = true;
+let rolActual = "MESA";
+const ACTOR = { id: "u1", correo: "m@x.test", nombre: "Mesa", rol: "MESA" };
 
 function conMesa(): void {
   vi.mocked(contenedor).mockReturnValue({
@@ -56,7 +58,7 @@ function conMesa(): void {
     autenticacion: () => ({
       api: {
         getSession: vi.fn(async () =>
-          hayMesa ? { user: { id: "u1", email: "m@x.test", name: "Mesa" } } : null,
+          hayMesa ? { user: { id: "u1", email: "m@x.test", name: "Mesa", rol: rolActual } } : null,
         ),
       },
     }),
@@ -74,9 +76,10 @@ const idp = (id = "s1") => ({ params: Promise.resolve({ id }) });
 
 beforeEach(() => {
   hayMesa = true;
+  rolActual = "MESA";
   for (const c of Object.values(casos)) for (const f of Object.values(c)) f.mockClear();
   casos.crearSesion.ejecutar.mockResolvedValue(sesion);
-  casos.sesiones.listar.mockResolvedValue([sesion]);
+  casos.listarSesionesDeLaMesa.ejecutar.mockResolvedValue([sesion]);
   casos.generarCodigosDeAcceso.ejecutar.mockResolvedValue(["AAAA-2222", "BBBB-3333"]);
   casos.crearPregunta.ejecutar.mockResolvedValue({
     id: "p1",
@@ -145,15 +148,15 @@ describe("API de la mesa", () => {
     );
     expect(r.status).toBe(201);
     expect((await r.json()).codigoDeSala).toBe("ABCD");
-    expect(casos.crearSesion.ejecutar).toHaveBeenCalledWith("Asamblea", "CON_CODIGOS", 120);
+    expect(casos.crearSesion.ejecutar).toHaveBeenCalledWith(ACTOR, "Asamblea", "CON_CODIGOS", 120);
     expect((await crear(pedir("POST", { titulo: "x", modo: "RARO" }))).status).toBe(400);
   });
 
   it("iniciar y terminar dan 204 y pasan el id", async () => {
     expect((await iniciar(pedir("POST"), idp("s9"))).status).toBe(204);
-    expect(casos.iniciarSesion.ejecutar).toHaveBeenCalledWith("s9");
+    expect(casos.iniciarSesion.ejecutar).toHaveBeenCalledWith(ACTOR, "s9");
     expect((await terminar(pedir("POST"), idp("s9"))).status).toBe(204);
-    expect(casos.terminarSesion.ejecutar).toHaveBeenCalledWith("s9");
+    expect(casos.terminarSesion.ejecutar).toHaveBeenCalledWith(ACTOR, "s9");
   });
 
   it("terminar con votación abierta da 409 y el mensaje para la mesa", async () => {
@@ -178,7 +181,7 @@ describe("API de la mesa", () => {
     expect(r.status).toBe(200);
     expect(r.headers.get("Cache-Control")).toBe("no-store");
     expect(await r.json()).toEqual({ codigos: ["AAAA-2222", "BBBB-3333"] });
-    expect(casos.generarCodigosDeAcceso.ejecutar).toHaveBeenCalledWith("s1", 2);
+    expect(casos.generarCodigosDeAcceso.ejecutar).toHaveBeenCalledWith(ACTOR, "s1", 2);
     expect((await codigos(pedir("POST", { cantidad: "2" }), idp())).status).toBe(400);
   });
 
@@ -193,14 +196,17 @@ describe("API de la mesa", () => {
   it("crear pregunta usa Sí/No/Me abstengo si no se mandan opciones", async () => {
     const r = await crearPregunta(pedir("POST", { texto: "¿Sí?" }), idp());
     expect(r.status).toBe(201);
-    expect(casos.crearPregunta.ejecutar).toHaveBeenCalledWith("s1", "¿Sí?", [
+    expect(casos.crearPregunta.ejecutar).toHaveBeenCalledWith(ACTOR, "s1", "¿Sí?", [
       "Sí",
       "No",
       "Me abstengo",
     ]);
     expect((await r.json()).id).toBe("p1");
     await crearPregunta(pedir("POST", { texto: "¿Quién?", opciones: ["Ana", "Luis"] }), idp());
-    expect(casos.crearPregunta.ejecutar).toHaveBeenLastCalledWith("s1", "¿Quién?", ["Ana", "Luis"]);
+    expect(casos.crearPregunta.ejecutar).toHaveBeenLastCalledWith(ACTOR, "s1", "¿Quién?", [
+      "Ana",
+      "Luis",
+    ]);
   });
 
   it("GET preguntas lista las de la sesión con estado, opciones y resultado de las cerradas", async () => {
@@ -224,7 +230,7 @@ describe("API de la mesa", () => {
     const r = await listarPreguntas(pedir("GET"), idp("s9"));
     expect(r.status).toBe(200);
     expect(r.headers.get("Cache-Control")).toBe("no-store");
-    expect(casos.listarPreguntasDeSesion.ejecutar).toHaveBeenCalledWith("s9");
+    expect(casos.listarPreguntasDeSesion.ejecutar).toHaveBeenCalledWith(ACTOR, "s9");
     expect(await r.json()).toEqual({
       preguntas: [
         {
@@ -255,7 +261,7 @@ describe("API de la mesa", () => {
 
   it("abrir, anular y proyectar dan 204; OTRA_PREGUNTA_ABIERTA da 409", async () => {
     expect((await abrir(pedir("POST"), idp("p1"))).status).toBe(204);
-    expect(casos.abrirPregunta.ejecutar).toHaveBeenCalledWith("p1");
+    expect(casos.abrirPregunta.ejecutar).toHaveBeenCalledWith(ACTOR, "p1");
     expect((await anular(pedir("POST"), idp("p1"))).status).toBe(204);
     expect((await proyectar(pedir("POST"), idp("p1"))).status).toBe(204);
     casos.abrirPregunta.ejecutar.mockRejectedValueOnce(new ErrorDeDominio("OTRA_PREGUNTA_ABIERTA"));
@@ -284,21 +290,79 @@ describe("API de la mesa", () => {
 
   it("dar la palabra acepta solicitudId opcional (null = siguiente)", async () => {
     expect((await dar(pedir("POST", {}), idp())).status).toBe(204);
-    expect(casos.darLaPalabra.ejecutar).toHaveBeenLastCalledWith("s1", null);
+    expect(casos.darLaPalabra.ejecutar).toHaveBeenLastCalledWith(ACTOR, "s1", null);
     await dar(pedir("POST", { solicitudId: "sol-1" }), idp());
-    expect(casos.darLaPalabra.ejecutar).toHaveBeenLastCalledWith("s1", "sol-1");
+    expect(casos.darLaPalabra.ejecutar).toHaveBeenLastCalledWith(ACTOR, "s1", "sol-1");
     expect((await dar(pedir("POST"), idp())).status).toBe(204);
   });
 
   it("terminar intervención, sumar minuto y rechazar moción dan 204", async () => {
     expect((await terminarIntervencion(pedir("POST"), idp())).status).toBe(204);
-    expect(casos.terminarIntervencion.ejecutar).toHaveBeenCalledWith("s1");
+    expect(casos.terminarIntervencion.ejecutar).toHaveBeenCalledWith(ACTOR, "s1");
     expect((await minuto(pedir("POST"), idp())).status).toBe(204);
-    expect(casos.sumarMinuto.ejecutar).toHaveBeenCalledWith("s1");
+    expect(casos.sumarMinuto.ejecutar).toHaveBeenCalledWith(ACTOR, "s1");
     const r = await rechazar(pedir("POST"), {
       params: Promise.resolve({ id: "s1", solicitudId: "sol-7" }),
     });
     expect(r.status).toBe(204);
-    expect(casos.rechazarMocion.ejecutar).toHaveBeenCalledWith("s1", "sol-7");
+    expect(casos.rechazarMocion.ejecutar).toHaveBeenCalledWith(ACTOR, "s1", "sol-7");
+  });
+
+  it("GET sesiones pasa el actor a la lista, que decide qué ve cada rol", async () => {
+    rolActual = "DEMO";
+    await listar(pedir("GET"));
+    expect(casos.listarSesionesDeLaMesa.ejecutar).toHaveBeenCalledWith({ ...ACTOR, rol: "DEMO" });
+  });
+
+  it("todas las rutas con sesión o pregunta pasan el actor con su rol a los casos de uso", async () => {
+    rolActual = "DEMO";
+    const demo = { ...ACTOR, rol: "DEMO" };
+    await iniciar(pedir("POST"), idp("s1"));
+    await terminar(pedir("POST"), idp("s1"));
+    await codigos(pedir("POST", { cantidad: 2 }), idp("s1"));
+    await crearPregunta(pedir("POST", { texto: "¿Sí?" }), idp("s1"));
+    await listarPreguntas(pedir("GET"), idp("s1"));
+    await abrir(pedir("POST"), idp("p1"));
+    await cerrar(pedir("POST"), idp("p1"));
+    await anular(pedir("POST"), idp("p1"));
+    await proyectar(pedir("POST"), idp("p1"));
+    await dar(pedir("POST", {}), idp("s1"));
+    await terminarIntervencion(pedir("POST"), idp("s1"));
+    await minuto(pedir("POST"), idp("s1"));
+    await rechazar(pedir("POST"), { params: Promise.resolve({ id: "s1", solicitudId: "x" }) });
+    await crear(pedir("POST", { titulo: "Asamblea", modo: "SALA_ABIERTA" }));
+    for (const caso of [
+      casos.iniciarSesion,
+      casos.terminarSesion,
+      casos.generarCodigosDeAcceso,
+      casos.crearPregunta,
+      casos.listarPreguntasDeSesion,
+      casos.abrirPregunta,
+      casos.cerrarPregunta,
+      casos.anularPregunta,
+      casos.proyectarResultado,
+      casos.darLaPalabra,
+      casos.terminarIntervencion,
+      casos.sumarMinuto,
+      casos.rechazarMocion,
+      casos.crearSesion,
+    ]) {
+      expect(caso.ejecutar).toHaveBeenCalledTimes(1);
+      expect(caso.ejecutar.mock.calls[0]?.[0]).toEqual(demo);
+    }
+  });
+
+  it("una sesión ajena a la cuenta de prueba responde igual que una que no existe", async () => {
+    rolActual = "DEMO";
+    casos.iniciarSesion.ejecutar.mockRejectedValueOnce(new ErrorDeDominio("SESION_AJENA"));
+    const ajena = await iniciar(pedir("POST"), idp("de-otro"));
+    const { SesionNoEncontrada } = await import("@kuorum/domain");
+    casos.iniciarSesion.ejecutar.mockRejectedValueOnce(new SesionNoEncontrada("no-existe"));
+    const inexistente = await iniciar(pedir("POST"), idp("no-existe"));
+
+    expect(ajena.status).toBe(404);
+    expect(ajena.status).toBe(inexistente.status);
+    expect(await ajena.json()).toEqual(await inexistente.json());
+    expect(ajena.headers.get("Cache-Control")).toBe("no-store");
   });
 });

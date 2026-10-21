@@ -35,7 +35,7 @@ export type Escenario = ReturnType<typeof crearEscenario>;
 
 export async function sembrarSesion(
   escenario: Escenario,
-  opciones: { modo?: ModoDeParticipacion; estado?: EstadoDeSesion } = {},
+  opciones: { modo?: ModoDeParticipacion; estado?: EstadoDeSesion; creadaPorId?: string } = {},
 ): Promise<Sesion> {
   const sesion = Sesion.reconstruir({
     id: escenario.ids.nuevo(),
@@ -46,6 +46,7 @@ export async function sembrarSesion(
     segundosPorIntervencion: 180,
     version: 0,
     creadaEn: escenario.reloj.ahora(),
+    creadaPorId: opciones.creadaPorId ?? null,
   });
   await escenario.sesiones.guardar(sesion);
   return sesion;
