@@ -40,7 +40,7 @@ export function buildSteps(token: TokenReader): Step[] {
 
 /** Secretos primero: es idempotente y una instalación vieja necesita las variables nuevas antes del build. */
 export function publishSteps(): Step[] {
-  return [new SecretsStep(), new DeployStep(), new VerificationStep()];
+  return [new SecretsStep({ sugerirPublicar: false }), new DeployStep(), new VerificationStep()];
 }
 
 export function buildPublishWizard(options: { cwd: string }): DeployWizard {

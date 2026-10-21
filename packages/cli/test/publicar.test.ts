@@ -28,6 +28,11 @@ describe("publicar", () => {
     expect(publishSteps().map((p) => p.id)).toEqual(["secretos", "despliegue", "verificacion"]);
   });
 
+  it("el paso de secretos de publicar no sugiere publicar", () => {
+    const secretos = publishSteps()[0] as unknown as { sugerirPublicar: boolean };
+    expect(secretos.sugerirPublicar).toBe(false);
+  });
+
   it("con repetirPasos corre los pasos aunque estén completados y no cambia completedSteps", async () => {
     const log: string[] = [];
     const store = new MemoryStateStore({

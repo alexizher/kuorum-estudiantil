@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { LimiteDeTasa, ipDe } from "../../src/http/limite-de-tasa";
 
 describe("LimiteDeTasa", () => {
@@ -35,11 +35,24 @@ describe("ipDe", () => {
     const r = new Request("http://x.test/", { headers: { "x-forwarded-for": "9.9.9.9, 8.8.8.8" } });
     expect(ipDe(r)).toBe("9.9.9.9");
   });
-  it("prefiere cf-connecting-ip a x-forwarded-for", () => {
+  it("con KUORUM_DETRAS_DE_CLOUDFLARE=1 prefiere cf-connecting-ip a x-forwarded-for", () => {
+    vi.stubEnv("KUORUM_DETRAS_DE_CLOUDFLARE", "1");
     const r = new Request("http://x.test/", {
       headers: { "cf-connecting-ip": "5.5.5.5", "x-forwarded-for": "172.70.0.1" },
     });
     expect(ipDe(r)).toBe("5.5.5.5");
+    vi.unstubAllEnvs();
+  });
+  it("sin la variable ignora cf-connecting-ip, que un cliente puede inventar", () => {
+    vi.stubEnv("KUORUM_DETRAS_DE_CLOUDFLARE", "");
+    const r = new Request("http://x.test/", {
+      headers: { "cf-connecting-ip": "5.5.5.5", "x-forwarded-for": "172.70.0.1" },
+    });
+    expect(ipDe(r)).toBe("172.70.0.1");
+    expect(
+      ipDe(new Request("http://x.test/", { headers: { "cf-connecting-ip": "5.5.5.5" } })),
+    ).toBeNull();
+    vi.unstubAllEnvs();
   });
   it("cae a x-real-ip y luego a null", () => {
     expect(ipDe(new Request("http://x.test/", { headers: { "x-real-ip": "7.7.7.7" } }))).toBe(

@@ -49,12 +49,16 @@ export class LimiteDeTasa {
 }
 
 /**
- * IP del cliente, solo para limitar `ingresar`. Detrás de Cloudflare llega en
- * `cf-connecting-ip`; si no, un solo valor de x-forwarded-for (el primero) o x-real-ip.
+ * IP del cliente, solo para limitar `ingresar`. `cf-connecting-ip` se lee únicamente con
+ * KUORUM_DETRAS_DE_CLOUDFLARE=1: Vercel deja pasar cabeceras ajenas y, sin Cloudflare
+ * delante, un cliente podría inventarla y rotarla. Si no, un solo valor de
+ * x-forwarded-for (el primero) o x-real-ip.
  */
 export function ipDe(solicitud: Request): string | null {
-  const cloudflare = solicitud.headers.get("cf-connecting-ip")?.trim();
-  if (cloudflare) return cloudflare;
+  if (process.env["KUORUM_DETRAS_DE_CLOUDFLARE"] === "1") {
+    const cloudflare = solicitud.headers.get("cf-connecting-ip")?.trim();
+    if (cloudflare) return cloudflare;
+  }
   const reenviada = solicitud.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
   if (reenviada) return reenviada;
   const real = solicitud.headers.get("x-real-ip")?.trim();

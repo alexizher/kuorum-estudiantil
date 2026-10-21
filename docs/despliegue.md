@@ -113,9 +113,11 @@ Pon Cloudflare delante en cuanto planees asambleas generales de más de unas 300
 ## Límites de tasa
 
 - Votos: tope de 1.000 por minuto por participante (la identidad de la cookie firmada), solo contra inundaciones. Nunca se limitan por IP: un auditorio entero comparte la misma.
-- Ingreso a la sala: tope por IP. La IP se lee de `cf-connecting-ip` si existe, y si no del primer valor de `x-forwarded-for` o de `x-real-ip`, para que con Cloudflare delante los usuarios no queden en un solo cupo.
+- Ingreso a la sala: tope por IP. Por defecto la IP sale del primer valor de `x-forwarded-for` o de `x-real-ip`. Con `KUORUM_DETRAS_DE_CLOUDFLARE=1` se lee `cf-connecting-ip`, para que con Cloudflare delante los usuarios no queden en un solo cupo. No pongas esa variable si Cloudflare no está delante: Vercel deja pasar cabeceras ajenas y un cliente podría inventar `cf-connecting-ip` para esquivar el tope. Con la variable activa, Vercel debe ser alcanzable solo a través de Cloudflare.
 - Los contadores viven en la memoria de cada instancia: se pierden al reiniciar y no se comparten entre instancias.
 
 ## Dominio propio con Cloudflare (recomendado para asambleas grandes)
 
 Cloudflare solo puede ponerse delante de un dominio propio, no de un `*.vercel.app`. Con un dominio (unos 10 USD al año) y el plan gratuito de Cloudflare, las consultas de estado las responde Cloudflare y la cuota de Vercel alcanza para sesiones de miles de personas. Los pasos son: comprar el dominio, pasarlo a Cloudflare, conectarlo al proyecto en Vercel y dejar que Cloudflare guarde en caché las consultas de estado público. Sin dominio, la cuota gratuita limita el tamaño de la sesión (ver "Capacidad del plan gratuito").
+
+Cuando Cloudflare esté delante, agrega `KUORUM_DETRAS_DE_CLOUDFLARE=1` a las variables de producción y publica de nuevo, para que el tope de ingreso use la IP real (`cf-connecting-ip`). Solo hazlo si Vercel es alcanzable únicamente a través de Cloudflare; si no, esa cabecera se puede falsificar.

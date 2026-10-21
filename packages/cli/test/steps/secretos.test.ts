@@ -60,6 +60,14 @@ describe("secretos", () => {
     expect(prompter.infos.join(" ")).toContain("pnpm publicar");
   });
 
+  it("dentro de publicar no sugiere publicar de nuevo", async () => {
+    const prompter = new FakePrompter();
+    await new SecretsStep({ sugerirPublicar: false }).run(
+      makeContext({ prompter, state: { completedSteps: ["despliegue"] } }),
+    );
+    expect(prompter.infos.join(" ")).not.toContain("pnpm publicar");
+  });
+
   it("falla con claridad si vercel env ls falla y no agrega nada", async () => {
     const runner = new FakeRunner((_, args) =>
       args[1] === "ls" ? { exitCode: 1, stderr: "sin sesión\notra línea" } : undefined,

@@ -7,6 +7,14 @@ const ENVIRONMENTS = ["production", "preview"];
 
 export class SecretsStep implements Step {
   readonly id = "secretos";
+
+  /** Dentro de `pnpm publicar` el build que sigue ya toma los secretos: no hay que sugerirlo. */
+  constructor(private readonly options: { sugerirPublicar?: boolean } = {}) {}
+
+  get sugerirPublicar(): boolean {
+    return this.options.sugerirPublicar ?? true;
+  }
+
   readonly description =
     "Generando KUORUM_SECRETO y BETTER_AUTH_SECRET en production y preview (solo los que falten)";
 
@@ -23,7 +31,7 @@ export class SecretsStep implements Step {
         await this.add(runner, name, environment);
       }
     }
-    if (state.completedSteps.includes("despliegue")) {
+    if (this.sugerirPublicar && state.completedSteps.includes("despliegue")) {
       prompter.info(
         "Los secretos nuevos se aplican en el próximo despliegue: corre pnpm publicar.",
       );
