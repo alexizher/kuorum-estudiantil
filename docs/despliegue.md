@@ -109,12 +109,23 @@ Qué no puede:
 
 - Ver, abrir ni modificar sesiones de otras cuentas. Si pide una por su dirección, recibe un 404, igual que si no existiera.
 - Tener más de 5 sesiones sin terminar a la vez. Al intentar la sexta recibe "La cuenta de prueba puede tener hasta 5 sesiones activas. Termina una para crear otra."
+- Tener más de 20 sesiones en total en el día, terminadas o no, ni más de 20 preguntas en una sesión. Los topes vuelven a cero con la limpieza diaria. Al llegar a ellos recibe un aviso en español.
 - Generar más de 50 códigos por petición ni más de 200 por sesión.
-- Cambiar su contraseña, su correo ni su nombre.
+- Cambiar su contraseña, su correo ni su nombre, ni cerrar las sesiones abiertas de otras personas que usan la misma cuenta.
 
 La limpieza es la ruta `GET /api/tareas/limpiar-demo`. Responde 401 sin el `CRON_SECRET` correcto (y siempre que la variable no esté definida). `apps/web/vercel.json` la programa con `"17 8 * * *"`, las 08:17 UTC, que son las 03:17 en Bogotá. En el plan Hobby Vercel puede ejecutarla en cualquier momento de esa hora. Borra, en una sola transacción, todas las sesiones creadas por cuentas `DEMO` con sus preguntas, conteos, votos emitidos, códigos, participantes y solicitudes de palabra. No toca nada de las cuentas `SUPERADMIN` ni `MESA`.
 
-Como la contraseña es pública, cualquiera puede iniciar sesión con ella y crear salas visibles con su código. Si quieres apagarla, quita `KUORUM_MODO_DEMO`: la cuenta sigue existiendo pero deja de mostrarse. Para borrarla del todo, elimina el usuario de la tabla `auth_users`.
+En la lista de la mesa, `SUPERADMIN` y `MESA` no ven las sesiones de la cuenta de prueba, para que los ensayos públicos no las tapen. `SUPERADMIN` tiene un interruptor "Mostrar sesiones de la cuenta de prueba"; `MESA` no. Las sesiones de la cuenta de prueba siguen abiertas por su dirección para ambos roles.
+
+Para rotar la contraseña no borres la cuenta: al borrar el usuario sus sesiones quedan sin dueño y las ve solo la administración. Cámbiala en su lugar, con la misma forma de arriba y `--actualizar` (también cierra las sesiones abiertas de esa cuenta):
+
+```
+printf '%s' "$NUEVA_CONTRASENA" | pnpm --filter @kuorum/web crear-admin --correo "$KUORUM_DEMO_CORREO" --nombre "Cuenta de prueba" --rol DEMO --actualizar
+```
+
+Después actualiza `KUORUM_DEMO_CONTRASENA` en Vercel y publica de nuevo. `--actualizar` sirve igual para cualquier otra cuenta.
+
+Como la contraseña es pública, cualquiera puede iniciar sesión con ella y crear salas visibles con su código. Si apagas la cuenta de prueba quitando `KUORUM_MODO_DEMO`, la cuenta sigue existiendo y la contraseña ya fue pública: cualquiera que la haya visto puede seguir entrando. Rota la contraseña con `--actualizar` (y no la publiques) o borra el usuario antes de apagarla.
 
 ## Migraciones de base de datos
 
