@@ -1,7 +1,8 @@
 import { Resultado, type Pregunta, type RegistroDeVotos } from "@kuorum/domain";
 import type { RepositorioDePreguntas } from "../puertos/repositorio-de-preguntas.js";
 import type { RepositorioDeSesiones } from "../puertos/repositorio-de-sesiones.js";
-import { obtenerSesion } from "../sala/obtener-sesion.js";
+import type { Actor } from "../sala/actor.js";
+import { obtenerSesionDeLaMesa } from "../sala/obtener-sesion-de-la-mesa.js";
 
 export interface PreguntaConResultado {
   pregunta: Pregunta;
@@ -17,8 +18,8 @@ export class ListarPreguntasDeSesion {
     private readonly votos: RegistroDeVotos,
   ) {}
 
-  async ejecutar(sesionId: string): Promise<PreguntaConResultado[]> {
-    await obtenerSesion(this.sesiones, sesionId);
+  async ejecutar(actor: Actor, sesionId: string): Promise<PreguntaConResultado[]> {
+    await obtenerSesionDeLaMesa(this.sesiones, actor, sesionId);
     const preguntas = await this.preguntas.deSesion(sesionId);
     return Promise.all(
       preguntas.map(async (pregunta) => ({

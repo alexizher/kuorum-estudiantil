@@ -21,6 +21,12 @@ describe("ClienteDeMesaPorFetch", () => {
     expect(fetchFalso.mock.calls[0]?.[0]).toBe("/api/mesa/v1/sesiones");
   });
 
+  it("pide también las sesiones de la cuenta de prueba solo si se le dice", async () => {
+    const { cliente, fetchFalso } = conRespuesta(Response.json({ sesiones: [] }));
+    await cliente.listarSesiones({ incluirCuentaDePrueba: true });
+    expect(fetchFalso.mock.calls[0]?.[0]).toBe("/api/mesa/v1/sesiones?incluirPrueba=1");
+  });
+
   it("crea una sesión con el cuerpo en JSON", async () => {
     const { cliente, fetchFalso } = conRespuesta(Response.json({ id: "s1" }, { status: 201 }));
     await cliente.crearSesion({

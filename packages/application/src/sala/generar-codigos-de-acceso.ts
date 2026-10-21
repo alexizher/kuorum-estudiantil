@@ -3,7 +3,12 @@ import type { Hasheador } from "../puertos/hasheador.js";
 import type { RepositorioDeParticipantes } from "../puertos/repositorio-de-participantes.js";
 import type { RepositorioDeSesiones } from "../puertos/repositorio-de-sesiones.js";
 import type { UnidadDeTrabajo } from "../puertos/unidad-de-trabajo.js";
-import { obtenerSesion } from "./obtener-sesion.js";
+import type { Actor } from "./actor.js";
+import {
+  CODIGOS_MAXIMOS_POR_SESION_DE_DEMO,
+  CODIGOS_MAXIMOS_POR_SOLICITUD_DE_DEMO,
+} from "./limites-de-demo.js";
+import { obtenerSesionDeLaMesa } from "./obtener-sesion-de-la-mesa.js";
 
 const CANTIDAD_MIN = 1;
 const CANTIDAD_MAX = 2000;
@@ -19,13 +24,14 @@ export class GenerarCodigosDeAcceso {
   ) {}
 
   /** Devuelve el texto plano una sola vez; solo se guardan los hashes. */
-  async ejecutar(sesionId: string, cantidad: number): Promise<string[]> {
+  async ejecutar(actor: Actor, sesionId: string, cantidad: number): Promise<string[]> {
     if (!Number.isInteger(cantidad) || cantidad < CANTIDAD_MIN || cantidad > CANTIDAD_MAX) {
       throw new ErrorDeDominio("CANTIDAD_INVALIDA");
     }
     return this.unidad.ejecutar(async () => {
-      const sesion = await obtenerSesion(this.sesiones, sesionId);
+      const sesion = await obtenerSesionDeLaMesa(this.sesiones, actor, sesionId);
       if (sesion.modo !== "CON_CODIGOS") throw new ErrorDeDominio("MODO_SIN_CODIGOS");
+      if (actor.rol === "DEMO") await this.exigirDentroDelLimiteDeDemo(sesion.id, cantidad);
 
       const codigos = new Set<string>();
       let intentos = 0;
@@ -43,5 +49,15 @@ export class GenerarCodigosDeAcceso {
       );
       return lista;
     });
+  }
+
+  private async exigirDentroDelLimiteDeDemo(sesionId: string, cantidad: number): Promise<void> {
+    const yaGenerados = await this.participantes.contarCodigos(sesionId);
+    if (
+      cantidad > CODIGOS_MAXIMOS_POR_SOLICITUD_DE_DEMO ||
+      yaGenerados + cantidad > CODIGOS_MAXIMOS_POR_SESION_DE_DEMO
+    ) {
+      throw new ErrorDeDominio("LIMITE_DE_CODIGOS_DE_DEMO");
+    }
   }
 }

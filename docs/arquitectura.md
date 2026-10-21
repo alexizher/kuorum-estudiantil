@@ -30,6 +30,12 @@ Los nombres del dominio van en español (`Sesion`, `Pregunta`, `SolicitudDePalab
 - **Participante y código de acceso.** El código se genera una vez, se muestra una vez y se guarda solo como hash. Activarlo crea un participante anónimo, que es lo que cuenta como un voto.
 - **Cola de intervenciones.** Solicitudes de palabra y mociones. Las mociones pasan adelante según su prioridad, y quien habla tiene un tiempo que la mesa puede ampliar.
 
+## Roles de la mesa y quién ve qué
+
+Cada cuenta de la mesa tiene un rol: `SUPERADMIN`, `MESA` o `DEMO`. Las rutas de la mesa pasan por `exigirMesa`, que arma el `Actor` (id y rol) y lo entrega a `accionDeMesa`. Cada caso de uso de la mesa recibe ese actor como primer argumento y llama a `exigirAccesoASesion(actor, sesion)` (en `packages/application/src/sala`): `DEMO` solo entra a las sesiones cuyo `creadaPorId` es el suyo, y `SUPERADMIN` y `MESA` entran a todas. Si falla, el caso de uso lanza `SESION_AJENA`, y `respuestaDeError` la publica como 404 `SESION_NO_ENCONTRADA`, con el mismo cuerpo que una sesión inexistente. Las preguntas ajenas responden `PREGUNTA_NO_ENCONTRADA` por la misma razón. La regla vive en la capa de aplicación, no en la interfaz. Las rutas públicas (sala, proyección, celular) no usan actor y no cambian.
+
+La cuenta `DEMO` además tiene topes (5 sesiones sin terminar, 50 códigos por petición y 200 por sesión) que aplican `CrearSesion` y `GenerarCodigosDeAcceso`, y la tarea diaria `LimpiarSesionesDeDemo` borra lo que creó. El rol se guarda en `auth_users.rol`; Better Auth lo declara con `input: false`, así que ningún cliente puede escribirlo, y un hook bloquea a `DEMO` en las rutas de cambio de contraseña, correo y datos.
+
 ## Cómo se guarda el voto secreto
 
 Toda pregunta es secreta. El voto se reparte en dos tablas que no se pueden unir:

@@ -4,6 +4,7 @@ import { Boton, clasesDeBoton } from "@kuorum/ui";
 import Link from "next/link";
 import { useState } from "react";
 import type { ModoDeSala } from "./cliente-de-mesa";
+import { InsigniaDeCuentaDePrueba } from "./insignia-de-cuenta-de-prueba";
 import estilos from "./mesa.module.css";
 import { ETIQUETA_DE_MODO, etiquetaDeEstadoDeSesion } from "./textos";
 
@@ -17,6 +18,7 @@ interface Propiedades {
   alIniciar: () => void;
   alPedirTerminar: () => void;
   alCopiarEnlace: () => Promise<boolean>;
+  esDemo?: boolean;
 }
 
 export function CabeceraDeSesion({
@@ -29,6 +31,7 @@ export function CabeceraDeSesion({
   alIniciar,
   alPedirTerminar,
   alCopiarEnlace,
+  esDemo = false,
 }: Propiedades) {
   const [copiado, setCopiado] = useState<boolean | undefined>(undefined);
   const puedeIniciar = estado === "PROGRAMADA" || estado === "ABIERTA";
@@ -56,6 +59,7 @@ export function CabeceraDeSesion({
         </p>
       </div>
       <div className={estilos.accionesDeCabecera}>
+        {esDemo ? <InsigniaDeCuentaDePrueba /> : null}
         {puedeIniciar ? (
           <Boton variante="tinta" onClick={alIniciar} disabled={ocupado}>
             Iniciar sesión

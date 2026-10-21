@@ -5,6 +5,7 @@ import { chromium } from "@playwright/test";
 import { entrarALaMesa } from "./ayudas";
 
 export const SESION_DE_MESA = "test-results/mesa.json";
+export const SESION_DE_DEMO = "test-results/demo.json";
 
 // Migra la base y crea una cuenta de mesa solo para esta corrida.
 export default async function preparar(): Promise<void> {
@@ -32,6 +33,26 @@ export default async function preparar(): Promise<void> {
   process.env["E2E_CORREO"] = correo;
   process.env["E2E_CONTRASENA"] = contrasena;
 
+  // La cuenta de prueba (rol DEMO), con la contraseña por stdin como en una instalación real.
+  const correoDemo = `demo-${randomUUID().slice(0, 8)}@example.test`;
+  const contrasenaDemo = `demo-${randomUUID()}`;
+  execFileSync(
+    "pnpm",
+    [
+      "--filter",
+      "@kuorum/web",
+      "--silent",
+      "crear-admin",
+      "--correo",
+      correoDemo,
+      "--nombre",
+      "Cuenta de prueba",
+      "--rol",
+      "DEMO",
+    ],
+    { cwd: raiz, input: contrasenaDemo, stdio: ["pipe", "inherit", "inherit"] },
+  );
+
   // Una sola entrada para toda la corrida: el ingreso está limitado a 5 intentos por minuto.
   mkdirSync("test-results", { recursive: true });
   const navegador = await chromium.launch();
@@ -40,5 +61,10 @@ export default async function preparar(): Promise<void> {
   });
   await entrarALaMesa(await ctx.newPage());
   await ctx.storageState({ path: SESION_DE_MESA });
+  const ctxDemo = await navegador.newContext({
+    baseURL: `http://localhost:${process.env["E2E_PUERTO"] ?? 3150}`,
+  });
+  await entrarALaMesa(await ctxDemo.newPage(), correoDemo, contrasenaDemo);
+  await ctxDemo.storageState({ path: SESION_DE_DEMO });
   await navegador.close();
 }

@@ -6,6 +6,8 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Mesa", robots: { index: false } };
 
 export default async function PaginaDeMesa() {
-  await exigirSesionDeMesa();
-  return <MesaEnVivo />;
+  const actor = await exigirSesionDeMesa();
+  return (
+    <MesaEnVivo esDemo={actor.rol === "DEMO"} puedeVerCuentaDePrueba={actor.rol === "SUPERADMIN"} />
+  );
 }

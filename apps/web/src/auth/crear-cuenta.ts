@@ -1,9 +1,11 @@
+import type { RolDeMesa } from "@kuorum/application";
 import type { Autenticacion } from "./crear-auth";
 
 export interface DatosDeCuenta {
   correo: string;
   nombre: string;
   contrasena: string;
+  rol: RolDeMesa;
 }
 
 export const LARGO_MINIMO_DE_CONTRASENA = 12;
@@ -11,7 +13,7 @@ export const LARGO_MINIMO_DE_CONTRASENA = 12;
 // Camino de servidor: no pasa por sign-up, que está desactivado.
 export async function crearCuentaDeMesa(
   auth: Autenticacion,
-  { correo, nombre, contrasena }: DatosDeCuenta,
+  { correo, nombre, contrasena, rol }: DatosDeCuenta,
 ): Promise<void> {
   if (contrasena.length < LARGO_MINIMO_DE_CONTRASENA) {
     throw new Error(`La contraseña debe tener al menos ${LARGO_MINIMO_DE_CONTRASENA} caracteres.`);
@@ -23,7 +25,7 @@ export async function crearCuentaDeMesa(
   }
   const hash = await contexto.password.hash(contrasena);
   const usuario = await contexto.internalAdapter.createUser(
-    { email: correoNormal, name: nombre.trim(), emailVerified: true },
+    { email: correoNormal, name: nombre.trim(), emailVerified: true, rol },
     { method: "admin" },
   );
   try {
@@ -37,4 +39,34 @@ export async function crearCuentaDeMesa(
     await contexto.internalAdapter.deleteUser(usuario.id);
     throw error;
   }
+}
+
+/**
+ * Cambia la contraseña y el rol de una cuenta que ya existe y cierra sus sesiones abiertas.
+ * Sirve para rotar la contraseña de la cuenta de prueba sin borrarla: borrarla y crearla de nuevo
+ * dejaría sus sesiones sin dueño.
+ */
+export async function actualizarCuentaDeMesa(
+  auth: Autenticacion,
+  { correo, contrasena, rol }: DatosDeCuenta,
+): Promise<void> {
+  if (contrasena.length < LARGO_MINIMO_DE_CONTRASENA) {
+    throw new Error(`La contraseña debe tener al menos ${LARGO_MINIMO_DE_CONTRASENA} caracteres.`);
+  }
+  const contexto = await auth.$context;
+  const correoNormal = correo.trim().toLowerCase();
+  const encontrado = await contexto.internalAdapter.findUserByEmail(correoNormal, {
+    includeAccounts: false,
+  });
+  if (encontrado === null) throw new Error(`No existe una cuenta con el correo ${correoNormal}.`);
+  const usuario = encontrado.user;
+  await contexto.internalAdapter.updatePassword(
+    usuario.id,
+    await contexto.password.hash(contrasena),
+  );
+  await contexto.internalAdapter.updateUser(usuario.id, { rol });
+  await contexto.adapter.deleteMany({
+    model: "session",
+    where: [{ field: "userId", value: usuario.id }],
+  });
 }

@@ -12,9 +12,9 @@ export async function GET(
   request: Request,
   contexto: { params: Promise<{ id: string }> },
 ): Promise<Response> {
-  return accionDeMesa(request, async () => {
+  return accionDeMesa(request, async (actor) => {
     const { id } = await contexto.params;
-    const preguntas = await contenedor().listarPreguntasDeSesion.ejecutar(id);
+    const preguntas = await contenedor().listarPreguntasDeSesion.ejecutar(actor, id);
     return accion({
       preguntas: preguntas.map(({ pregunta: p, resultado }) => ({
         id: p.id,
@@ -41,11 +41,12 @@ export async function POST(
   request: Request,
   contexto: { params: Promise<{ id: string }> },
 ): Promise<Response> {
-  return accionDeMesa(request, async () => {
+  return accionDeMesa(request, async (actor) => {
     const cuerpo = await leerCuerpo(request, esquemaCrearPregunta);
     if (cuerpo === undefined) return solicitudInvalida();
     const { id } = await contexto.params;
     const pregunta = await contenedor().crearPregunta.ejecutar(
+      actor,
       id,
       cuerpo.texto,
       cuerpo.opciones ?? OPCIONES_SI_NO_ABSTENCION,

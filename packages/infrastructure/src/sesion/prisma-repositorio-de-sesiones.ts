@@ -13,6 +13,7 @@ function aDominio(fila: FilaDeSesion): Sesion {
     segundosPorIntervencion: fila.segundosPorIntervencion,
     version: fila.version,
     creadaEn: fila.creadaEn,
+    creadaPorId: fila.creadaPorId,
   });
 }
 
@@ -36,9 +37,29 @@ export class PrismaRepositorioDeSesiones implements RepositorioDeSesiones {
     return fila === null ? null : this.recordar(aDominio(fila));
   }
 
-  async listar(): Promise<Sesion[]> {
-    const filas = await this.contexto.cliente().sesion.findMany({ orderBy: { creadaEn: "asc" } });
+  async listar(
+    filtro: { creadaPorId?: string; sinCuentaDePrueba?: boolean } = {},
+  ): Promise<Sesion[]> {
+    const filas = await this.contexto.cliente().sesion.findMany({
+      where: {
+        ...(filtro.creadaPorId === undefined ? {} : { creadaPorId: filtro.creadaPorId }),
+        ...(filtro.sinCuentaDePrueba === true
+          ? { OR: [{ creadaPorId: null }, { creadaPor: { rol: { not: "DEMO" as const } } }] }
+          : {}),
+      },
+      orderBy: { creadaEn: "asc" },
+    });
     return filas.map((fila) => this.recordar(aDominio(fila)));
+  }
+
+  contarDe(creadaPorId: string): Promise<number> {
+    return this.contexto.cliente().sesion.count({ where: { creadaPorId } });
+  }
+
+  contarActivasDe(creadaPorId: string): Promise<number> {
+    return this.contexto.cliente().sesion.count({
+      where: { creadaPorId, estado: { notIn: ["CERRADA", "ACTA_FINAL", "CANCELADA"] } },
+    });
   }
 
   async guardar(sesion: Sesion): Promise<void> {
@@ -75,6 +96,7 @@ export class PrismaRepositorioDeSesiones implements RepositorioDeSesiones {
         codigoDeSala: sesion.codigoDeSala.valor,
         version: sesion.version,
         creadaEn: sesion.creadaEn,
+        creadaPorId: sesion.creadaPorId,
         ...datos,
       } as Prisma.SesionUncheckedCreateInput,
     });

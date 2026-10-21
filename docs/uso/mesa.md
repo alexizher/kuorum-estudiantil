@@ -6,6 +6,8 @@ Para quien modera la asamblea: crea la sala, reparte los códigos, abre y cierra
 
 La cuenta de la mesa la crea quien instaló el sitio con `pnpm --filter @kuorum/web crear-admin`. Entra en `/mesa/ingresar` con el correo y la contraseña. Después de cinco intentos fallidos en un minuto el ingreso se bloquea un rato.
 
+Cada cuenta tiene un rol. `SUPERADMIN` (quien instaló el sitio) y `MESA` ven y operan todas las sesiones. `DEMO` es la cuenta de prueba pública: solo ve las sesiones que ella creó, no tiene acceso a las de las demás cuentas, puede tener hasta 5 sesiones sin terminar, genera hasta 50 códigos por vez y 200 por sesión, y no puede cambiar su contraseña. Si el sitio la ofrece, el ingreso muestra su correo y su contraseña en un bloque aparte, con un botón que llena el formulario, y la cabecera de la mesa lleva la insignia "Cuenta de prueba". Sus sesiones se borran cada día.
+
 ![Ingreso de la mesa](capturas/mesa-ingresar-1280-claro.png)
 
 ## 2. Crear la sesión

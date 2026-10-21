@@ -44,6 +44,10 @@ export class RepositorioDeParticipantesEnMemoria implements RepositorioDePartici
     return [...(this.codigos.get(sesionId)?.values() ?? [])].filter(Boolean).length;
   }
 
+  async contarCodigos(sesionId: string): Promise<number> {
+    return this.codigos.get(sesionId)?.size ?? 0;
+  }
+
   /** Todo lo guardado, para comprobar que no hay texto plano. */
   volcado(): string {
     return JSON.stringify({

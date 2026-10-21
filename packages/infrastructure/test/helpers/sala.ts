@@ -16,6 +16,7 @@ import { PrismaRepositorioDeParticipantes } from "../../src/participantes/prisma
 import { PrismaRepositorioDePreguntas } from "../../src/votacion/prisma-repositorio-de-preguntas.js";
 import { PrismaRegistroDeVotos } from "../../src/votacion/prisma-registro-de-votos.js";
 import { PrismaRepositorioDeSolicitudes } from "../../src/palabra/prisma-repositorio-de-solicitudes.js";
+import { PrismaLimpiezaDeDemo } from "../../src/demo/prisma-limpieza-de-demo.js";
 import { urlDePruebas } from "./url-de-base-local.js";
 
 export function crearBanco() {
@@ -30,6 +31,7 @@ export function crearBanco() {
     preguntas: new PrismaRepositorioDePreguntas(contexto),
     votos: new PrismaRegistroDeVotos(contexto),
     solicitudes: new PrismaRepositorioDeSolicitudes(contexto),
+    limpieza: new PrismaLimpiezaDeDemo(contexto),
   };
 }
 
@@ -50,7 +52,12 @@ function codigoUnico(): string {
 }
 
 export function sesionDePrueba(
-  datos: { modo?: ModoDeParticipacion; estado?: EstadoDeSesion; version?: number } = {},
+  datos: {
+    modo?: ModoDeParticipacion;
+    estado?: EstadoDeSesion;
+    version?: number;
+    creadaPorId?: string;
+  } = {},
 ): Sesion {
   return Sesion.reconstruir({
     id: randomUUID(),
@@ -61,6 +68,7 @@ export function sesionDePrueba(
     segundosPorIntervencion: 180,
     version: datos.version ?? 0,
     creadaEn: new Date("2026-10-20T15:00:00.000Z"),
+    creadaPorId: datos.creadaPorId ?? null,
   });
 }
 
@@ -96,4 +104,18 @@ export function participanteDePrueba(sesionId: string, hash: string = randomUUID
 
 export async function limpiar(banco: Banco): Promise<void> {
   await banco.prisma.sesion.deleteMany();
+  await banco.prisma.user.deleteMany({
+    where: { email: { endsWith: "@usuarios-de-prueba.test" } },
+  });
+}
+
+export async function usuarioDePrueba(
+  banco: Banco,
+  rol: "SUPERADMIN" | "MESA" | "DEMO",
+): Promise<string> {
+  const id = randomUUID();
+  await banco.prisma.user.create({
+    data: { id, name: `Usuario ${rol}`, email: `${id}@usuarios-de-prueba.test`, rol },
+  });
+  return id;
 }

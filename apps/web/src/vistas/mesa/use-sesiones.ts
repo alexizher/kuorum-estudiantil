@@ -29,7 +29,7 @@ export interface Sesiones {
   errorDeCrear: string | undefined;
 }
 
-export function useSesiones(cliente: ClienteDeMesa): Sesiones {
+export function useSesiones(cliente: ClienteDeMesa, incluirCuentaDePrueba = false): Sesiones {
   const [sesiones, setSesiones] = useState<SesionDeLista[]>([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | undefined>(undefined);
@@ -40,14 +40,14 @@ export function useSesiones(cliente: ClienteDeMesa): Sesiones {
   const recargar = useCallback(async () => {
     setError(undefined);
     try {
-      const lista = await cliente.listarSesiones();
+      const lista = await cliente.listarSesiones({ incluirCuentaDePrueba });
       setSesiones([...lista].sort((a, b) => Date.parse(b.creadaEn) - Date.parse(a.creadaEn)));
     } catch (causa) {
       setError(comoErrorDeMesa(causa).message);
     } finally {
       setCargando(false);
     }
-  }, [cliente]);
+  }, [cliente, incluirCuentaDePrueba]);
 
   useEffect(() => {
     void recargar();

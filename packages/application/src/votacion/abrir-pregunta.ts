@@ -2,8 +2,8 @@ import { ErrorDeDominio, type Reloj } from "@kuorum/domain";
 import type { RepositorioDePreguntas } from "../puertos/repositorio-de-preguntas.js";
 import type { RepositorioDeSesiones } from "../puertos/repositorio-de-sesiones.js";
 import type { UnidadDeTrabajo } from "../puertos/unidad-de-trabajo.js";
-import { obtenerSesion } from "../sala/obtener-sesion.js";
-import { obtenerPregunta } from "./obtener-pregunta.js";
+import type { Actor } from "../sala/actor.js";
+import { obtenerPreguntaDeLaMesa } from "./obtener-pregunta.js";
 
 export class AbrirPregunta {
   constructor(
@@ -13,10 +13,14 @@ export class AbrirPregunta {
     private readonly unidad: UnidadDeTrabajo,
   ) {}
 
-  ejecutar(preguntaId: string): Promise<void> {
+  ejecutar(actor: Actor, preguntaId: string): Promise<void> {
     return this.unidad.ejecutar(async () => {
-      const pregunta = await obtenerPregunta(this.preguntas, preguntaId);
-      const sesion = await obtenerSesion(this.sesiones, pregunta.sesionId);
+      const { pregunta, sesion } = await obtenerPreguntaDeLaMesa(
+        this.preguntas,
+        this.sesiones,
+        actor,
+        preguntaId,
+      );
       sesion.exigirEnCurso();
       const abierta = await this.preguntas.abiertaDeSesion(sesion.id);
       if (abierta !== null && abierta.id !== pregunta.id) {

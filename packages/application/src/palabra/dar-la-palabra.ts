@@ -2,7 +2,8 @@ import type { Reloj } from "@kuorum/domain";
 import type { RepositorioDeSesiones } from "../puertos/repositorio-de-sesiones.js";
 import type { RepositorioDeSolicitudes } from "../puertos/repositorio-de-solicitudes.js";
 import type { UnidadDeTrabajo } from "../puertos/unidad-de-trabajo.js";
-import { cargarColaDeLaSesion, guardarColaDeLaSesion } from "./cola-de-la-sesion.js";
+import type { Actor } from "../sala/actor.js";
+import { cargarColaDeLaMesa, guardarColaDeLaSesion } from "./cola-de-la-sesion.js";
 
 export class DarLaPalabra {
   constructor(
@@ -12,9 +13,9 @@ export class DarLaPalabra {
     private readonly unidad: UnidadDeTrabajo,
   ) {}
 
-  ejecutar(sesionId: string, solicitudId: string | null): Promise<void> {
+  ejecutar(actor: Actor, sesionId: string, solicitudId: string | null): Promise<void> {
     return this.unidad.ejecutar(async () => {
-      const contexto = await cargarColaDeLaSesion(this.sesiones, this.solicitudes, sesionId);
+      const contexto = await cargarColaDeLaMesa(this.sesiones, this.solicitudes, actor, sesionId);
       contexto.cola.darLaPalabra(solicitudId, this.reloj);
       await guardarColaDeLaSesion(this.sesiones, this.solicitudes, contexto);
     });

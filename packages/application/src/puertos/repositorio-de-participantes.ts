@@ -13,4 +13,6 @@ export interface RepositorioDeParticipantes {
   guardarCodigos(sesionId: string, hashes: string[]): Promise<void>;
   activarCodigo(sesionId: string, hash: string): Promise<ResultadoDeActivacion>;
   contarActivos(sesionId: string): Promise<number>;
+  /** Todos los códigos de la sesión, activados o no. */
+  contarCodigos(sesionId: string): Promise<number>;
 }

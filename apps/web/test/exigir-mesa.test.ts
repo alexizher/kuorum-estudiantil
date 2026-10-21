@@ -19,17 +19,40 @@ describe("exigirMesa", () => {
     expect(await respuesta.json()).toEqual({ error: "NO_AUTENTICADO" });
   });
 
-  it("con sesión devuelve solo id, correo y nombre", async () => {
+  it("con sesión devuelve solo id, correo, nombre y rol", async () => {
     conSesion({
-      user: { id: "u1", email: "a@b.test", name: "Ana", image: null, emailVerified: true },
+      user: {
+        id: "u1",
+        email: "a@b.test",
+        name: "Ana",
+        image: null,
+        emailVerified: true,
+        rol: "SUPERADMIN",
+      },
       session: { token: "secreto" },
     });
     expect(await exigirMesa(new Request("http://x.test/api/mesa"))).toEqual({
       id: "u1",
       correo: "a@b.test",
       nombre: "Ana",
+      rol: "SUPERADMIN",
     });
   });
+
+  it.each(["SUPERADMIN", "MESA", "DEMO"])("conserva el rol %s", async (rol) => {
+    conSesion({ user: { id: "u1", email: "a@b.test", name: "Ana", rol } });
+    expect(await exigirMesa(new Request("http://x.test/api/mesa"))).toMatchObject({ rol });
+  });
+
+  it.each([undefined, null, "", "ROOT", 7])(
+    "un rol ausente o desconocido (%s) se trata como DEMO, el más restringido",
+    async (rol) => {
+      conSesion({ user: { id: "u1", email: "a@b.test", name: "Ana", rol } });
+      expect(await exigirMesa(new Request("http://x.test/api/mesa"))).toMatchObject({
+        rol: "DEMO",
+      });
+    },
+  );
 
   it("si la autenticación falla, responde 401 en vez de filtrar el error", async () => {
     vi.mocked(contenedor).mockReturnValue({

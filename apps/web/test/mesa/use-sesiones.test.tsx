@@ -92,4 +92,18 @@ describe("useSesiones", () => {
     await act(() => result.current.crear({ titulo: "A", modo: "SALA_ABIERTA", segundos: 180 }));
     expect(result.current.errorDeCrear).toBe("Revisa los datos e inténtalo de nuevo.");
   });
+
+  it("con incluirCuentaDePrueba pide la lista con esa opción y vuelve a pedirla al cambiarla", async () => {
+    const cliente = clienteDeMesaFalso();
+    const { result, rerender } = renderHook(({ incluir }) => useSesiones(cliente, incluir), {
+      initialProps: { incluir: false },
+    });
+    await waitFor(() => expect(result.current.cargando).toBe(false));
+    expect(cliente.listarSesiones).toHaveBeenLastCalledWith({ incluirCuentaDePrueba: false });
+
+    rerender({ incluir: true });
+    await waitFor(() =>
+      expect(cliente.listarSesiones).toHaveBeenLastCalledWith({ incluirCuentaDePrueba: true }),
+    );
+  });
 });

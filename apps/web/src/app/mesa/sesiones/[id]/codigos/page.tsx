@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Generar códigos", robots: { index: false } };
 
 export default async function PaginaDeCodigos({ params }: { params: Promise<{ id: string }> }) {
-  await exigirSesionDeMesa();
-  const { id, titulo, codigo } = await cargarSesionDeMesa((await params).id);
+  const actor = await exigirSesionDeMesa();
+  const { id, titulo, codigo } = await cargarSesionDeMesa(actor, (await params).id);
   return <CodigosEnVivo sesion={{ id, titulo, codigo }} />;
 }

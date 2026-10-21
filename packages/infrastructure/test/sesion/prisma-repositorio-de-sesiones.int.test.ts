@@ -1,6 +1,6 @@
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { CodigoDeSala, ErrorDeDominio, Sesion } from "@kuorum/domain";
-import { crearBanco, limpiar, sesionDePrueba } from "../helpers/sala.js";
+import { crearBanco, limpiar, sesionDePrueba, usuarioDePrueba } from "../helpers/sala.js";
 
 const banco = crearBanco();
 
@@ -116,5 +116,85 @@ describe("PrismaRepositorioDeSesiones", () => {
       codigo: "TITULO_INVALIDO",
     });
     await expect(banco.sesiones.porId(sesion.id)).rejects.toBeInstanceOf(ErrorDeDominio);
+  });
+
+  it("guarda quién creó la sesión y lo devuelve al leerla", async () => {
+    const autor = await usuarioDePrueba(banco, "DEMO");
+    const sesion = sesionDePrueba({ creadaPorId: autor });
+    await banco.sesiones.guardar(sesion);
+    const sinAutor = sesionDePrueba();
+    await banco.sesiones.guardar(sinAutor);
+
+    expect((await banco.sesiones.porId(sesion.id))?.creadaPorId).toBe(autor);
+    expect((await banco.sesiones.porId(sinAutor.id))?.creadaPorId).toBeNull();
+  });
+
+  it("listar con filtro devuelve solo las del creador", async () => {
+    const demo = await usuarioDePrueba(banco, "DEMO");
+    const jefe = await usuarioDePrueba(banco, "SUPERADMIN");
+    const propia = sesionDePrueba({ creadaPorId: demo });
+    const ajena = sesionDePrueba({ creadaPorId: jefe });
+    await banco.sesiones.guardar(propia);
+    await banco.sesiones.guardar(ajena);
+
+    expect((await banco.sesiones.listar({ creadaPorId: demo })).map((s) => s.id)).toEqual([
+      propia.id,
+    ]);
+    expect(await banco.sesiones.listar({})).toHaveLength(2);
+    expect(await banco.sesiones.listar({ creadaPorId: "nadie" })).toEqual([]);
+  });
+
+  it("contarActivasDe ignora las cerradas, con acta final y canceladas, y las de otros", async () => {
+    const demo = await usuarioDePrueba(banco, "DEMO");
+    const jefe = await usuarioDePrueba(banco, "SUPERADMIN");
+    for (const estado of [
+      "PROGRAMADA",
+      "ABIERTA",
+      "EN_CURSO",
+      "CERRADA",
+      "ACTA_FINAL",
+      "CANCELADA",
+    ] as const) {
+      await banco.sesiones.guardar(sesionDePrueba({ creadaPorId: demo, estado }));
+    }
+    await banco.sesiones.guardar(sesionDePrueba({ creadaPorId: jefe, estado: "EN_CURSO" }));
+
+    expect(await banco.sesiones.contarActivasDe(demo)).toBe(3);
+    expect(await banco.sesiones.contarActivasDe(jefe)).toBe(1);
+    expect(await banco.sesiones.contarActivasDe("nadie")).toBe(0);
+  });
+
+  it("si se borra al usuario, la sesión queda sin dueño en vez de borrarse", async () => {
+    const autor = await usuarioDePrueba(banco, "MESA");
+    const sesion = sesionDePrueba({ creadaPorId: autor });
+    await banco.sesiones.guardar(sesion);
+
+    await banco.prisma.user.delete({ where: { id: autor } });
+
+    expect((await banco.sesiones.porId(sesion.id))?.creadaPorId).toBeNull();
+  });
+
+  it("sinCuentaDePrueba deja fuera lo de cuentas DEMO y conserva lo de las demás y lo sin dueño", async () => {
+    const demo = await usuarioDePrueba(banco, "DEMO");
+    const jefe = await usuarioDePrueba(banco, "SUPERADMIN");
+    const mesa = await usuarioDePrueba(banco, "MESA");
+    const deDemo = sesionDePrueba({ creadaPorId: demo });
+    const deJefe = sesionDePrueba({ creadaPorId: jefe });
+    const deMesa = sesionDePrueba({ creadaPorId: mesa });
+    const sinDueno = sesionDePrueba();
+    for (const s of [deDemo, deJefe, deMesa, sinDueno]) await banco.sesiones.guardar(s);
+
+    const visibles = (await banco.sesiones.listar({ sinCuentaDePrueba: true })).map((s) => s.id);
+    expect(visibles.sort()).toEqual([deJefe.id, deMesa.id, sinDueno.id].sort());
+    expect(await banco.sesiones.listar({})).toHaveLength(4);
+  });
+
+  it("contarDe cuenta todas las del creador, en cualquier estado", async () => {
+    const demo = await usuarioDePrueba(banco, "DEMO");
+    for (const estado of ["PROGRAMADA", "CERRADA", "CANCELADA"] as const) {
+      await banco.sesiones.guardar(sesionDePrueba({ creadaPorId: demo, estado }));
+    }
+    expect(await banco.sesiones.contarDe(demo)).toBe(3);
+    expect(await banco.sesiones.contarDe("nadie")).toBe(0);
   });
 });

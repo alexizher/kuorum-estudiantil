@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { AnularPregunta, CerrarPregunta, EmitirVoto, ProyectarResultado } from "../../src/index.js";
 import { crearEscenario, opcionDe, sembrarPregunta, sembrarSesion } from "../dobles/escenario.js";
+import { superadmin } from "../dobles/actores.js";
 
 async function montar(estadoPregunta: "BORRADOR" | "ABIERTA" | "CERRADA") {
   const e = crearEscenario();
@@ -24,7 +25,7 @@ describe("CerrarPregunta", () => {
       e.votos,
       e.reloj,
       e.unidad,
-    ).ejecutar(pregunta.id);
+    ).ejecutar(superadmin, pregunta.id);
 
     expect(pregunta.estado).toBe("CERRADA");
     expect(sesion.version).toBe(1);
@@ -36,7 +37,10 @@ describe("CerrarPregunta", () => {
   it("falla si no estaba abierta", async () => {
     const { e, sesion, pregunta } = await montar("BORRADOR");
     await expect(
-      new CerrarPregunta(e.preguntas, e.sesiones, e.votos, e.reloj, e.unidad).ejecutar(pregunta.id),
+      new CerrarPregunta(e.preguntas, e.sesiones, e.votos, e.reloj, e.unidad).ejecutar(
+        superadmin,
+        pregunta.id,
+      ),
     ).rejects.toMatchObject({ codigo: "TRANSICION_INVALIDA" });
     expect(sesion.version).toBe(0);
   });
@@ -47,7 +51,7 @@ describe("AnularPregunta", () => {
     const { e, sesion, pregunta } = await montar("CERRADA");
     pregunta.proyectarResultado();
 
-    await new AnularPregunta(e.preguntas, e.sesiones, e.unidad).ejecutar(pregunta.id);
+    await new AnularPregunta(e.preguntas, e.sesiones, e.unidad).ejecutar(superadmin, pregunta.id);
 
     expect(pregunta.estado).toBe("ANULADA");
     expect(pregunta.resultadoVisible).toBe(false);
@@ -57,8 +61,8 @@ describe("AnularPregunta", () => {
   it("anular dos veces da TRANSICION_INVALIDA", async () => {
     const { e, pregunta } = await montar("BORRADOR");
     const caso = new AnularPregunta(e.preguntas, e.sesiones, e.unidad);
-    await caso.ejecutar(pregunta.id);
-    await expect(caso.ejecutar(pregunta.id)).rejects.toMatchObject({
+    await caso.ejecutar(superadmin, pregunta.id);
+    await expect(caso.ejecutar(superadmin, pregunta.id)).rejects.toMatchObject({
       codigo: "TRANSICION_INVALIDA",
     });
   });
@@ -67,7 +71,10 @@ describe("AnularPregunta", () => {
 describe("ProyectarResultado", () => {
   it("marca el resultado visible y sube la versión", async () => {
     const { e, sesion, pregunta } = await montar("CERRADA");
-    await new ProyectarResultado(e.preguntas, e.sesiones, e.unidad).ejecutar(pregunta.id);
+    await new ProyectarResultado(e.preguntas, e.sesiones, e.unidad).ejecutar(
+      superadmin,
+      pregunta.id,
+    );
     expect(pregunta.resultadoVisible).toBe(true);
     expect(sesion.version).toBe(1);
   });
@@ -75,7 +82,7 @@ describe("ProyectarResultado", () => {
   it("falla con PREGUNTA_NO_CERRADA si sigue abierta", async () => {
     const { e, sesion, pregunta } = await montar("ABIERTA");
     await expect(
-      new ProyectarResultado(e.preguntas, e.sesiones, e.unidad).ejecutar(pregunta.id),
+      new ProyectarResultado(e.preguntas, e.sesiones, e.unidad).ejecutar(superadmin, pregunta.id),
     ).rejects.toMatchObject({ codigo: "PREGUNTA_NO_CERRADA" });
     expect(sesion.version).toBe(0);
   });

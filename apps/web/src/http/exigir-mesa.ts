@@ -1,9 +1,16 @@
+import type { Actor as ActorDeAplicacion, RolDeMesa } from "@kuorum/application";
 import { contenedor } from "../composicion";
 
-export interface Actor {
-  id: string;
+export interface Actor extends ActorDeAplicacion {
   correo: string;
   nombre: string;
+}
+
+const ROLES: readonly RolDeMesa[] = ["SUPERADMIN", "MESA", "DEMO"];
+
+/** Un rol que no se reconoce se trata como DEMO: ante la duda, el que menos puede ver. */
+function rolDe(valor: unknown): RolDeMesa {
+  return ROLES.find((rol) => rol === valor) ?? "DEMO";
 }
 
 function noAutenticado(): Response {
@@ -19,7 +26,12 @@ export async function exigirMesa(solicitud: Request): Promise<Actor | Response> 
       .autenticacion()
       .api.getSession({ headers: solicitud.headers });
     if (sesion === null || sesion === undefined) return noAutenticado();
-    return { id: sesion.user.id, correo: sesion.user.email, nombre: sesion.user.name };
+    return {
+      id: sesion.user.id,
+      correo: sesion.user.email,
+      nombre: sesion.user.name,
+      rol: rolDe((sesion.user as { rol?: unknown }).rol),
+    };
   } catch (error) {
     console.error(error);
     return noAutenticado();

@@ -34,7 +34,7 @@ export interface DatosDeSesion {
 
 /** Acciones de la mesa. Todas lanzan ErrorDeMesa si algo falla. */
 export interface ClienteDeMesa {
-  listarSesiones(): Promise<SesionDeLista[]>;
+  listarSesiones(opciones?: { incluirCuentaDePrueba?: boolean }): Promise<SesionDeLista[]>;
   crearSesion(datos: DatosDeSesion): Promise<SesionDeLista>;
   iniciar(sesionId: string): Promise<void>;
   terminar(sesionId: string): Promise<void>;
@@ -102,8 +102,11 @@ function leer<T>(cuerpo: unknown, campo: string): T {
 export class ClienteDeMesaPorFetch implements ClienteDeMesa {
   constructor(private readonly fetch: typeof globalThis.fetch) {}
 
-  async listarSesiones(): Promise<SesionDeLista[]> {
-    const lista = leer<unknown>(await this.pedir("GET", `${MESA}/sesiones`), "sesiones");
+  async listarSesiones(
+    opciones: { incluirCuentaDePrueba?: boolean } = {},
+  ): Promise<SesionDeLista[]> {
+    const ruta = `${MESA}/sesiones${opciones.incluirCuentaDePrueba ? "?incluirPrueba=1" : ""}`;
+    const lista = leer<unknown>(await this.pedir("GET", ruta), "sesiones");
     if (!Array.isArray(lista)) throw new ErrorDeMesa(0, "RESPUESTA_INVALIDA");
     return lista as SesionDeLista[];
   }

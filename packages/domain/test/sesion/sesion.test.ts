@@ -5,6 +5,7 @@ import {
   ErrorDeDominio,
   Sesion,
   type GeneradorDeCodigos,
+  type PropiedadesDeSesion,
 } from "../../src/index.js";
 
 const creadaEn = new Date("2026-10-19T12:00:00Z");
@@ -41,6 +42,32 @@ describe("Sesion.nueva", () => {
     expect(sesion.estado).toBe("PROGRAMADA");
     expect(sesion.version).toBe(0);
     expect(sesion.creadaEn).toBe(creadaEn);
+  });
+
+  it("guarda quién la creó, o null si no se indica", () => {
+    expect(Sesion.nueva(datosBase, generador).creadaPorId).toBeNull();
+    expect(Sesion.nueva({ ...datosBase, creadaPorId: "u-1" }, generador).creadaPorId).toBe("u-1");
+  });
+
+  it("solo está activa mientras no esté cerrada, en acta final ni cancelada", () => {
+    const base = Sesion.nueva(datosBase, generador);
+    const conEstado = (estado: PropiedadesDeSesion["estado"]) =>
+      Sesion.reconstruir({
+        id: base.id,
+        titulo: base.titulo,
+        codigoDeSala: base.codigoDeSala,
+        modo: base.modo,
+        estado,
+        segundosPorIntervencion: base.segundosPorIntervencion,
+        version: 0,
+        creadaEn,
+      });
+    expect(
+      (["PROGRAMADA", "ABIERTA", "EN_CURSO"] as const).map((e) => conEstado(e).activa),
+    ).toEqual([true, true, true]);
+    expect(
+      (["CERRADA", "ACTA_FINAL", "CANCELADA"] as const).map((e) => conEstado(e).activa),
+    ).toEqual([false, false, false]);
   });
 
   it("usa 180 segundos por intervención si no se indican", () => {
@@ -86,8 +113,14 @@ describe("Sesion.nueva", () => {
   );
 
   it("acepta los límites 30 y 900 segundos", () => {
-    expect(Sesion.nueva({ ...datosBase, segundosPorIntervencion: 30 }, generador).segundosPorIntervencion).toBe(30);
-    expect(Sesion.nueva({ ...datosBase, segundosPorIntervencion: 900 }, generador).segundosPorIntervencion).toBe(900);
+    expect(
+      Sesion.nueva({ ...datosBase, segundosPorIntervencion: 30 }, generador)
+        .segundosPorIntervencion,
+    ).toBe(30);
+    expect(
+      Sesion.nueva({ ...datosBase, segundosPorIntervencion: 900 }, generador)
+        .segundosPorIntervencion,
+    ).toBe(900);
   });
 });
 
