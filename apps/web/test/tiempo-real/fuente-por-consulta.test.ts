@@ -339,4 +339,64 @@ describe("FuenteDeEstadoPorConsulta", () => {
     fuente.reprogramar();
     expect(programadas).toEqual([12_000, 3000]);
   });
+
+  it("refrescar consulta ya, sin If-None-Match y saltándose la caché, y sigue el ciclo", async () => {
+    const fetchFalso = vi
+      .fn()
+      .mockResolvedValueOnce(ok(1))
+      .mockResolvedValueOnce(ok(2))
+      .mockResolvedValueOnce(ok(3));
+    const temporizador = new TemporizadorFalso();
+    const alCambiar = vi.fn();
+    const fuente = new FuenteDeEstadoPorConsulta(fetchFalso, new PoliticaFija(3000), temporizador);
+    fuente.suscribir("K7F2", alCambiar);
+    await vaciar();
+
+    fuente.refrescar();
+    await vaciar();
+
+    expect(alCambiar.mock.calls).toEqual([[estado(1)], [estado(2)]]);
+    const [url, opciones] = fetchFalso.mock.calls[1] as [string, RequestInit];
+    expect(url).toMatch(/^\/api\/public\/v1\/salas\/K7F2\/estado\?r=\d+$/);
+    expect(opciones.headers).toEqual({});
+    // la espera anterior se canceló y hay exactamente una nueva
+    expect(temporizador.pendientes).toHaveLength(1);
+    temporizador.disparar();
+    await vaciar();
+    expect(alCambiar).toHaveBeenCalledTimes(3);
+  });
+
+  it("refrescar durante una consulta en vuelo repite al terminar y no deja dos ciclos", async () => {
+    let resolver!: (r: Response) => void;
+    const fetchFalso = vi
+      .fn()
+      .mockImplementationOnce(() => new Promise<Response>((r) => (resolver = r)))
+      .mockResolvedValueOnce(ok(2));
+    const temporizador = new TemporizadorFalso();
+    const fuente = new FuenteDeEstadoPorConsulta(fetchFalso, new PoliticaFija(3000), temporizador);
+    fuente.suscribir("K7F2", vi.fn());
+
+    fuente.refrescar();
+    expect(fetchFalso).toHaveBeenCalledTimes(1);
+    resolver(ok(1));
+    await vaciar();
+
+    expect(fetchFalso).toHaveBeenCalledTimes(2);
+    expect(temporizador.pendientes).toHaveLength(1);
+  });
+
+  it("refrescar tras cancelar la suscripción no consulta", async () => {
+    const fetchFalso = vi.fn().mockResolvedValue(ok(1));
+    const fuente = new FuenteDeEstadoPorConsulta(
+      fetchFalso,
+      new PoliticaFija(3000),
+      new TemporizadorFalso(),
+    );
+    const cancelar = fuente.suscribir("K7F2", vi.fn());
+    await vaciar();
+    cancelar();
+    fuente.refrescar();
+    await vaciar();
+    expect(fetchFalso).toHaveBeenCalledTimes(1);
+  });
 });

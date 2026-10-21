@@ -11,7 +11,10 @@ import { POST as rechazar } from "../../src/app/api/mesa/v1/sesiones/[id]/mocion
 import { POST as minuto } from "../../src/app/api/mesa/v1/sesiones/[id]/palabra/minuto/route";
 import { POST as dar } from "../../src/app/api/mesa/v1/sesiones/[id]/palabra/dar/route";
 import { POST as terminarIntervencion } from "../../src/app/api/mesa/v1/sesiones/[id]/palabra/terminar/route";
-import { POST as crearPregunta } from "../../src/app/api/mesa/v1/sesiones/[id]/preguntas/route";
+import {
+  GET as listarPreguntas,
+  POST as crearPregunta,
+} from "../../src/app/api/mesa/v1/sesiones/[id]/preguntas/route";
 import { POST as terminar } from "../../src/app/api/mesa/v1/sesiones/[id]/terminar/route";
 import { contenedor } from "../../src/composicion";
 
@@ -34,6 +37,7 @@ const casos = {
   terminarSesion: ejecutar(),
   generarCodigosDeAcceso: { ejecutar: vi.fn() },
   crearPregunta: { ejecutar: vi.fn() },
+  listarPreguntasDeSesion: { ejecutar: vi.fn() },
   abrirPregunta: ejecutar(),
   cerrarPregunta: { ejecutar: vi.fn() },
   anularPregunta: ejecutar(),
@@ -99,6 +103,7 @@ describe("API de la mesa", () => {
       terminar(pedir("POST"), idp()),
       codigos(pedir("POST", { cantidad: 2 }), idp()),
       crearPregunta(pedir("POST", { texto: "¿Sí?" }), idp()),
+      listarPreguntas(pedir("GET"), idp()),
       abrir(pedir("POST"), idp()),
       cerrar(pedir("POST"), idp()),
       anular(pedir("POST"), idp()),
@@ -184,6 +189,39 @@ describe("API de la mesa", () => {
     expect((await r.json()).id).toBe("p1");
     await crearPregunta(pedir("POST", { texto: "¿Quién?", opciones: ["Ana", "Luis"] }), idp());
     expect(casos.crearPregunta.ejecutar).toHaveBeenLastCalledWith("s1", "¿Quién?", ["Ana", "Luis"]);
+  });
+
+  it("GET preguntas lista las de la sesión con estado, opciones y resultado proyectado", async () => {
+    casos.listarPreguntasDeSesion.ejecutar.mockResolvedValue([
+      {
+        id: "p1",
+        texto: "¿Sí?",
+        estado: "CERRADA",
+        resultadoVisible: true,
+        opciones: [{ id: "o1", texto: "Sí", orden: 0 }],
+      },
+    ]);
+    const r = await listarPreguntas(pedir("GET"), idp("s9"));
+    expect(r.status).toBe(200);
+    expect(r.headers.get("Cache-Control")).toBe("no-store");
+    expect(casos.listarPreguntasDeSesion.ejecutar).toHaveBeenCalledWith("s9");
+    expect(await r.json()).toEqual({
+      preguntas: [
+        {
+          id: "p1",
+          texto: "¿Sí?",
+          estado: "CERRADA",
+          resultadoProyectado: true,
+          opciones: [{ id: "o1", texto: "Sí" }],
+        },
+      ],
+    });
+  });
+
+  it("GET preguntas de una sesión inexistente da 404", async () => {
+    const { SesionNoEncontrada } = await import("@kuorum/domain");
+    casos.listarPreguntasDeSesion.ejecutar.mockRejectedValueOnce(new SesionNoEncontrada("x"));
+    expect((await listarPreguntas(pedir("GET"), idp("x"))).status).toBe(404);
   });
 
   it("abrir, anular y proyectar dan 204; OTRA_PREGUNTA_ABIERTA da 409", async () => {

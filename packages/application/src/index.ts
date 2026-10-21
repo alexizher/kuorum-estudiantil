@@ -13,6 +13,7 @@ export type {
 export type { UnidadDeTrabajo } from "./puertos/unidad-de-trabajo.js";
 export type { Hasheador } from "./puertos/hasheador.js";
 export { CrearPregunta } from "./votacion/crear-pregunta.js";
+export { ListarPreguntasDeSesion } from "./votacion/listar-preguntas-de-sesion.js";
 export { AbrirPregunta } from "./votacion/abrir-pregunta.js";
 export { CerrarPregunta } from "./votacion/cerrar-pregunta.js";
 export { AnularPregunta } from "./votacion/anular-pregunta.js";

@@ -12,6 +12,11 @@ export interface FuenteDeEstado {
   ): () => void;
 }
 
+/** Fuente que además puede consultar de inmediato. */
+export interface FuenteRefrescable extends FuenteDeEstado {
+  refrescar(): void;
+}
+
 export interface Temporizador {
   /** Devuelve la función que cancela la acción programada. */
   programar(accion: () => void, ms: number): () => void;

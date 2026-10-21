@@ -8,6 +8,25 @@ import { accion, solicitudInvalida } from "../../../../../../../http/respuestas"
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
+export async function GET(
+  request: Request,
+  contexto: { params: Promise<{ id: string }> },
+): Promise<Response> {
+  return accionDeMesa(request, async () => {
+    const { id } = await contexto.params;
+    const preguntas = await contenedor().listarPreguntasDeSesion.ejecutar(id);
+    return accion({
+      preguntas: preguntas.map((p) => ({
+        id: p.id,
+        texto: p.texto,
+        estado: p.estado,
+        resultadoProyectado: p.resultadoVisible,
+        opciones: p.opciones.map((o) => ({ id: o.id, texto: o.texto })),
+      })),
+    });
+  });
+}
+
 export async function POST(
   request: Request,
   contexto: { params: Promise<{ id: string }> },

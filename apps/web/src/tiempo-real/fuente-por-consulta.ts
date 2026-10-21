@@ -13,6 +13,7 @@ import {
 
 export class FuenteDeEstadoPorConsulta implements FuenteDeEstado {
   private readonly reprogramadores = new Set<() => void>();
+  private readonly refrescadores = new Set<() => void>();
 
   constructor(
     private readonly fetch: typeof globalThis.fetch,
@@ -32,8 +33,9 @@ export class FuenteDeEstadoPorConsulta implements FuenteDeEstado {
     let etiqueta: string | undefined;
     let cancelarEspera: (() => void) | undefined;
     let consultando = false;
+    let repetirAlTerminar = false;
 
-    const consultar = async () => {
+    const consultar = async (saltarCache = false) => {
       if (!activa) return;
       consultando = true;
       if (typeof document !== "undefined" && document.visibilityState === "hidden") {
@@ -43,10 +45,12 @@ export class FuenteDeEstadoPorConsulta implements FuenteDeEstado {
       }
       try {
         const cabeceras: Record<string, string> = {};
-        if (etiqueta !== undefined) cabeceras["If-None-Match"] = etiqueta;
+        if (etiqueta !== undefined && !saltarCache) cabeceras["If-None-Match"] = etiqueta;
         // Llamada suelta: window.fetch lanza "Illegal invocation" si `this` es la instancia.
         const pedir = this.fetch;
-        const respuesta = await pedir(urlDeEstado(codigo), { headers: cabeceras });
+        // Un parámetro distinto hace que la CDN no devuelva la copia de hace dos segundos.
+        const url = saltarCache ? `${urlDeEstado(codigo)}?r=${Date.now()}` : urlDeEstado(codigo);
+        const respuesta = await pedir(url, { headers: cabeceras });
         if (activa && respuesta.status === 404) {
           activa = false;
           alNoExistir?.();
@@ -74,7 +78,12 @@ export class FuenteDeEstadoPorConsulta implements FuenteDeEstado {
         }
       }
       consultando = false;
-      esperar();
+      if (repetirAlTerminar) {
+        repetirAlTerminar = false;
+        void consultar(true);
+      } else {
+        esperar();
+      }
     };
     const esperar = () => {
       if (activa)
@@ -92,16 +101,33 @@ export class FuenteDeEstadoPorConsulta implements FuenteDeEstado {
     };
     this.reprogramadores.add(reprogramar);
 
+    const refrescar = () => {
+      if (!activa) return;
+      if (consultando) {
+        repetirAlTerminar = true;
+        return;
+      }
+      cancelarEspera?.();
+      void consultar(true);
+    };
+    this.refrescadores.add(refrescar);
+
     void consultar();
     return () => {
       activa = false;
       cancelarEspera?.();
       this.reprogramadores.delete(reprogramar);
+      this.refrescadores.delete(refrescar);
     };
   }
 
   /** Vuelve a programar la próxima consulta con el contexto de ahora. */
   reprogramar(): void {
     for (const reprogramar of this.reprogramadores) reprogramar();
+  }
+
+  /** Consulta ya, sin esperar el turno ni la caché. Para después de una acción de la mesa. */
+  refrescar(): void {
+    for (const refrescar of this.refrescadores) refrescar();
   }
 }

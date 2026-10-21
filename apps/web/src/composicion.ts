@@ -10,6 +10,7 @@ import {
   GenerarCodigosDeAcceso,
   IngresarASala,
   IniciarSesion,
+  ListarPreguntasDeSesion,
   PedirLaPalabra,
   PresentarMocion,
   ProyectarResultado,
@@ -46,6 +47,7 @@ export interface Contenedor {
   generarCodigosDeAcceso: GenerarCodigosDeAcceso;
   // Votación
   crearPregunta: CrearPregunta;
+  listarPreguntasDeSesion: ListarPreguntasDeSesion;
   abrirPregunta: AbrirPregunta;
   cerrarPregunta: CerrarPregunta;
   anularPregunta: AnularPregunta;
@@ -105,6 +107,7 @@ export function contenedor(): Contenedor {
         hasheador,
       ),
       crearPregunta: new CrearPregunta(sesiones, preguntas, ids, unidad),
+      listarPreguntasDeSesion: new ListarPreguntasDeSesion(sesiones, preguntas),
       abrirPregunta: new AbrirPregunta(sesiones, preguntas, reloj, unidad),
       cerrarPregunta: new CerrarPregunta(preguntas, sesiones, votos, reloj, unidad),
       anularPregunta: new AnularPregunta(preguntas, sesiones, unidad),
