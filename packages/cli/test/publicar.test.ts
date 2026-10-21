@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { parseCommand } from "../src/cli.js";
+import { publishSteps } from "../src/composition.js";
 import { DeployWizard } from "../src/wizard/deploy-wizard.js";
 import type { Step } from "../src/wizard/step.js";
 import { FakePrompter, FakeRunner, MemoryStateStore } from "./doubles.js";
@@ -21,6 +22,10 @@ describe("publicar", () => {
   it("se reconoce como comando, sin --config", () => {
     expect(parseCommand(["publicar"])).toEqual({ kind: "publicar" });
     expect(parseCommand(["publicar", "--config", "a.json"])).toEqual({ kind: "uso" });
+  });
+
+  it("corre secretos antes de desplegar, para que una instalación vieja tenga las variables nuevas", () => {
+    expect(publishSteps().map((p) => p.id)).toEqual(["secretos", "despliegue", "verificacion"]);
   });
 
   it("con repetirPasos corre los pasos aunque estén completados y no cambia completedSteps", async () => {

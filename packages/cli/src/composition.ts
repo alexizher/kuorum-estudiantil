@@ -38,6 +38,11 @@ export function buildSteps(token: TokenReader): Step[] {
   ];
 }
 
+/** Secretos primero: es idempotente y una instalación vieja necesita las variables nuevas antes del build. */
+export function publishSteps(): Step[] {
+  return [new SecretsStep(), new DeployStep(), new VerificationStep()];
+}
+
 export function buildPublishWizard(options: { cwd: string }): DeployWizard {
   const prompter = new ClackPrompter();
   const sinInstalacion: ConfigSource = {
@@ -48,7 +53,7 @@ export function buildPublishWizard(options: { cwd: string }): DeployWizard {
     },
   };
   return new DeployWizard(
-    [new DeployStep(), new VerificationStep()],
+    publishSteps(),
     new StateStore(resolve(options.cwd, ".kuorum/despliegue.json")),
     sinInstalacion,
     prompter,
