@@ -151,6 +151,39 @@ describe("cabecera", () => {
     expect(confirmar).not.toHaveBeenCalled();
   });
 
+  it("con una votación abierta deshabilita Terminar sesión y explica por qué", () => {
+    const { props } = propiedades({
+      panel: {
+        preguntas: [
+          {
+            id: "p1",
+            texto: "¿Aprobamos?",
+            estado: "ABIERTA",
+            opciones: [],
+            resultado: null,
+          } as unknown as Panel["preguntas"][number],
+        ],
+      },
+    });
+    render(<PanelDeSesion {...props} />);
+    const boton = screen.getByRole("button", { name: "Terminar sesión" });
+    expect((boton as HTMLButtonElement).disabled).toBe(true);
+    expect(
+      screen.getByText("Cierra la votación abierta para poder terminar la sesión."),
+    ).toBeTruthy();
+    expect(boton.getAttribute("aria-describedby")).toBe(
+      screen.getByText("Cierra la votación abierta para poder terminar la sesión.").id,
+    );
+  });
+
+  it("sin votación abierta no muestra el aviso y Terminar sesión está activo", () => {
+    render(<PanelDeSesion {...propiedades().props} />);
+    expect(
+      (screen.getByRole("button", { name: "Terminar sesión" }) as HTMLButtonElement).disabled,
+    ).toBe(false);
+    expect(screen.queryByText(/para poder terminar la sesión/)).toBeNull();
+  });
+
   it("copiar el enlace avisa del resultado", async () => {
     const { props, alCopiarEnlace } = propiedades();
     render(<PanelDeSesion {...props} />);

@@ -156,6 +156,18 @@ describe("API de la mesa", () => {
     expect(casos.terminarSesion.ejecutar).toHaveBeenCalledWith("s9");
   });
 
+  it("terminar con votación abierta da 409 y el mensaje para la mesa", async () => {
+    casos.terminarSesion.ejecutar.mockRejectedValueOnce(
+      new ErrorDeDominio("SESION_CON_VOTACION_ABIERTA"),
+    );
+    const r = await terminar(pedir("POST"), idp());
+    expect(r.status).toBe(409);
+    expect(await r.json()).toEqual({
+      error: "SESION_CON_VOTACION_ABIERTA",
+      mensaje: "Cierra la votación abierta antes de terminar la sesión.",
+    });
+  });
+
   it("TRANSICION_INVALIDA al iniciar da 409", async () => {
     casos.iniciarSesion.ejecutar.mockRejectedValueOnce(new ErrorDeDominio("TRANSICION_INVALIDA"));
     expect((await iniciar(pedir("POST"), idp())).status).toBe(409);

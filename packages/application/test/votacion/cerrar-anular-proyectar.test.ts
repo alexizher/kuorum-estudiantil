@@ -93,7 +93,7 @@ describe("EmitirVoto", () => {
     return id;
   }
   const caso = (e: ReturnType<typeof crearEscenario>) =>
-    new EmitirVoto(e.participantes, e.preguntas, e.votos);
+    new EmitirVoto(e.participantes, e.preguntas, e.sesiones, e.votos);
 
   it("registra el voto sin subir la versión", async () => {
     const { e, sesion, pregunta } = await montar("ABIERTA");
@@ -104,6 +104,16 @@ describe("EmitirVoto", () => {
 
     expect((await e.votos.conteos(pregunta.id)).get(opcion)).toBe(1);
     expect(sesion.version).toBe(0);
+  });
+
+  it("con la sesión terminada da SESION_NO_EN_CURSO aunque la pregunta siga abierta", async () => {
+    const { e, sesion, pregunta } = await montar("ABIERTA");
+    const id = await votante(e, sesion.id);
+    sesion.terminar();
+    await expect(caso(e).ejecutar(id, pregunta.id, opcionDe(pregunta, 0))).rejects.toMatchObject({
+      codigo: "SESION_NO_EN_CURSO",
+    });
+    expect(await e.votos.votosEmitidos(pregunta.id)).toBe(0);
   });
 
   it("doble voto da YA_VOTO y no cuenta dos veces", async () => {

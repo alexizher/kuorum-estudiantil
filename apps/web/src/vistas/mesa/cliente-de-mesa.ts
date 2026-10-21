@@ -61,6 +61,7 @@ const MENSAJE_POR_CODIGO: Readonly<Record<string, string>> = {
   SOLICITUD_INVALIDA: "Revisa los datos e inténtalo de nuevo.",
   OTRA_PREGUNTA_ABIERTA: "Ya hay otra votación abierta. Ciérrala o anúlala primero.",
   TRANSICION_INVALIDA: "La sala no puede pasar a ese estado ahora.",
+  SESION_CON_VOTACION_ABIERTA: "Cierra la votación abierta antes de terminar la sesión.",
   SESION_NO_EN_CURSO: "La sesión todavía no está en curso. Iníciala primero.",
   SESION_NO_DISPONIBLE: "La sesión ya terminó.",
   SESION_NO_ENCONTRADA: "No encontramos esa sesión.",

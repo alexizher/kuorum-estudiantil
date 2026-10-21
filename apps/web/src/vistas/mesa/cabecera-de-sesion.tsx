@@ -13,6 +13,7 @@ interface Propiedades {
   modo: ModoDeSala;
   estado: string;
   ocupado: boolean;
+  hayVotacionAbierta?: boolean;
   alIniciar: () => void;
   alPedirTerminar: () => void;
   alCopiarEnlace: () => Promise<boolean>;
@@ -24,6 +25,7 @@ export function CabeceraDeSesion({
   modo,
   estado,
   ocupado,
+  hayVotacionAbierta = false,
   alIniciar,
   alPedirTerminar,
   alCopiarEnlace,
@@ -60,9 +62,19 @@ export function CabeceraDeSesion({
           </Boton>
         ) : null}
         {puedeTerminar ? (
-          <Boton variante="peligro" onClick={alPedirTerminar} disabled={ocupado}>
+          <Boton
+            variante="peligro"
+            onClick={alPedirTerminar}
+            disabled={ocupado || hayVotacionAbierta}
+            aria-describedby={hayVotacionAbierta ? "aviso-terminar" : undefined}
+          >
             Terminar sesión
           </Boton>
+        ) : null}
+        {puedeTerminar && hayVotacionAbierta ? (
+          <p id="aviso-terminar" className="suave">
+            Cierra la votación abierta para poder terminar la sesión.
+          </p>
         ) : null}
         <a
           className={clasesDeBoton({})}

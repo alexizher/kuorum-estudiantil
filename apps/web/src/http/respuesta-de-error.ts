@@ -16,6 +16,7 @@ const ESTADO_POR_CODIGO: Readonly<Record<string, number>> = {
   TRANSICION_INVALIDA: 409,
   SESION_NO_EN_CURSO: 409,
   SESION_NO_DISPONIBLE: 409,
+  SESION_CON_VOTACION_ABIERTA: 409,
   PARTICIPANTE_AJENO: 403,
   NO_ES_TUYA: 403,
 };
@@ -26,6 +27,7 @@ const MENSAJE_POR_CODIGO: Readonly<Record<string, string>> = {
   PREGUNTA_CERRADA: "La votación ya se cerró.",
   SALA_NO_DISPONIBLE: "Esta sala no existe o ya terminó.",
   CODIGO_NO_EXISTE: "Ese código no es de esta sala.",
+  SESION_CON_VOTACION_ABIERTA: "Cierra la votación abierta antes de terminar la sesión.",
 };
 
 /** CIERRE_OCUPADO lleva su propio mensaje, con el consejo para la mesa. */

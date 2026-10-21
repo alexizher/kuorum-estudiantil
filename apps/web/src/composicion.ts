@@ -98,7 +98,7 @@ export function contenedor(): Contenedor {
     instancia = {
       crearSesion: new CrearSesion(sesiones, unidad, ids, reloj, codigos),
       iniciarSesion: new IniciarSesion(sesiones, unidad),
-      terminarSesion: new TerminarSesion(sesiones, unidad),
+      terminarSesion: new TerminarSesion(sesiones, preguntas, unidad),
       generarCodigosDeAcceso: new GenerarCodigosDeAcceso(
         sesiones,
         participantes,
@@ -112,7 +112,7 @@ export function contenedor(): Contenedor {
       cerrarPregunta: new CerrarPregunta(preguntas, sesiones, votos, reloj, unidad),
       anularPregunta: new AnularPregunta(preguntas, sesiones, unidad),
       proyectarResultado: new ProyectarResultado(preguntas, sesiones, unidad),
-      emitirVoto: new EmitirVoto(participantes, preguntas, votos),
+      emitirVoto: new EmitirVoto(participantes, preguntas, sesiones, votos),
       pedirLaPalabra: new PedirLaPalabra(participantes, sesiones, solicitudes, reloj, ids, unidad),
       presentarMocion: new PresentarMocion(
         participantes,

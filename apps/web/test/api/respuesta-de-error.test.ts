@@ -14,6 +14,7 @@ describe("respuestaDeError", () => {
     ["TRANSICION_INVALIDA", 409],
     ["SESION_NO_EN_CURSO", 409],
     ["SESION_NO_DISPONIBLE", 409],
+    ["SESION_CON_VOTACION_ABIERTA", 409],
     ["PARTICIPANTE_AJENO", 403],
     ["NO_ES_TUYA", 403],
     ["OPCION_INVALIDA", 422],
@@ -38,6 +39,9 @@ describe("respuestaDeError", () => {
     expect(await cuerpo("PREGUNTA_CERRADA")).toBe("La votación ya se cerró.");
     expect(await cuerpo("SALA_NO_DISPONIBLE")).toBe("Esta sala no existe o ya terminó.");
     expect(await cuerpo("CODIGO_NO_EXISTE")).toBe("Ese código no es de esta sala.");
+    expect(await cuerpo("SESION_CON_VOTACION_ABIERTA")).toBe(
+      "Cierra la votación abierta antes de terminar la sesión.",
+    );
     expect(await cuerpo("TRANSICION_INVALIDA")).toBeUndefined();
     const ocupado = await respuestaDeError(
       new ErrorDeDominio("CIERRE_OCUPADO", "Hay votos entrando"),

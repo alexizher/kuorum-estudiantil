@@ -74,6 +74,7 @@ export function PanelDeSesion({
         modo={sesion.modo}
         estado={estadoDeSesion}
         ocupado={ocupado}
+        hayVotacionAbierta={hayVotacionAbierta}
         alIniciar={() => void acciones.iniciar()}
         alPedirTerminar={() => setConfirmacion({ tipo: "terminar" })}
         alCopiarEnlace={alCopiarEnlace}
