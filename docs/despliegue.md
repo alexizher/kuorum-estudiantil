@@ -32,6 +32,8 @@ Antes de cada paso que crea algo en tu cuenta, el asistente dice qué va a crear
 
 El registro público está desactivado: las cuentas de la mesa solo se crean con este paso o con `pnpm --filter @kuorum/web crear-admin --correo <correo> --nombre <nombre>`, que lee la contraseña por stdin (mínimo 12 caracteres) o, con `--generar`, imprime una contraseña nueva una sola vez. El script necesita `DATABASE_URL` y `BETTER_AUTH_SECRET` en el entorno.
 
+Cada cuenta tiene un rol. `--rol` acepta `SUPERADMIN` (el valor por defecto, y el que crea el asistente), `MESA` y `DEMO`. `SUPERADMIN` y `MESA` ven y operan todas las sesiones. `DEMO` es la cuenta de prueba pública y solo ve las que ella misma creó (ver la sección siguiente). Al actualizar una instalación que ya existía, la migración deja como `SUPERADMIN` a todas las cuentas que había y le asigna al primero de ellos las sesiones existentes.
+
 ## Publicar una versión nueva
 
 En una instalación ya creada:
@@ -81,6 +83,38 @@ Si falta un campo o es inválido, el asistente dice cuál y termina con código 
 El archivo `.vercelignore` deja fuera del despliegue `.env*`, `.kuorum`, `node_modules` y los artefactos de build. La integración se instala con `--no-env-pull`, así que las credenciales de la base no se escriben en tu copia local.
 
 En tu máquina deja `.vercel/` (el enlace al proyecto) y `.kuorum/despliegue.json` (el avance del asistente, sin secretos). Ambos están en `.gitignore`.
+
+## Cuenta de prueba (opcional)
+
+Sirve para que cualquiera pruebe la mesa sin pedirte una cuenta. Las credenciales se muestran en la página de ingreso, así que son públicas por diseño. La cuenta de prueba no puede ver ni tocar las sesiones de las demás cuentas, y las suyas se borran cada día.
+
+Variables de entorno (en Vercel, en production):
+
+| Variable                 | Qué es                                                                                                                                       |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `KUORUM_MODO_DEMO`       | `1` muestra el bloque "Cuenta de prueba" en `/mesa/ingresar`. Sin ella, o con otro valor, no aparece nada.                                   |
+| `KUORUM_DEMO_CORREO`     | Correo de la cuenta de prueba.                                                                                                               |
+| `KUORUM_DEMO_CONTRASENA` | Su contraseña, de 12 caracteres o más. Se lee en el servidor al pedir la página; no va en el código del navegador.                           |
+| `CRON_SECRET`            | Secreto de la limpieza diaria. Genera uno con `openssl rand -base64 32`. Vercel lo manda como `Authorization: Bearer <CRON_SECRET>` al cron. |
+
+Las variables solo muestran la cuenta. Para que exista hay que crearla una vez, con el mismo correo y la misma contraseña. Con `DATABASE_URL` y `BETTER_AUTH_SECRET` de producción en el entorno (por ejemplo con `vercel env pull` a un archivo temporal que luego borras):
+
+```
+printf '%s' "$KUORUM_DEMO_CONTRASENA" | pnpm --filter @kuorum/web crear-admin --correo "$KUORUM_DEMO_CORREO" --nombre "Cuenta de prueba" --rol DEMO
+```
+
+Qué puede hacer: crear sesiones, preguntas y códigos, abrir y cerrar votaciones y dar la palabra, todo dentro de las sesiones que creó. Los participantes entran a esas salas como a cualquier otra.
+
+Qué no puede:
+
+- Ver, abrir ni modificar sesiones de otras cuentas. Si pide una por su dirección, recibe un 404, igual que si no existiera.
+- Tener más de 5 sesiones sin terminar a la vez. Al intentar la sexta recibe "La cuenta de prueba puede tener hasta 5 sesiones activas. Termina una para crear otra."
+- Generar más de 50 códigos por petición ni más de 200 por sesión.
+- Cambiar su contraseña, su correo ni su nombre.
+
+La limpieza es la ruta `GET /api/tareas/limpiar-demo`. Responde 401 sin el `CRON_SECRET` correcto (y siempre que la variable no esté definida). `apps/web/vercel.json` la programa con `"17 8 * * *"`, las 08:17 UTC, que son las 03:17 en Bogotá. En el plan Hobby Vercel puede ejecutarla en cualquier momento de esa hora. Borra, en una sola transacción, todas las sesiones creadas por cuentas `DEMO` con sus preguntas, conteos, votos emitidos, códigos, participantes y solicitudes de palabra. No toca nada de las cuentas `SUPERADMIN` ni `MESA`.
+
+Como la contraseña es pública, cualquiera puede iniciar sesión con ella y crear salas visibles con su código. Si quieres apagarla, quita `KUORUM_MODO_DEMO`: la cuenta sigue existiendo pero deja de mostrarse. Para borrarla del todo, elimina el usuario de la tabla `auth_users`.
 
 ## Migraciones de base de datos
 

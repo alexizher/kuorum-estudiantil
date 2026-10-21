@@ -84,6 +84,8 @@ El asistente pide el nombre de la institución y deja todo listo:
 
 Si algo falla, vuelve a correrlo y sigue donde quedó. Para publicar una versión nueva usa `pnpm publicar`.
 
+Si quieres que cualquiera pueda probar la mesa, activa la cuenta de prueba pública: su correo y su contraseña aparecen en la página de ingreso, solo ve las sesiones que crea y se borran cada día. Se configura con cuatro variables de entorno; los pasos están en [docs/despliegue.md](docs/despliegue.md#cuenta-de-prueba-opcional).
+
 En el plan gratuito de Vercel caben asambleas de facultad de cientos de personas. Para una asamblea general de miles conviene un dominio propio con Cloudflare delante. Las cifras y los pasos están en [docs/despliegue.md](docs/despliegue.md).
 
 ## Cómo está hecho
