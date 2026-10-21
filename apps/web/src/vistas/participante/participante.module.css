@@ -435,3 +435,9 @@
 .barra :global(.pestanas) {
   border-top: 0;
 }
+
+/* El código de acceso tiene 9 caracteres: el campo ocupa todo el ancho. */
+.campoDeAcceso :global(.campo__entrada) {
+  width: 100%;
+  font-size: var(--t-4);
+}

@@ -26,6 +26,7 @@ export function PantallaDeCodigo({ error, enviando, alEnviar }: Propiedades) {
       <form onSubmit={enviar} noValidate>
         <CampoDeTexto
           codigo
+          className={estilos.campoDeAcceso}
           etiqueta="Tu código de acceso"
           ayuda="Está en la hoja que te dieron o en el QR de la mesa."
           error={error}
