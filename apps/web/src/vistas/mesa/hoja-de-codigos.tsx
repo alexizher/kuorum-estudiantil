@@ -13,7 +13,7 @@ interface Propiedades {
 
 /** Lista imprimible: 40 por hoja carta, cada código con su QR y cómo usarlo. */
 export function HojaDeCodigos({ codigos, codigoDeSala, origen }: Propiedades) {
-  const instruccion = `Escanea el QR o escribe el código en ${direccionCorta(enlaceParaParticipantes(origen, codigoDeSala))}`;
+  const instruccion = `Escanea o escribe el código en ${direccionCorta(enlaceParaParticipantes(origen, codigoDeSala))}`;
   return (
     <div className={estilos.hojas}>
       {dividirEnHojas(codigos).map((hoja, indice) => (

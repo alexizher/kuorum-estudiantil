@@ -1,7 +1,11 @@
 import type { EstadoDeSala } from "@kuorum/contracts";
 import { vi } from "vitest";
 import type { FuenteRefrescable } from "../../src/tiempo-real/fuente-de-estado";
-import type { ClienteDeMesa, PreguntaDeMesa } from "../../src/vistas/mesa/cliente-de-mesa";
+import type {
+  ClienteDeMesa,
+  PreguntaDeMesa,
+  ResultadoDeVotacion,
+} from "../../src/vistas/mesa/cliente-de-mesa";
 
 export function clienteDeMesaFalso(preguntas: PreguntaDeMesa[] = []) {
   return {
@@ -22,7 +26,7 @@ export function clienteDeMesaFalso(preguntas: PreguntaDeMesa[] = []) {
     listarPreguntas: vi.fn<ClienteDeMesa["listarPreguntas"]>(async () => preguntas),
     crearPregunta: vi.fn<ClienteDeMesa["crearPregunta"]>(async () => undefined),
     abrirPregunta: vi.fn<ClienteDeMesa["abrirPregunta"]>(async () => undefined),
-    cerrarPregunta: vi.fn<ClienteDeMesa["cerrarPregunta"]>(async () => undefined),
+    cerrarPregunta: vi.fn<ClienteDeMesa["cerrarPregunta"]>(async () => RESULTADO),
     anularPregunta: vi.fn<ClienteDeMesa["anularPregunta"]>(async () => undefined),
     proyectarPregunta: vi.fn<ClienteDeMesa["proyectarPregunta"]>(async () => undefined),
     darLaPalabra: vi.fn<ClienteDeMesa["darLaPalabra"]>(async () => undefined),
@@ -58,11 +62,22 @@ export class FuenteRefrescableFalsa implements FuenteRefrescable {
   }
 }
 
+export const RESULTADO: ResultadoDeVotacion = {
+  totalVotos: 10,
+  porOpcion: [
+    { opcionId: "o1", texto: "Sí", votos: 7, porcentaje: 70 },
+    { opcionId: "o2", texto: "No", votos: 3, porcentaje: 30 },
+  ],
+  ganadora: "o1",
+  aprobada: true,
+};
+
 export const borrador: PreguntaDeMesa = {
   id: "p1",
   texto: "¿Aprueba el orden del día?",
   estado: "BORRADOR",
   resultadoProyectado: false,
+  resultado: null,
   opciones: [
     { id: "o1", texto: "Sí" },
     { id: "o2", texto: "No" },

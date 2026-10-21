@@ -56,6 +56,13 @@ describe("ClienteDeMesaPorFetch", () => {
     ]);
   });
 
+  it("cerrar devuelve el resultado de la respuesta", async () => {
+    const resultado = { totalVotos: 3, porOpcion: [], ganadora: null, aprobada: null };
+    const { cliente, fetchFalso } = conRespuesta(Response.json(resultado));
+    expect(await cliente.cerrarPregunta("p1")).toEqual(resultado);
+    expect(fetchFalso.mock.calls[0]?.[0]).toBe("/api/mesa/v1/preguntas/p1/cerrar");
+  });
+
   it("palabra: dar con y sin solicitud, terminar, minuto y rechazar", async () => {
     const { cliente, fetchFalso } = conRespuesta(new Response(null, { status: 204 }));
     await cliente.darLaPalabra("s1");

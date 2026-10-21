@@ -1,7 +1,7 @@
 "use client";
 
 import type { EstadoDeSala } from "@kuorum/contracts";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 export interface OpcionesDeSegundos {
   /** Milisegundos locales; se inyecta en las pruebas. */
@@ -16,22 +16,25 @@ export function useSegundosRestantes(
   estado: EstadoDeSala | null,
   { reloj = Date.now, intervaloMs = INTERVALO_MS }: OpcionesDeSegundos = {},
 ): number | null {
+  // El reloj puede cambiar de identidad entre renders (pruebas); se lee desde una ref.
+  const relojActual = useRef(reloj);
+  relojActual.current = reloj;
   const desfaseMs = useMemo(
-    () => (estado === null ? 0 : Date.parse(estado.horaDelServidor) - reloj()),
+    () => (estado === null ? 0 : Date.parse(estado.horaDelServidor) - relojActual.current()),
     // `reloj` es estable salvo en pruebas.
     [estado],
   );
-  const [ahora, setAhora] = useState(() => reloj());
+  const [ahora, setAhora] = useState(() => relojActual.current());
   const orador = estado?.palabra.conLaPalabra ?? null;
 
   useEffect(() => {
-    setAhora(reloj());
+    setAhora(relojActual.current());
   }, [estado]);
 
   const hayOrador = orador !== null;
   useEffect(() => {
     if (!hayOrador) return;
-    const id = setInterval(() => setAhora(reloj()), intervaloMs);
+    const id = setInterval(() => setAhora(relojActual.current()), intervaloMs);
     return () => clearInterval(id);
   }, [hayOrador, intervaloMs]);
 

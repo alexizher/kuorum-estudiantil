@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { ErrorDeMesa } from "../../src/vistas/mesa/cliente-de-mesa";
 import { usePanelDeSesion } from "../../src/vistas/mesa/use-panel-de-sesion";
 import { preguntaAbierta, salaVacia } from "../proyeccion/estados";
-import { borrador, clienteDeMesaFalso, FuenteRefrescableFalsa } from "./falsos";
+import { borrador, clienteDeMesaFalso, FuenteRefrescableFalsa, RESULTADO } from "./falsos";
 
 afterEach(cleanup);
 
@@ -124,6 +124,23 @@ describe("usePanelDeSesion", () => {
     expect(result.current.error?.codigo).toBe("OTRA_PREGUNTA_ABIERTA");
     expect(result.current.error?.mensaje).toMatch(/otra votación abierta/i);
     expect(fuente.refrescos).toBe(0);
+  });
+
+  it("tras cerrar muestra el resultado de la respuesta aunque el listado aún no lo traiga", async () => {
+    const abierta = { ...borrador, estado: "ABIERTA" as const };
+    const { result, cliente } = await montar([abierta]);
+    await waitFor(() => expect(result.current.preguntas).toHaveLength(1));
+    await act(() => result.current.acciones.cerrar("p1"));
+    expect(result.current.preguntas[0]?.resultado).toEqual(RESULTADO);
+    // al refrescar, el listado manda
+    const cerrada = {
+      ...borrador,
+      estado: "CERRADA" as const,
+      resultado: { ...RESULTADO, totalVotos: 11 },
+    };
+    cliente.listarPreguntas.mockResolvedValue([cerrada]);
+    await act(() => result.current.acciones.sumarMinuto());
+    expect(result.current.preguntas[0]?.resultado?.totalVotos).toBe(11);
   });
 
   it("CIERRE_OCUPADO se puede reintentar y el error se limpia al salir bien", async () => {

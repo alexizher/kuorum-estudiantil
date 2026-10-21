@@ -17,7 +17,7 @@ import {
   preguntaConResultado,
   salaVacia,
 } from "../proyeccion/estados";
-import { borrador } from "./falsos";
+import { borrador, RESULTADO } from "./falsos";
 
 // jsdom no trae canvas; axe lo toca al comparar nombre y texto visible de los botones.
 beforeAll(() => {
@@ -285,9 +285,44 @@ describe("votación", () => {
       },
     });
     render(<PanelDeSesion {...proyectada.props} />);
-    expect(screen.getByRole("list", { name: "Resultado proyectado" })).toBeTruthy();
+    expect(screen.getByRole("list", { name: "Resultado" })).toBeTruthy();
     expect(screen.getByText(/Aprobada\./)).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Proyectar resultado" })).toBeNull();
+  });
+
+  it("cerrada y sin proyectar muestra el conteo con su rótulo y deja proyectar", async () => {
+    const cerrada = { ...borrador, id: "p1", estado: "CERRADA" as const, resultado: RESULTADO };
+    const { props, acciones: a } = propiedades({
+      panel: {
+        estado: salaVacia({ pregunta: { ...preguntaConResultado(), resultado: null } }),
+        preguntas: [cerrada],
+      },
+    });
+    render(<PanelDeSesion {...props} />);
+    expect(screen.getByText("Resultado (aún no proyectado)")).toBeTruthy();
+    expect(screen.getByText("10")).toBeTruthy();
+    const lista = screen.getByRole("list", { name: "Resultado" });
+    expect(within(lista).getByText("7")).toBeTruthy();
+    expect(within(lista).getByText("3")).toBeTruthy();
+    expect(screen.getByText(/Aprobada\./)).toBeTruthy();
+    await userEvent.click(screen.getByRole("button", { name: "Proyectar resultado" }));
+    expect(a.proyectar).toHaveBeenCalledWith("p1");
+  });
+
+  it("ya proyectado el rótulo desaparece", () => {
+    const cerrada = {
+      ...borrador,
+      id: "p1",
+      estado: "CERRADA" as const,
+      resultado: RESULTADO,
+      resultadoProyectado: true,
+    };
+    const { props } = propiedades({
+      panel: { estado: salaVacia({ pregunta: preguntaConResultado() }), preguntas: [cerrada] },
+    });
+    render(<PanelDeSesion {...props} />);
+    expect(screen.queryByText("Resultado (aún no proyectado)")).toBeNull();
+    expect(screen.getByRole("list", { name: "Resultado" })).toBeTruthy();
   });
 
   it("los borradores se abren desde la lista de preguntas", async () => {
@@ -439,7 +474,9 @@ describe("accesibilidad", () => {
         propiedades({
           panel: {
             estado: salaVacia({ pregunta: preguntaConResultado() }),
-            preguntas: [{ ...borrador, estado: "CERRADA", resultadoProyectado: true }],
+            preguntas: [
+              { ...borrador, estado: "CERRADA", resultadoProyectado: true, resultado: RESULTADO },
+            ],
           },
         }).props,
     ],

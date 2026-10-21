@@ -9,11 +9,20 @@ export interface SesionDeLista {
   creadaEn: string;
 }
 
+export interface ResultadoDeVotacion {
+  totalVotos: number;
+  porOpcion: { opcionId: string; texto: string; votos: number; porcentaje: number }[];
+  ganadora: string | null;
+  aprobada: boolean | null;
+}
+
 export interface PreguntaDeMesa {
   id: string;
   texto: string;
   estado: "BORRADOR" | "ABIERTA" | "CERRADA" | "ANULADA";
   resultadoProyectado: boolean;
+  /** Solo las cerradas: la mesa lo ve antes de proyectarlo. */
+  resultado: ResultadoDeVotacion | null;
   opciones: { id: string; texto: string }[];
 }
 
@@ -35,7 +44,8 @@ export interface ClienteDeMesa {
   /** Sin opciones, la API usa Sí, No y Me abstengo. */
   crearPregunta(sesionId: string, texto: string, opciones?: string[]): Promise<void>;
   abrirPregunta(preguntaId: string): Promise<void>;
-  cerrarPregunta(preguntaId: string): Promise<void>;
+  /** Devuelve el conteo de la votación recién cerrada. */
+  cerrarPregunta(preguntaId: string): Promise<ResultadoDeVotacion>;
   anularPregunta(preguntaId: string): Promise<void>;
   proyectarPregunta(preguntaId: string): Promise<void>;
   /** Sin solicitud da la palabra a la siguiente de la fila. */
@@ -134,8 +144,12 @@ export class ClienteDeMesaPorFetch implements ClienteDeMesa {
     await this.pedir("POST", this.pregunta(preguntaId, "abrir"));
   }
 
-  async cerrarPregunta(preguntaId: string): Promise<void> {
-    await this.pedir("POST", this.pregunta(preguntaId, "cerrar"));
+  async cerrarPregunta(preguntaId: string): Promise<ResultadoDeVotacion> {
+    const cuerpo = await this.pedir("POST", this.pregunta(preguntaId, "cerrar"));
+    if (cuerpo === null || typeof cuerpo !== "object") {
+      throw new ErrorDeMesa(0, "RESPUESTA_INVALIDA");
+    }
+    return cuerpo as ResultadoDeVotacion;
   }
 
   async anularPregunta(preguntaId: string): Promise<void> {

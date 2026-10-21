@@ -4,7 +4,12 @@ import type { EstadoDeSala } from "@kuorum/contracts";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { FuenteRefrescable } from "../../tiempo-real/fuente-de-estado";
 import { hayMasVotosQueCodigos } from "./alerta";
-import { comoErrorDeMesa, type ClienteDeMesa, type PreguntaDeMesa } from "./cliente-de-mesa";
+import {
+  comoErrorDeMesa,
+  type ClienteDeMesa,
+  type PreguntaDeMesa,
+  type ResultadoDeVotacion,
+} from "./cliente-de-mesa";
 
 const FALLOS_PARA_AVISAR = 3;
 
@@ -53,7 +58,8 @@ export function usePanelDeSesion(
   const [estado, setEstado] = useState<EstadoDeSala | null>(null);
   const [noExiste, setNoExiste] = useState(false);
   const [fallos, setFallos] = useState(0);
-  const [preguntas, setPreguntas] = useState<PreguntaDeMesa[]>([]);
+  const [listadas, setPreguntas] = useState<PreguntaDeMesa[]>([]);
+  const [alCerrar, setAlCerrar] = useState<Record<string, ResultadoDeVotacion>>({});
   const [ocupado, setOcupado] = useState(false);
   const [error, setError] = useState<ErrorDelPanel | undefined>(undefined);
   const enCurso = useRef(false);
@@ -115,7 +121,11 @@ export function usePanelDeSesion(
       crearPregunta: (texto, opciones) =>
         ejecutar(() => cliente.crearPregunta(sesion.id, texto, opciones)),
       abrir: (id) => ejecutar(() => cliente.abrirPregunta(id)),
-      cerrar: (id) => ejecutar(() => cliente.cerrarPregunta(id)),
+      cerrar: (id) =>
+        ejecutar(async () => {
+          const resultado = await cliente.cerrarPregunta(id);
+          setAlCerrar((previos) => ({ ...previos, [id]: resultado }));
+        }),
       anular: (id) => ejecutar(() => cliente.anularPregunta(id)),
       proyectar: (id) => ejecutar(() => cliente.proyectarPregunta(id)),
       darLaPalabra: (solicitudId) => ejecutar(() => cliente.darLaPalabra(sesion.id, solicitudId)),
@@ -130,6 +140,12 @@ export function usePanelDeSesion(
   const reintentar = useCallback(
     async () => (ultima.current === null ? false : ejecutar(ultima.current)),
     [ejecutar],
+  );
+
+  // El resultado de la respuesta al cerrar cubre el hueco hasta que el listado lo traiga.
+  const preguntas = useMemo(
+    () => listadas.map((p) => ({ ...p, resultado: p.resultado ?? alCerrar[p.id] ?? null })),
+    [listadas, alCerrar],
   );
 
   return {

@@ -107,7 +107,7 @@ export function contenedor(): Contenedor {
         hasheador,
       ),
       crearPregunta: new CrearPregunta(sesiones, preguntas, ids, unidad),
-      listarPreguntasDeSesion: new ListarPreguntasDeSesion(sesiones, preguntas),
+      listarPreguntasDeSesion: new ListarPreguntasDeSesion(sesiones, preguntas, votos),
       abrirPregunta: new AbrirPregunta(sesiones, preguntas, reloj, unidad),
       cerrarPregunta: new CerrarPregunta(preguntas, sesiones, votos, reloj, unidad),
       anularPregunta: new AnularPregunta(preguntas, sesiones, unidad),

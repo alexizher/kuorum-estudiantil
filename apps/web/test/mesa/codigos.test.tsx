@@ -64,7 +64,7 @@ describe("HojaDeCodigos", () => {
     expect(screen.getByText("AAAA-0000")).toBeTruthy();
     expect(screen.getByRole("img", { name: "QR del código AAAA-0040" })).toBeTruthy();
     expect(
-      screen.getAllByText(/Escanea el QR o escribe el código en kuorum\.test\/s\/K7F2/),
+      screen.getAllByText(/Escanea o escribe el código en kuorum\.test\/s\/K7F2/),
     ).toHaveLength(41);
   });
 
@@ -76,6 +76,8 @@ describe("HojaDeCodigos", () => {
     expect(css).toMatch(/@page\s*\{[^}]*size:\s*letter/);
     expect(css).toMatch(/grid-template-columns:\s*repeat\(4,\s*1fr\)/);
     expect(css).toMatch(/break-after:\s*page/);
+    const instruccion = /\.instruccion\s*\{[^}]*font-size:\s*([\d.]+)pt/.exec(css)?.[1];
+    expect(Number(instruccion)).toBeGreaterThanOrEqual(9);
     expect(css).toMatch(/\.noImprimir\s*\{\s*display:\s*none\s*!important/);
   });
 });
@@ -157,6 +159,9 @@ describe("EntregarEnVivo", () => {
     );
     expect(screen.getByRole("button", { name: "Mostrar el primer código" })).toBeTruthy();
     expect(screen.getByText("Entregados en esta pantalla: 0")).toBeTruthy();
+    expect(
+      screen.getByText(/Los códigos que no entregues siguen vigentes y sin usar/),
+    ).toBeTruthy();
   });
 
   it("muestra un código a la vez con su QR, de a lotes de 50, y cuenta", async () => {

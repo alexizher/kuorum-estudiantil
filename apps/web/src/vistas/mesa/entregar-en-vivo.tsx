@@ -67,6 +67,10 @@ export function EntregarEnVivo({ sesion, dependencias }: Propiedades) {
         <Boton variante="tinta" ancho onClick={() => void siguiente()} disabled={cargando}>
           {actual === null ? "Mostrar el primer código" : "Siguiente código"}
         </Boton>
+        <p className={estilos.nota}>
+          Los códigos que no entregues siguen vigentes y sin usar: no se activan hasta que alguien
+          los escribe.
+        </p>
         <p className={`${estilos.contador} num`} role="status">
           Entregados en esta pantalla: {entregados}
         </p>

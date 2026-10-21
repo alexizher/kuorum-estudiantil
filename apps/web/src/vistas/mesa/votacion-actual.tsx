@@ -5,7 +5,7 @@ import { Boton } from "@kuorum/ui";
 import { coloresDeOpciones } from "../proyeccion/colores-de-opciones";
 import { formatearNumero } from "../proyeccion/textos";
 import { veredictoDe } from "../proyeccion/veredicto";
-import type { PreguntaDeMesa } from "./cliente-de-mesa";
+import type { PreguntaDeMesa, ResultadoDeVotacion } from "./cliente-de-mesa";
 import estilos from "./mesa.module.css";
 import { ETIQUETA_DE_PREGUNTA } from "./textos";
 
@@ -30,13 +30,22 @@ export function votacionActual(preguntas: readonly PreguntaDeMesa[]): PreguntaDe
   return cerradas[cerradas.length - 1] ?? null;
 }
 
-function Resultado({ resultado }: { resultado: NonNullable<PreguntaPublica["resultado"]> }) {
+function Resultado({
+  resultado,
+  proyectado,
+}: {
+  resultado: ResultadoDeVotacion;
+  proyectado: boolean;
+}) {
   const colores = coloresDeOpciones(resultado.porOpcion.map((o) => o.texto));
   const mayor = Math.max(1, ...resultado.porOpcion.map((o) => o.votos));
   const veredicto = veredictoDe(resultado);
   return (
     <>
-      <ul className={estilos.conteo} aria-label="Resultado proyectado">
+      {proyectado ? null : (
+        <p className={estilos.rotuloDeResultado}>Resultado (aún no proyectado)</p>
+      )}
+      <ul className={estilos.conteo} aria-label="Resultado">
         {resultado.porOpcion.map((opcion, i) => (
           <li key={opcion.opcionId}>
             <span>{opcion.texto}</span>
@@ -76,10 +85,12 @@ export function VotacionActual({
     );
   }
   const abierta = pregunta.estado === "ABIERTA";
-  const votos = publica?.id === pregunta.id ? publica.votosEmitidos : 0;
+  // Cerrada y sin proyectar, el estado público ya no la trae: el conteo sale del resultado.
+  const votos =
+    pregunta.resultado?.totalVotos ?? (publica?.id === pregunta.id ? publica.votosEmitidos : 0);
   const avance =
     asistencia !== null && asistencia > 0 ? Math.min(100, (votos / asistencia) * 100) : 0;
-  const resultado = publica?.id === pregunta.id ? publica.resultado : null;
+  const resultado = pregunta.resultado ?? (publica?.id === pregunta.id ? publica.resultado : null);
   return (
     <div className={estilos.votacion}>
       <p className={estilos.estadoDeVotacion}>
@@ -111,12 +122,10 @@ export function VotacionActual({
         ) : null}
       </div>
       {resultado !== null ? (
-        <Resultado resultado={resultado} />
+        <Resultado resultado={resultado} proyectado={pregunta.resultadoProyectado} />
       ) : (
         <p className={estilos.nota}>
-          {abierta
-            ? "El conteo se ve al proyectar el resultado, con la votación cerrada."
-            : "Votación cerrada. Proyecta el resultado para verlo."}
+          {abierta ? "El conteo se ve al cerrar la votación." : "Votación cerrada."}
         </p>
       )}
       <div className={estilos.accionesDeVotacion}>

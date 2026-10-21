@@ -191,14 +191,22 @@ describe("API de la mesa", () => {
     expect(casos.crearPregunta.ejecutar).toHaveBeenLastCalledWith("s1", "¿Quién?", ["Ana", "Luis"]);
   });
 
-  it("GET preguntas lista las de la sesión con estado, opciones y resultado proyectado", async () => {
+  it("GET preguntas lista las de la sesión con estado, opciones y resultado de las cerradas", async () => {
+    const resultado = {
+      totalVotos: 3,
+      porOpcion: [{ opcionId: "o1", texto: "Sí", votos: 3, porcentaje: 100 }],
+      ganadora: "o1",
+      aprobada: true,
+    };
+    const opciones = [{ id: "o1", texto: "Sí", orden: 0 }];
     casos.listarPreguntasDeSesion.ejecutar.mockResolvedValue([
       {
-        id: "p1",
-        texto: "¿Sí?",
-        estado: "CERRADA",
-        resultadoVisible: true,
-        opciones: [{ id: "o1", texto: "Sí", orden: 0 }],
+        pregunta: { id: "p1", texto: "¿Sí?", estado: "CERRADA", resultadoVisible: true, opciones },
+        resultado,
+      },
+      {
+        pregunta: { id: "p2", texto: "¿No?", estado: "ANULADA", resultadoVisible: false, opciones },
+        resultado: null,
       },
     ]);
     const r = await listarPreguntas(pedir("GET"), idp("s9"));
@@ -213,6 +221,15 @@ describe("API de la mesa", () => {
           estado: "CERRADA",
           resultadoProyectado: true,
           opciones: [{ id: "o1", texto: "Sí" }],
+          resultado,
+        },
+        {
+          id: "p2",
+          texto: "¿No?",
+          estado: "ANULADA",
+          resultadoProyectado: false,
+          opciones: [{ id: "o1", texto: "Sí" }],
+          resultado: null,
         },
       ],
     });

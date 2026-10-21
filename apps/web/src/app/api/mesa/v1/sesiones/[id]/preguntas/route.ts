@@ -16,12 +16,22 @@ export async function GET(
     const { id } = await contexto.params;
     const preguntas = await contenedor().listarPreguntasDeSesion.ejecutar(id);
     return accion({
-      preguntas: preguntas.map((p) => ({
+      preguntas: preguntas.map(({ pregunta: p, resultado }) => ({
         id: p.id,
         texto: p.texto,
         estado: p.estado,
         resultadoProyectado: p.resultadoVisible,
         opciones: p.opciones.map((o) => ({ id: o.id, texto: o.texto })),
+        // La mesa lo ve al cerrar, antes de proyectarlo; el público no.
+        resultado:
+          resultado === null
+            ? null
+            : {
+                totalVotos: resultado.totalVotos,
+                porOpcion: resultado.porOpcion.map((o) => ({ ...o })),
+                ganadora: resultado.ganadora,
+                aprobada: resultado.aprobada,
+              },
       })),
     });
   });
