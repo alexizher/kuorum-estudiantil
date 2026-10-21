@@ -16,19 +16,21 @@
   ],
   "scripts": {
     "generate": "prisma generate",
-    "build": "pnpm generate && tsc -p tsconfig.build.json",
+    "build": "tsc -p tsconfig.build.json",
     "lint": "eslint .",
-    "typecheck": "pnpm generate && tsc -p tsconfig.json --noEmit",
-    "test": "pnpm generate && vitest run",
-    "test:int": "pnpm generate && vitest run --config vitest.int.config.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:int": "vitest run --config vitest.int.config.ts",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy"
   },
   "dependencies": {
+    "@kuorum/application": "workspace:*",
     "@kuorum/domain": "workspace:*",
     "@prisma/adapter-neon": "7.10.1",
     "@prisma/adapter-pg": "7.10.1",
-    "@prisma/client": "7.10.1"
+    "@prisma/client": "7.10.1",
+    "better-auth": "1.7.10"
   },
   "devDependencies": {
     "prisma": "7.10.1"

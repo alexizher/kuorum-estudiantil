@@ -1,9 +1,15 @@
 {
   "$schema": "https://turborepo.com/schema.json",
   "tasks": {
-    "build": { "dependsOn": ["^build"], "outputs": ["dist/**", ".next/**"] },
+    "generate": { "outputs": ["src/generated/**"] },
+    "build": { "dependsOn": ["^build", "generate"], "outputs": ["dist/**", ".next/**"] },
     "lint": {},
-    "typecheck": { "dependsOn": ["^build"] },
-    "test": { "dependsOn": ["^build"] }
+    "typecheck": { "dependsOn": ["^build", "generate"] },
+    "test": { "dependsOn": ["^build", "generate"] },
+    "test:int": {
+      "dependsOn": ["^build", "generate"],
+      "cache": false,
+      "passThroughEnv": ["DATABASE_URL"]
+    }
   }
 }

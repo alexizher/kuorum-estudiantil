@@ -1,5 +1,7 @@
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
-  test: { include: ["test/**/*.test.ts"] },
+  // tsconfig usa jsx "preserve" por Next; para las pruebas se transforma en automático.
+  oxc: { jsx: { runtime: "automatic" } },
+  test: { include: ["test/**/*.test.{ts,tsx}"], exclude: ["test/**/*.int.test.ts"] },
 });

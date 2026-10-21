@@ -22,8 +22,12 @@ export type DeployContext = {
   interactive: boolean;
 };
 
+/** "omitido" deja el paso pendiente para la próxima corrida. */
+// eslint-disable-next-line @typescript-eslint/no-invalid-void-type
+export type ResultadoDePaso = void | "omitido";
+
 export interface Step {
   readonly id: string;
   readonly description: string | ((config: DeployConfig) => string);
-  run(context: DeployContext): Promise<void>;
+  run(context: DeployContext): Promise<ResultadoDePaso>;
 }

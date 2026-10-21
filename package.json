@@ -11,9 +11,12 @@
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test && vitest run",
+    "test:int": "turbo run test:int --concurrency=1",
+    "e2e": "pnpm --filter @kuorum/web e2e",
     "depcheck": "depcruise packages apps --config .dependency-cruiser.cjs",
     "format": "prettier --write .",
-    "desplegar": "pnpm --filter @kuorum/cli build && node packages/cli/dist/index.js desplegar"
+    "desplegar": "pnpm --filter @kuorum/cli build && node packages/cli/dist/index.js desplegar",
+    "publicar": "pnpm --filter @kuorum/cli build && node packages/cli/dist/index.js publicar"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

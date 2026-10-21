@@ -12,3 +12,5 @@ coverage/
 **/src/generated/
 next-env.d.ts
 .kuorum/
+test-results/
+playwright-report/

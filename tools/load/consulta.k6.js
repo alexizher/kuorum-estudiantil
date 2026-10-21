@@ -1,10 +1,10 @@
 // Carga por consulta con If-None-Match.
-// k6 run -e URL=https://app -e SESION=id -e VUS=300 -e DURACION=5m -e INTERVALO_S=3 tools/load/consulta.k6.js
+// k6 run -e URL=https://app -e SALA=CODIGO -e VUS=300 -e DURACION=5m -e INTERVALO_S=3 tools/load/consulta.k6.js
 import http from "k6/http";
 import { check, sleep } from "k6";
 
 const base = __ENV.URL;
-const sesion = __ENV.SESION;
+const sala = __ENV.SALA;
 const intervalo = Number(__ENV.INTERVALO_S || 3);
 
 export const options = {
@@ -17,7 +17,7 @@ let etiqueta;
 let primera = true;
 
 export function setup() {
-  if (!base || !sesion) throw new Error("Faltan las variables URL y SESION");
+  if (!base || !sala) throw new Error("Faltan las variables URL y SALA");
 }
 
 export default function () {
@@ -27,7 +27,7 @@ export default function () {
     sleep(Math.random() * intervalo);
   }
   const cabeceras = etiqueta ? { "If-None-Match": etiqueta } : {};
-  const respuesta = http.get(`${base}/api/public/v1/sesiones/${sesion}/estado`, {
+  const respuesta = http.get(`${base}/api/public/v1/salas/${sala}/estado`, {
     headers: cabeceras,
   });
   check(respuesta, { "200 o 304": (r) => r.status === 200 || r.status === 304 });

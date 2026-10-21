@@ -33,6 +33,21 @@ module.exports = {
       },
     },
     {
+      name: "ui-sin-capas",
+      comment:
+        "ui solo importa react, qrcode, contracts y a sí misma: nada de domain, application, infrastructure, apps ni módulos de Node.",
+      severity: "error",
+      from: { path: "^packages/ui/src" },
+      to: {
+        pathNot: [
+          "^packages/(ui|contracts)/",
+          "^@kuorum/(ui|contracts)(/|$)",
+          "^(react|qrcode)(/|$)",
+          "(^|/)node_modules/(react|qrcode|@types/react|@types/qrcode)(/|$)",
+        ],
+      },
+    },
+    {
       name: "nadie-importa-cli",
       comment: "Nada fuera de packages/cli importa packages/cli.",
       severity: "error",

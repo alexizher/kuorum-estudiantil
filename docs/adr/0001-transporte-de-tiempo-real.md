@@ -8,7 +8,7 @@ La pantalla pública de una sesión necesita saber cuándo cambia el estado (la 
 
 ## Opciones
 
-- Consulta periódica: cada cliente pide `GET /api/public/v1/sesiones/{id}/estado` cada pocos segundos con `If-None-Match`. La respuesta lleva `Cache-Control: public, max-age=0, s-maxage=2, stale-while-revalidate=2`, así que el borde absorbe casi todo y la base se consulta unas pocas veces por segundo. Cada consulta cuenta como una petición de CDN.
+- Consulta periódica: cada cliente pide `GET /api/public/v1/salas/{codigoDeSala}/estado` cada pocos segundos con `If-None-Match`. La respuesta lleva `Cache-Control: public, max-age=0, s-maxage=2, stale-while-revalidate=2`, así que el borde absorbe casi todo y la base se consulta unas pocas veces por segundo. Cada consulta cuenta como una petición de CDN.
 - Eventos enviados por el servidor (SSE): cada cliente mantiene abierta una conexión a una función de Vercel, que consulta la base cada 1 s y cierra a los 290 s para que el cliente reconecte. Gasta pocas peticiones, pero cada conexión ocupa una función durante toda la sesión.
 - Un servicio WebSocket externo: no se midió. Queda fuera del plan gratuito sin servicios adicionales y se deja como posibilidad futura detrás de la interfaz `FuenteDeEstado`.
 
@@ -84,7 +84,7 @@ Guía de capacidad:
 
 ## Cómo repetir la medición
 
-1. Crear una sesión de pruebas con `node tools/load/preparar.mjs`. Imprime el id.
-2. Lanzar el flujo `Carga` en GitHub Actions (`.github/workflows/carga.yml`, solo manual) con la URL del despliegue, el id de la sesión, `consulta` como transporte, hasta 300 usuarios y hasta 10 minutos. El flujo avanza la versión cada 10 s con `tools/load/avanzar.mjs` y corre `tools/load/consulta.k6.js`.
+1. Crear una sesión de pruebas con `node tools/load/preparar.mjs`. Imprime el id (`sesion=`) y el código de sala (`sala=`).
+2. Lanzar el flujo `Carga` en GitHub Actions (`.github/workflows/carga.yml`, solo manual) con la URL del despliegue, el id y el código de sala de la sesión, `consulta` como transporte, hasta 300 usuarios y hasta 10 minutos. El flujo avanza la versión cada 10 s con `tools/load/avanzar.mjs` y corre `tools/load/consulta.k6.js`.
 3. Leer el panel de uso de Vercel antes y después y restar. El presupuesto total de peticiones entre corridas es de 150.000.
 4. Repetir la extrapolación con las cifras nuevas.

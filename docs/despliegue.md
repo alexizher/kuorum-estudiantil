@@ -24,9 +24,28 @@ Antes de cada paso que crea algo en tu cuenta, el asistente dice qué va a crear
 3. `proyecto`: crea el proyecto, lo enlaza y fija `apps/web` como directorio raíz con el framework Next.js (y activa el acceso a archivos fuera de ese directorio, que el build necesita). Si en tu cuenta ya existe un proyecto con ese nombre, pregunta antes de reutilizarlo. Si el remoto `origin` es de GitHub, conecta el repositorio.
 4. `base-de-datos`: instala la integración de Neon con el nombre `<nombre-corto>-db` y plan gratuito en production, preview y development, y comprueba que production tenga `DATABASE_URL` y `DATABASE_URL_UNPOOLED`. Si ya las tiene (por ejemplo, tras un corte a mitad del paso), no crea otra base.
 5. `variables`: carga `KUORUM_INSTITUCION_NOMBRE` en production y preview.
-6. `despliegue`: corre `vercel deploy --prod --yes` y guarda la URL.
-7. `verificacion`: pide `/api/salud` hasta recibir 200 (12 intentos, uno cada 5 segundos, por si Neon arranca en frío).
-8. `resumen`: muestra la URL.
+6. `secretos`: genera `KUORUM_SECRETO` y `BETTER_AUTH_SECRET` (32 bytes aleatorios en hexadecimal cada uno) en production y preview, solo si no existen. Los valores viajan por stdin y no se guardan en ningún archivo.
+7. `despliegue`: corre `vercel deploy --prod --yes` y guarda la URL.
+8. `verificacion`: pide `/api/salud` hasta recibir 200 (12 intentos, uno cada 5 segundos, por si Neon arranca en frío).
+9. `administrador`: pregunta correo y nombre de la primera cuenta de la mesa, trae las variables de producción a un archivo temporal (permisos 0600), crea la cuenta con una contraseña generada, la muestra una sola vez y borra el archivo. Si la cuenta ya existe, lo avisa y sigue.
+10. `resumen`: muestra la URL.
+
+El registro público está desactivado: las cuentas de la mesa solo se crean con este paso o con `pnpm --filter @kuorum/web crear-admin --correo <correo> --nombre <nombre>`, que lee la contraseña por stdin (mínimo 12 caracteres) o, con `--generar`, imprime una contraseña nueva una sola vez. El script necesita `DATABASE_URL` y `BETTER_AUTH_SECRET` en el entorno.
+
+## Publicar una versión nueva
+
+En una instalación ya creada:
+
+```
+pnpm publicar
+```
+
+Corre `secretos`, `despliegue` y `verificacion`, sin mirar qué pasos se completaron antes. `secretos` solo agrega los que faltan, así que repetirlo no cambia nada. Hace falta haber corrido `pnpm desplegar` al menos una vez en ese directorio.
+
+Si actualizas una instalación hecha antes de que existiera el ingreso de la mesa, el orden es este:
+
+1. `pnpm publicar`: agrega los secretos nuevos y publica, y el build aplica las migraciones en producción.
+2. `pnpm desplegar`: corre los pasos pendientes, como `administrador`, que necesita las tablas que dejó el paso anterior.
 
 Para fijar el directorio raíz el asistente llama a la API de Vercel y necesita un token. Lo toma de la variable `VERCEL_TOKEN` o, si no existe, del archivo de sesión de la CLI (en Linux, `~/.local/share/com.vercel.cli/auth.json`). El token no se imprime ni se guarda.
 
@@ -44,7 +63,7 @@ En modo no interactivo, cualquier acción manual (instalar la CLI de Vercel, cre
 pnpm desplegar -- --config configuracion.json
 ```
 
-El JSON lleva los dos campos y no se pregunta nada. Como nadie puede confirmar, si ya existe un proyecto con ese nombre el asistente falla, salvo que agregues `"reuseExistingProject": true`. Si ya hay avance guardado y el JSON dice otra cosa, también falla: borra `.kuorum/despliegue.json` para empezar con la nueva configuración.
+El JSON lleva los dos campos y no se pregunta nada. Si agregas `adminEmail` y `adminName`, el paso `administrador` crea la cuenta de la mesa; sin ellos, ese paso se omite con un aviso y queda pendiente. Como nadie puede confirmar, si ya existe un proyecto con ese nombre el asistente falla, salvo que agregues `"reuseExistingProject": true`. Si ya hay avance guardado y el JSON dice otra cosa, también falla: borra `.kuorum/despliegue.json` para empezar con la nueva configuración.
 
 ```json
 { "institutionName": "Universidad del Ejemplo", "shortName": "ejemplo" }
@@ -91,6 +110,14 @@ La pantalla pública consulta el estado de la sesión cada 3 s mientras hay una 
 
 Pon Cloudflare delante en cuanto planees asambleas generales de más de unas 300 personas, o varias sesiones grandes en el mismo mes.
 
+## Límites de tasa
+
+- Votos: tope de 1.000 por minuto por participante (la identidad de la cookie firmada), solo contra inundaciones. Nunca se limitan por IP: un auditorio entero comparte la misma.
+- Ingreso a la sala: tope por IP. Por defecto la IP sale del primer valor de `x-forwarded-for` o de `x-real-ip`. Con `KUORUM_DETRAS_DE_CLOUDFLARE=1` se lee `cf-connecting-ip`, para que con Cloudflare delante los usuarios no queden en un solo cupo. No pongas esa variable si Cloudflare no está delante: Vercel deja pasar cabeceras ajenas y un cliente podría inventar `cf-connecting-ip` para esquivar el tope. Con la variable activa, Vercel debe ser alcanzable solo a través de Cloudflare.
+- Los contadores viven en la memoria de cada instancia: se pierden al reiniciar y no se comparten entre instancias.
+
 ## Dominio propio con Cloudflare (recomendado para asambleas grandes)
 
 Cloudflare solo puede ponerse delante de un dominio propio, no de un `*.vercel.app`. Con un dominio (unos 10 USD al año) y el plan gratuito de Cloudflare, las consultas de estado las responde Cloudflare y la cuota de Vercel alcanza para sesiones de miles de personas. Los pasos son: comprar el dominio, pasarlo a Cloudflare, conectarlo al proyecto en Vercel y dejar que Cloudflare guarde en caché las consultas de estado público. Sin dominio, la cuota gratuita limita el tamaño de la sesión (ver "Capacidad del plan gratuito").
+
+Cuando Cloudflare esté delante, agrega `KUORUM_DETRAS_DE_CLOUDFLARE=1` a las variables de producción y publica de nuevo, para que el tope de ingreso use la IP real (`cf-connecting-ip`). Solo hazlo si Vercel es alcanzable únicamente a través de Cloudflare; si no, esa cabecera se puede falsificar.

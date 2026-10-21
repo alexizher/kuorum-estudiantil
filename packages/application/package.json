@@ -22,5 +22,8 @@
   },
   "dependencies": {
     "@kuorum/domain": "workspace:*"
+  },
+  "devDependencies": {
+    "@kuorum/contracts": "workspace:*"
   }
 }
