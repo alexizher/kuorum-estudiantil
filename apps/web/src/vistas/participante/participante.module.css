@@ -1,0 +1,437 @@
+/* Celular del participante: una columna de hasta 440 px, pestañas abajo. */
+
+.app {
+  --ancho-app: 440px;
+  --alto-pestanas: 64px;
+  max-width: var(--ancho-app);
+  min-height: 100vh;
+  min-height: 100dvh;
+  margin-inline: auto;
+  background: var(--papel);
+  padding-bottom: calc(var(--alto-pestanas) + 96px + env(safe-area-inset-bottom));
+}
+@media (min-width: 480px) {
+  .app {
+    border-inline: 1px solid var(--linea);
+  }
+}
+
+.soloLectores {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.cabecera {
+  padding: 14px 16px 12px;
+  border-bottom: 2px solid var(--tinta);
+}
+.sesion {
+  font-weight: 650;
+  line-height: 1.25;
+}
+.cabeceraFila {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+.sala {
+  font-size: var(--t-0);
+  color: var(--tinta-suave);
+}
+.sala strong {
+  color: var(--tinta);
+  font-stretch: 75%;
+  font-weight: 800;
+  font-size: 1.25em;
+  letter-spacing: 0.03em;
+}
+
+.sinConexion {
+  margin: 0;
+  padding: 8px 16px;
+  background: var(--ambar-fondo);
+  color: var(--ambar-texto);
+  border-bottom: 1px solid var(--ambar);
+  font-size: var(--t-0);
+  font-weight: 650;
+}
+
+.panel {
+  padding: 20px 16px 8px;
+}
+.panel[hidden] {
+  display: none;
+}
+.pantalla {
+  padding: 28px 16px 8px;
+  display: grid;
+  gap: 16px;
+  align-content: start;
+}
+.pantalla h1 {
+  font-size: var(--t-4);
+}
+.pantalla form {
+  display: grid;
+  gap: 16px;
+}
+.mensaje {
+  font-size: var(--t-4);
+}
+
+.enlace {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin-top: 12px;
+  font-size: var(--t-1);
+}
+
+/* Votar */
+.estado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 14px;
+  font-size: var(--t-0);
+}
+.estadoAbierta {
+  color: var(--si-texto);
+  font-weight: 650;
+}
+.estadoSecreto {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--tinta-suave);
+}
+.indicativa {
+  margin-top: 12px;
+  padding: 8px 12px;
+  border: 2px solid var(--tinta);
+  border-radius: var(--r-control);
+  font-size: var(--t-0);
+}
+.indicativa strong {
+  display: block;
+  font-size: var(--t-1);
+}
+.pregunta {
+  font-size: var(--t-4);
+  margin-top: 10px;
+}
+
+.opciones {
+  border: 0;
+  padding: 0;
+  margin: 22px 0 0;
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+.opcion {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 64px;
+  padding: 12px 18px;
+  border: 2px solid var(--linea);
+  border-radius: var(--r-hoja);
+  background: var(--superficie);
+  font-size: var(--t-2);
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color var(--dur) var(--curva),
+    border-color var(--dur) var(--curva),
+    color var(--dur) var(--curva);
+}
+.opcion input,
+.tipo input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+.marca {
+  width: 26px;
+  height: 26px;
+  flex: none;
+  border: 2px solid var(--borde-control);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  transition: inherit;
+}
+.marca::after {
+  content: "";
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--tinta);
+  transform: scale(0);
+  transition: transform var(--dur) var(--curva);
+}
+.opcion:hover {
+  border-color: var(--borde-control);
+}
+.opcion:has(input:checked) {
+  background: var(--tinta);
+  border-color: var(--tinta);
+  color: var(--sobre-tinta);
+}
+.opcion:has(input:checked) .marca {
+  border-color: var(--sobre-tinta);
+}
+.opcion:has(input:checked) .marca::after {
+  background: var(--sobre-tinta);
+  transform: scale(1);
+}
+.opcion:has(input:focus-visible),
+.tipo:has(input:focus-visible) {
+  outline: 3px solid var(--foco);
+  outline-offset: 3px;
+}
+
+.accionFija {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(var(--alto-pestanas) + env(safe-area-inset-bottom));
+  width: min(100%, var(--ancho-app));
+  padding: 12px 16px;
+  background: var(--papel);
+  border-top: 1px solid var(--linea);
+}
+.accionFija :global(.boton) {
+  min-height: 56px;
+  font-size: var(--t-2);
+}
+.ayuda {
+  font-size: var(--t-0);
+  color: var(--tinta-suave);
+  margin-bottom: 6px;
+}
+.error {
+  font-size: var(--t-0);
+  color: var(--no-texto);
+  font-weight: 650;
+  margin-bottom: 6px;
+}
+
+.errorSuelto {
+  margin-top: 12px;
+}
+
+.confirmado {
+  padding-top: 12px;
+  animation: aparece 260ms var(--curva);
+}
+.confirmado:focus-visible {
+  outline: none;
+}
+.sello {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--si);
+  color: var(--sobre-color);
+  display: grid;
+  place-items: center;
+}
+.sello :global(.icono) {
+  width: 34px;
+  height: 34px;
+  stroke-width: 2.25;
+}
+.confirmado h1 {
+  font-size: var(--t-5);
+  margin-top: 18px;
+}
+.confirmado p {
+  margin-top: 12px;
+  max-width: 34ch;
+}
+@keyframes aparece {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+/* Palabra */
+.orador {
+  display: grid;
+  gap: 2px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--linea);
+  margin-bottom: 22px;
+}
+.oradorRotulo {
+  font-size: var(--t-0);
+  color: var(--tinta-suave);
+}
+.oradorNombre {
+  font-size: var(--t-3);
+}
+
+.nombre {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0 8px;
+  margin-bottom: 8px;
+}
+.nombreCambiar {
+  min-height: 44px;
+}
+
+.pedir {
+  margin-top: 14px;
+  min-height: 76px;
+  font-size: var(--t-3);
+  font-stretch: 85%;
+  font-weight: 700;
+  border-radius: var(--r-hoja);
+  gap: 12px;
+}
+.pedir :global(.icono) {
+  width: 30px;
+  height: 30px;
+}
+
+.turno {
+  margin-bottom: 22px;
+  padding: 18px;
+  background: var(--superficie);
+  border: 2px solid var(--tinta);
+  border-radius: var(--r-hoja);
+  animation: aparece 260ms var(--curva);
+}
+.turnoFila {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+.turnoLugar {
+  font-stretch: 62%;
+  font-weight: 850;
+  font-size: 4.5rem;
+  line-height: 0.85;
+}
+.turnoTexto {
+  font-weight: 600;
+}
+.turnoDetalle {
+  color: var(--tinta-suave);
+  font-size: var(--t-0);
+  margin-top: 8px;
+}
+.turno :global(.boton) {
+  margin-top: 12px;
+}
+.turno :global(.mocion) {
+  margin-bottom: 8px;
+}
+
+.secundaria {
+  margin-top: 12px;
+  min-height: 56px;
+  border-radius: var(--r-hoja);
+}
+.nota {
+  font-size: var(--t-0);
+  color: var(--tinta-suave);
+  margin-top: 8px;
+}
+
+/* Hoja de mociones */
+.hojaIntro {
+  color: var(--tinta-suave);
+  margin-top: 6px;
+  font-size: 0.95rem;
+}
+.tipos {
+  border: 0;
+  padding: 0;
+  margin: 16px 0 0;
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+.tipo {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 12px;
+  align-items: start;
+  padding: 12px 14px;
+  min-height: 64px;
+  border: 2px solid var(--linea);
+  border-radius: var(--r-hoja);
+  background: var(--superficie);
+  cursor: pointer;
+  transition:
+    border-color var(--dur) var(--curva),
+    background-color var(--dur) var(--curva);
+}
+.tipo .marca {
+  grid-row: 1 / span 2;
+  margin-top: 2px;
+}
+.tipoNombre {
+  font-weight: 650;
+}
+.tipoDescripcion {
+  font-size: 0.9rem;
+  color: var(--tinta-suave);
+  line-height: 1.35;
+}
+.tipo:has(input:checked) {
+  border-color: var(--ambar);
+  background: var(--ambar-fondo);
+}
+.tipo:has(input:checked) .marca {
+  border-color: var(--tinta);
+}
+.tipo:has(input:checked) .marca::after {
+  transform: scale(1);
+}
+.hojaAcciones {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+}
+.hojaAcciones :global(.boton) {
+  min-height: 52px;
+}
+.hojaCampo {
+  margin-top: 16px;
+}
+
+/* Pestañas fijas abajo */
+.barra {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 0;
+  width: min(100%, var(--ancho-app));
+  padding-bottom: env(safe-area-inset-bottom);
+  background: var(--superficie);
+  border-top: 2px solid var(--tinta);
+}
+.barra :global(.pestanas) {
+  border-top: 0;
+}

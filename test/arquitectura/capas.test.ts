@@ -20,6 +20,8 @@ function cruzar(cwd: string, objetivos: string[]) {
     spawnSync(depcruise, [...objetivos, "--config", configuracion, "--output-type", formato], {
       cwd,
       encoding: "utf8",
+      // El grafo en json de todo el repo ya pasa del 1 MB que spawnSync admite por defecto.
+      maxBuffer: 256 * 1024 * 1024,
     });
   const salida = JSON.parse(ejecutar("json").stdout) as {
     summary: { violations: Violacion[] };
