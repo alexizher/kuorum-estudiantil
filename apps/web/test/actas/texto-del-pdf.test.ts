@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { aWinAnsi, partirEnLineas } from "../../src/actas/texto-del-pdf";
+import { aWinAnsi, partirEnLineas, textoDeAsistencia } from "../../src/actas/texto-del-pdf";
 
 const medir = (t: string) => t.length * 5;
 
@@ -12,6 +12,12 @@ describe("aWinAnsi", () => {
   });
   it("reemplaza caracteres fuera de WinAnsi", () => {
     expect(aWinAnsi("日本")).toBe("??");
+  });
+  it("compone las tildes escritas como letra más marca", () => {
+    expect(aWinAnsi("Bogota\u0301 y an\u0303o")).toBe("Bogotá y año");
+  });
+  it("los saltos de línea quedan como espacio", () => {
+    expect(aWinAnsi("uno\ndos\r\ntres")).toBe("uno dos tres");
   });
 });
 
@@ -30,5 +36,13 @@ describe("partirEnLineas", () => {
   });
   it("texto vacío da una línea vacía", () => {
     expect(partirEnLineas("", 50, medir)).toEqual([""]);
+  });
+});
+
+describe("textoDeAsistencia", () => {
+  it("concuerda en número", () => {
+    expect(textoDeAsistencia(1)).toBe("Asistencia: 1 código activado");
+    expect(textoDeAsistencia(2)).toBe("Asistencia: 2 códigos activados");
+    expect(textoDeAsistencia(null)).toBe("Sin registro de asistencia");
   });
 });

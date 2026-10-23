@@ -28,38 +28,48 @@ export function useActa(
   const [error, setError] = useState<string | undefined>(undefined);
   const enCurso = useRef(false);
 
-  const cargar = useCallback(async () => {
-    try {
-      const leida = await cliente.leerActa(sesionId);
-      setActa(leida);
-      setDesarrollo(leida.desarrollo);
-    } catch (causa) {
-      setError(comoErrorDeMesa(causa).message);
-    } finally {
-      setCargando(false);
-    }
-  }, [cliente, sesionId]);
+  // Con conservarTexto, un borrador mantiene lo que se está escribiendo.
+  const cargar = useCallback(
+    async (conservarTexto = false) => {
+      try {
+        const leida = await cliente.leerActa(sesionId);
+        setActa(leida);
+        if (!conservarTexto || leida.estado === "FINAL") setDesarrollo(leida.desarrollo);
+      } catch (causa) {
+        setError(comoErrorDeMesa(causa).message);
+      } finally {
+        setCargando(false);
+      }
+    },
+    [cliente, sesionId],
+  );
 
   useEffect(() => {
     void cargar();
   }, [cargar]);
 
-  const ejecutar = useCallback(async (accion: () => Promise<void>): Promise<boolean> => {
-    if (enCurso.current) return false;
-    enCurso.current = true;
-    setOcupado(true);
-    setError(undefined);
-    try {
-      await accion();
-      return true;
-    } catch (causa) {
-      setError(comoErrorDeMesa(causa).message);
-      return false;
-    } finally {
-      enCurso.current = false;
-      setOcupado(false);
-    }
-  }, []);
+  const ejecutar = useCallback(
+    async (accion: () => Promise<void>): Promise<boolean> => {
+      if (enCurso.current) return false;
+      enCurso.current = true;
+      setOcupado(true);
+      setError(undefined);
+      try {
+        await accion();
+        return true;
+      } catch (causa) {
+        const error = comoErrorDeMesa(causa);
+        setError(error.message);
+        // Otra pestaña cambió el acta: se muestra como quedó.
+        if (error.estado === 409) await cargar(true);
+        return false;
+      } finally {
+        enCurso.current = false;
+        setOcupado(false);
+      }
+    },
+    [cargar],
+  );
 
   const guardar = useCallback(async () => {
     const conExito = await ejecutar(() => cliente.guardarActa(sesionId, desarrollo));

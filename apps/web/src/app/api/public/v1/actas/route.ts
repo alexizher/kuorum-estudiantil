@@ -15,12 +15,13 @@ export function GET(request: Request): Promise<Response> {
     const actas = [];
     for (const { acta, sesion } of publicas) {
       const cuerpo = await c.cuerpos.porId(sesion.cuerpoId);
-      if (!acta.codigo || !acta.finalizadaEn || !cuerpo) continue;
+      if (!acta.codigo || !acta.finalizadaEn || !acta.contenido || !cuerpo) continue;
       actas.push({
         id: sesion.id,
         cuerpo: { slug: cuerpo.slug, nombre: cuerpo.nombre },
-        titulo: sesion.titulo,
-        inicio: sesion.inicio.toISOString(),
+        // La foto del acta: lo que se cambie después en la sesión no la altera.
+        titulo: acta.contenido.titulo,
+        inicio: acta.contenido.inicio,
         finalizadaEn: acta.finalizadaEn.toISOString(),
         codigo: acta.codigo.valor,
         pdf: `/api/public/v1/actas/${sesion.id}.pdf`,

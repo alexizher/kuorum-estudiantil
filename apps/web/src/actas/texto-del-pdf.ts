@@ -9,11 +9,14 @@ function cabeEnWinAnsi(caracter: string): boolean {
   );
 }
 
-/** Reemplaza con "?" lo que la fuente estándar no puede dibujar. Los saltos de línea los resuelve quien llama. */
+/**
+ * Reemplaza con "?" lo que la fuente estándar no puede dibujar. Compone antes las tildes
+ * que llegan separadas de su letra; tabuladores y saltos de línea quedan como espacio.
+ */
 export function aWinAnsi(texto: string): string {
   let salida = "";
-  for (const caracter of texto) {
-    if (caracter === "\t") salida += " ";
+  for (const caracter of texto.normalize("NFC").replace(/\r\n/g, "\n")) {
+    if (caracter === "\t" || caracter === "\n" || caracter === "\r") salida += " ";
     else salida += cabeEnWinAnsi(caracter) ? caracter : "?";
   }
   return salida;
@@ -55,4 +58,11 @@ export function partirEnLineas(
   }
   lineas.push(actual);
   return lineas;
+}
+
+export function textoDeAsistencia(asistentes: number | null): string {
+  if (asistentes === null) return "Sin registro de asistencia";
+  return asistentes === 1
+    ? "Asistencia: 1 código activado"
+    : `Asistencia: ${asistentes} códigos activados`;
 }

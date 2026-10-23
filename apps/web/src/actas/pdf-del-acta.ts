@@ -5,7 +5,7 @@ import {
   type ContenidoDeActa,
   type TipoDeMocion,
 } from "@kuorum/domain";
-import { aWinAnsi, partirEnLineas } from "./texto-del-pdf";
+import { aWinAnsi, partirEnLineas, textoDeAsistencia } from "./texto-del-pdf";
 
 const ANCHO = 612;
 const ALTO = 792;
@@ -134,11 +134,7 @@ function escribirOrdenYDatos(h: Hoja, c: ContenidoDeActa): void {
     c.ordenDelDia.forEach((punto, i) => h.parrafo(`${i + 1}. ${punto}`, { sangria: 12 }));
   }
   h.espacio(10);
-  h.parrafo(
-    c.asistentes === null
-      ? "Sin registro de asistencia"
-      : `Asistencia: ${c.asistentes} códigos activados`,
-  );
+  h.parrafo(textoDeAsistencia(c.asistentes));
   h.parrafo(`Intervenciones: ${c.intervenciones}`);
   const tipos = Object.keys(c.mociones) as TipoDeMocion[];
   const mociones = tipos.map((t) => `${NOMBRE_DE_MOCION[t]}: ${c.mociones[t]}`).join(" · ");

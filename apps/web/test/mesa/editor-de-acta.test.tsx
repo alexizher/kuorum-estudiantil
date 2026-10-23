@@ -146,6 +146,27 @@ describe("editor del acta", () => {
     expect(alerta.getAttribute("role")).toBe("alert");
   });
 
+  it("tras un 409 recarga el acta: si otra pestaña la finalizó, se ve final", async () => {
+    let lecturas = 0;
+    const f = vi.fn<typeof fetch>(async (_url, init) => {
+      if ((init?.method ?? "GET") === "GET") {
+        lecturas += 1;
+        return Response.json(
+          lecturas === 1 ? acta() : acta({ estado: "FINAL", codigo: "ABCDE-23456" }),
+        );
+      }
+      return Response.json(
+        { error: "ACTA_FINALIZADA", mensaje: "El acta ya está finalizada." },
+        { status: 409 },
+      );
+    });
+    montar(f);
+    await screen.findByLabelText("Desarrollo");
+    await userEvent.click(screen.getByRole("button", { name: "Guardar borrador" }));
+    expect(await screen.findByText("ABCDE-23456")).toBeTruthy();
+    expect(screen.getByText("El acta ya está finalizada.")).toBeTruthy();
+  });
+
   for (const tema of ["claro", "oscuro"] as const) {
     it(`sin violaciones de accesibilidad (${tema})`, async () => {
       document.documentElement.setAttribute("data-tema", tema);

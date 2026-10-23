@@ -148,6 +148,17 @@ describe("GET /api/public/v1/actas", () => {
     });
   });
 
+  it("título e inicio salen de la foto del acta, no de la sesión viva", async () => {
+    const cambiada = { ...sesion, titulo: "Otro título", inicio: new Date("2027-01-01T00:00:00Z") };
+    listarActas.mockResolvedValueOnce([{ acta, sesion: cambiada }]);
+    const r = await actas(new Request("http://k.example/api/public/v1/actas"));
+    const { actas: lista } = (await r.json()) as { actas: { titulo: string; inicio: string }[] };
+    expect(lista[0]).toMatchObject({
+      titulo: "Asamblea de Artes",
+      inicio: "2026-11-03T19:00:00.000Z",
+    });
+  });
+
   it("cuerpo inexistente da 404", async () => {
     listarActas.mockRejectedValueOnce(new ErrorDeDominio("CUERPO_NO_EXISTE"));
     expect((await actas(new Request("http://k.example/x?cuerpo=n"))).status).toBe(404);
