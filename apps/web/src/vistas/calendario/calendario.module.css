@@ -1,0 +1,157 @@
+.pagina {
+  display: grid;
+  gap: 20px;
+  padding: 20px 16px 48px;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+.cabecera {
+  display: grid;
+  gap: 4px;
+  border-bottom: 2px solid var(--tinta);
+  padding-bottom: 12px;
+}
+.cabecera h1 {
+  margin: 0;
+  font-size: var(--t-4);
+}
+.cabecera p {
+  margin: 0;
+}
+.volver {
+  font-size: var(--t-0);
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+}
+.vistas,
+.filtro {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+}
+.vistas a,
+.filtro a {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+.vistas a[aria-current="page"],
+.filtro a[aria-current="page"] {
+  font-weight: 800;
+  text-decoration-thickness: 3px;
+}
+.seccion {
+  display: grid;
+  gap: 12px;
+}
+.navegacionDeMes {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.navegacionDeMes a {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--t-2);
+  text-decoration: none;
+}
+.nombreDelMes {
+  margin: 0;
+  font-size: var(--t-2);
+}
+.mes {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+.mes th {
+  text-align: left;
+  font-size: var(--t-0);
+  padding: 4px 6px;
+  border-bottom: 2px solid var(--tinta);
+}
+.mes td {
+  vertical-align: top;
+  height: 96px;
+  padding: 4px 6px;
+  border: 1px solid var(--linea);
+}
+.fuera .numero {
+  color: var(--tinta-suave);
+}
+.numero {
+  font-weight: 700;
+}
+.enCelda {
+  margin: 4px 0 0;
+  font-size: var(--t-0);
+  overflow-wrap: anywhere;
+}
+.cuerpoEnCelda {
+  color: var(--tinta-suave);
+}
+.dias,
+.delDia {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+}
+.dias {
+  gap: 16px;
+}
+.dia {
+  margin: 0 0 4px;
+  font-size: var(--t-1);
+  text-transform: capitalize;
+}
+.sesion {
+  display: grid;
+  gap: 2px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--linea);
+}
+.hora {
+  font-weight: 700;
+}
+.titulo {
+  font-size: var(--t-1);
+  overflow-wrap: anywhere;
+}
+.datos {
+  font-size: var(--t-0);
+  color: var(--tinta-suave);
+}
+[data-estado="CANCELADA"] {
+  color: var(--tinta-suave);
+}
+.suscripcion {
+  display: grid;
+  gap: 8px;
+  border-top: 2px solid var(--tinta);
+  padding-top: 16px;
+}
+.suscripcion p {
+  margin: 0;
+}
+.url code {
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+.soloAngosto {
+  display: none;
+}
+@media (max-width: 767px) {
+  .soloAncho {
+    display: none;
+  }
+  .soloAngosto {
+    display: grid;
+  }
+}
