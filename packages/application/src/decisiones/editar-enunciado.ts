@@ -15,8 +15,10 @@ export class EditarEnunciado {
   /** Lo ajeno responde igual que lo inexistente. */
   ejecutar(actor: Actor, decisionId: string, texto: string | null): Promise<void> {
     return this.unidad.ejecutar(async () => {
-      const decision = await this.decisiones.porId(decisionId);
-      const sesion = decision === null ? null : await this.sesiones.porId(decision.sesionId);
+      const previa = await this.decisiones.porId(decisionId);
+      const sesion = previa === null ? null : await this.sesiones.porIdBloqueando(previa.sesionId);
+      // Con la sesión bloqueada se relee: la finalización del acta ya terminó o no empezó.
+      const decision = sesion === null ? null : await this.decisiones.porId(decisionId);
       if (decision === null || sesion === null || !puedeConducir(actor, sesion)) {
         throw new ErrorDeDominio("DECISION_NO_ENCONTRADA");
       }

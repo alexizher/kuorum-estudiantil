@@ -15,7 +15,7 @@ import type { RepositorioDeSesiones } from "../puertos/repositorio-de-sesiones.j
 import type { RepositorioDeSolicitudes } from "../puertos/repositorio-de-solicitudes.js";
 import type { UnidadDeTrabajo } from "../puertos/unidad-de-trabajo.js";
 import type { Actor } from "../sala/actor.js";
-import { obtenerSesionDeLaMesa } from "../sala/obtener-sesion-de-la-mesa.js";
+import { bloquearSesionDeLaMesa } from "../sala/obtener-sesion-de-la-mesa.js";
 import { ArmadorDeActa } from "./armador-de-acta.js";
 
 const INTENTOS_DE_CODIGO = 5;
@@ -47,9 +47,22 @@ export class FinalizarActa {
   }
 
   /** El documento final sale del último borrador guardado, no de lo que mande el cliente. */
-  ejecutar(actor: Actor, sesionId: string): Promise<CodigoDeVerificacion> {
+  async ejecutar(actor: Actor, sesionId: string): Promise<CodigoDeVerificacion> {
+    // Otro acta puede tomar el mismo código entre la consulta y la escritura: se repite todo.
+    for (let intento = 1; ; intento += 1) {
+      try {
+        return await this.intentar(actor, sesionId);
+      } catch (error) {
+        const repetido =
+          error instanceof ErrorDeDominio && error.codigo === "CODIGO_DE_VERIFICACION_REPETIDO";
+        if (!repetido || intento >= INTENTOS_DE_CODIGO) throw error;
+      }
+    }
+  }
+
+  private intentar(actor: Actor, sesionId: string): Promise<CodigoDeVerificacion> {
     return this.unidad.ejecutar(async () => {
-      const sesion = await obtenerSesionDeLaMesa(this.sesiones, actor, sesionId);
+      const sesion = await bloquearSesionDeLaMesa(this.sesiones, actor, sesionId);
       const guardada = await this.actas.deSesion(sesion.id);
       if (guardada?.estado === "FINAL") throw new ErrorDeDominio("ACTA_FINALIZADA");
       sesion.finalizarActa();

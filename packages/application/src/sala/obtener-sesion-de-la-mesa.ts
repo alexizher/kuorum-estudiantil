@@ -1,4 +1,4 @@
-import type { Sesion } from "@kuorum/domain";
+import { SesionNoEncontrada, type Sesion } from "@kuorum/domain";
 import type { RepositorioDeSesiones } from "../puertos/repositorio-de-sesiones.js";
 import type { Actor } from "./actor.js";
 import { exigirAccesoASesion } from "./acceso-a-sesion.js";
@@ -11,6 +11,18 @@ export async function obtenerSesionDeLaMesa(
   id: string,
 ): Promise<Sesion> {
   const sesion = await obtenerSesion(repositorio, id);
+  exigirAccesoASesion(actor, sesion);
+  return sesion;
+}
+
+/** Igual, con el candado de la sesión tomado: lo que se lea después ya no cambia por debajo. */
+export async function bloquearSesionDeLaMesa(
+  repositorio: RepositorioDeSesiones,
+  actor: Actor,
+  id: string,
+): Promise<Sesion> {
+  const sesion = await repositorio.porIdBloqueando(id);
+  if (sesion === null) throw new SesionNoEncontrada(id);
   exigirAccesoASesion(actor, sesion);
   return sesion;
 }
