@@ -12,6 +12,10 @@ export class RepositorioDeSesionesEnMemoria implements RepositorioDeSesiones {
     return this.sesiones.get(id) ?? null;
   }
 
+  porIdBloqueando(id: string): Promise<Sesion | null> {
+    return this.porId(id);
+  }
+
   async porCodigoDeSala(codigo: CodigoDeSala): Promise<Sesion | null> {
     for (const sesion of this.sesiones.values()) {
       if (sesion.codigoDeSala.valor === codigo.valor) return sesion;

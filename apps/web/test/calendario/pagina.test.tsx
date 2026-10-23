@@ -3,7 +3,11 @@ import { TemaProvider } from "@kuorum/ui";
 import { cleanup, render as renderizar, screen, within } from "@testing-library/react";
 import type { ReactElement } from "react";
 import { afterEach, describe, expect, it } from "vitest";
-import { Calendario, type PropiedadesDeCalendario } from "../../src/vistas/calendario/calendario";
+import {
+  Calendario,
+  type PropiedadesDeCalendario,
+  type SesionVisible,
+} from "../../src/vistas/calendario/calendario";
 import { violacionesDeAxe } from "../proyeccion/axe";
 
 const render = (ui: ReactElement) => renderizar(ui, { wrapper: TemaProvider });
@@ -22,6 +26,7 @@ const sesiones: PropiedadesDeCalendario["sesiones"] = [
     modalidad: "MIXTA",
     lugar: "Auditorio",
     estado: "PROGRAMADA",
+    actaId: null,
   },
   {
     id: "s2",
@@ -32,6 +37,7 @@ const sesiones: PropiedadesDeCalendario["sesiones"] = [
     modalidad: "PRESENCIAL",
     lugar: null,
     estado: "CANCELADA",
+    actaId: null,
   },
 ];
 
@@ -108,6 +114,14 @@ describe("Calendario", () => {
     expect(suscripcion.textContent).toContain(
       "https://kuorum.example/api/public/v1/calendario.ics?cuerpo=artes",
     );
+  });
+
+  it("las sesiones con acta final enlazan al PDF", () => {
+    const conActa = { ...sesiones[0], estado: "ACTA_FINAL", actaId: "s1" } as SesionVisible;
+    render(<Calendario {...base} vista="lista" sesiones={[conActa, ...sesiones.slice(1)]} />);
+    const enlaces = screen.getAllByRole("link", { name: /^Acta/ });
+    expect(enlaces).toHaveLength(1);
+    expect(enlaces[0]?.getAttribute("href")).toBe("/api/public/v1/actas/s1.pdf");
   });
 
   it("sin sesiones lo dice", () => {

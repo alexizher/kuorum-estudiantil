@@ -31,6 +31,15 @@ Los nombres del dominio van en español (`Sesion`, `Pregunta`, `SolicitudDePalab
 - **Participante y código de acceso.** El código se genera una vez, se muestra una vez y se guarda solo como hash. Activarlo crea un participante anónimo, que es lo que cuenta como un voto.
 - **Cola de intervenciones.** Solicitudes de palabra y mociones. Las mociones pasan adelante según su prioridad, y quien habla tiene un tiempo que la mesa puede ampliar.
 
+- **Decision.** Se crea dentro de la misma transacción que cierra la votación, una por pregunta (índice único), y no se crea para las anuladas. Guarda una foto del resultado: totales por opción, votos emitidos, asistencia al cerrar y si la votación es indicativa. No se recalcula después, así que lo que se lee hoy es lo que se vio al cerrar. Guarda también la regla (`MAYORIA_SIMPLE`) para que una regla nueva no obligue a migrar datos. Solo el enunciado se puede editar, y solo hasta que el acta se finaliza.
+- **Acta.** Pasa de borrador a final. Los campos fijos los arma el sistema (cuerpo, fecha, lugar, orden del día, asistencia como número, intervenciones, mociones y decisiones) y la mesa escribe el desarrollo. No guarda nombres. Al finalizar se congela la foto del contenido y se genera el código de verificación; después no admite cambios (`ACTA_FINALIZADA`, 409) y la sesión pasa a `ACTA_FINAL`.
+
+## Decisiones y actas en PDF
+
+El PDF no se almacena. Se genera bajo pedido con `pdf-lib` desde la foto guardada al finalizar, con Helvetica estándar (cubre tildes y eñe), y la respuesta se cachea un día en el borde (`s-maxage=86400`). Como el acta final no cambia, el PDF es siempre el mismo. No hay almacenamiento de archivos que mantener.
+
+El código de verificación tiene 10 caracteres del alfabeto de los códigos de sala, en grupos `XXXXX-XXXXX`. Se guarda tal cual porque es público por diseño: sirve para que cualquiera compruebe un PDF, no para entrar a nada. Es único, y la verificación lo normaliza (mayúsculas, sin espacios, con o sin guion). El público ve decisiones y actas solo cuando la sesión está en `ACTA_FINAL`, y nunca las de la cuenta de prueba.
+
 ## Roles de la mesa y quién ve qué
 
 Cada cuenta de la mesa tiene un tipo en `auth_users.rol`: `SUPERADMIN` (administra la instalación), `MESA` (personal) o `DEMO` (cuenta de prueba pública). Los permisos del personal salen de sus membresías (`membresias`: usuario, cuerpo y rol `ENCARGADO` o `MESA`). Las rutas de la mesa pasan por `exigirMesa`, que arma el `Actor` (id, tipo y membresías) y lo entrega a `accionDeMesa`. Las reglas viven en `packages/application/src/institucion/permisos.ts` y cada caso de uso las aplica, no la interfaz:

@@ -21,6 +21,7 @@ export async function POST(
       ...(cuerpo.fin === undefined ? {} : { finLocal: cuerpo.fin }),
       ...(cuerpo.modalidad === undefined ? {} : { modalidad: cuerpo.modalidad }),
       ...(cuerpo.lugar === undefined ? {} : { lugar: cuerpo.lugar }),
+      ...(cuerpo.ordenDelDia === undefined ? {} : { ordenDelDia: cuerpo.ordenDelDia }),
     });
     return sinContenido();
   });

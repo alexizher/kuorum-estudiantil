@@ -89,6 +89,13 @@ export function clienteDeMesaFalso(preguntas: PreguntaDeMesa[] = []) {
     terminarIntervencion: vi.fn<ClienteDeMesa["terminarIntervencion"]>(async () => undefined),
     sumarMinuto: vi.fn<ClienteDeMesa["sumarMinuto"]>(async () => undefined),
     rechazarMocion: vi.fn<ClienteDeMesa["rechazarMocion"]>(async () => undefined),
+    leerActa: vi.fn<ClienteDeMesa["leerActa"]>(async () => {
+      throw new Error("sin acta");
+    }),
+    guardarActa: vi.fn<ClienteDeMesa["guardarActa"]>(async () => undefined),
+    finalizarActa: vi.fn<ClienteDeMesa["finalizarActa"]>(async () => "ABCDE-23456"),
+    listarDecisiones: vi.fn<ClienteDeMesa["listarDecisiones"]>(async () => []),
+    editarEnunciado: vi.fn<ClienteDeMesa["editarEnunciado"]>(async () => undefined),
   };
 }
 

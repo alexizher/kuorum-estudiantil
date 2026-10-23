@@ -60,3 +60,12 @@ describe("CancelarSesion", () => {
     await expect(cancelar.ejecutar(superadmin, sesion.id)).resolves.toBeUndefined();
   });
 });
+
+describe("ReprogramarSesion con orden del día", () => {
+  it("cambia el orden del día", async () => {
+    const { sesion, reprogramar } = await montar();
+    await reprogramar.ejecutar(encargadoDeIngenieria, sesion.id, { ordenDelDia: ["Uno", "Dos"] });
+    expect(sesion.ordenDelDia).toEqual(["Uno", "Dos"]);
+    expect(sesion.version).toBe(1);
+  });
+});

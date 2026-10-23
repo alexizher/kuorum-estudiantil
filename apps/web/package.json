@@ -26,6 +26,7 @@
     "@kuorum/ui": "workspace:*",
     "better-auth": "1.7.10",
     "next": "16.4.2",
+    "pdf-lib": "1.17.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },

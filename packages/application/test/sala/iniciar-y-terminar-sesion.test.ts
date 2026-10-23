@@ -39,7 +39,10 @@ describe("TerminarSesion", () => {
     const e = crearEscenario();
     const sesion = await sembrarSesion(e, { estado: "EN_CURSO" });
 
-    await new TerminarSesion(e.sesiones, e.preguntas, e.unidad).ejecutar(superadmin, sesion.id);
+    await new TerminarSesion(e.sesiones, e.preguntas, e.unidad, e.actas).ejecutar(
+      superadmin,
+      sesion.id,
+    );
 
     const guardada = await e.sesiones.porId(sesion.id);
     expect(guardada?.estado).toBe("CERRADA");
@@ -50,7 +53,10 @@ describe("TerminarSesion", () => {
     const e = crearEscenario();
     const sesion = await sembrarSesion(e);
     await expect(
-      new TerminarSesion(e.sesiones, e.preguntas, e.unidad).ejecutar(superadmin, sesion.id),
+      new TerminarSesion(e.sesiones, e.preguntas, e.unidad, e.actas).ejecutar(
+        superadmin,
+        sesion.id,
+      ),
     ).rejects.toMatchObject({ codigo: "TRANSICION_INVALIDA" });
     expect(sesion.version).toBe(0);
   });
@@ -58,7 +64,7 @@ describe("TerminarSesion", () => {
   it("falla si la sesión no existe", async () => {
     const e = crearEscenario();
     await expect(
-      new TerminarSesion(e.sesiones, e.preguntas, e.unidad).ejecutar(superadmin, "nada"),
+      new TerminarSesion(e.sesiones, e.preguntas, e.unidad, e.actas).ejecutar(superadmin, "nada"),
     ).rejects.toMatchObject({
       codigo: "SESION_NO_ENCONTRADA",
     });
@@ -69,7 +75,10 @@ describe("TerminarSesion", () => {
     const sesion = await sembrarSesion(e, { estado: "EN_CURSO" });
     await sembrarPregunta(e, sesion.id, "ABIERTA");
     await expect(
-      new TerminarSesion(e.sesiones, e.preguntas, e.unidad).ejecutar(superadmin, sesion.id),
+      new TerminarSesion(e.sesiones, e.preguntas, e.unidad, e.actas).ejecutar(
+        superadmin,
+        sesion.id,
+      ),
     ).rejects.toMatchObject({ codigo: "SESION_CON_VOTACION_ABIERTA" });
     expect(sesion.estado).toBe("EN_CURSO");
     expect(sesion.version).toBe(0);
@@ -80,7 +89,10 @@ describe("TerminarSesion", () => {
     const sesion = await sembrarSesion(e, { estado: "EN_CURSO" });
     await sembrarPregunta(e, sesion.id, "CERRADA");
     await sembrarPregunta(e, sesion.id, "BORRADOR");
-    await new TerminarSesion(e.sesiones, e.preguntas, e.unidad).ejecutar(superadmin, sesion.id);
+    await new TerminarSesion(e.sesiones, e.preguntas, e.unidad, e.actas).ejecutar(
+      superadmin,
+      sesion.id,
+    );
     expect(sesion.estado).toBe("CERRADA");
   });
 });

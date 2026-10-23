@@ -827,3 +827,42 @@
   min-height: 44px;
   font-size: var(--t-0);
 }
+
+/* Enunciado de la decisión y acta */
+.enunciado {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+}
+.enunciado :global(.campo__entrada) {
+  width: 100%;
+}
+.acta {
+  display: grid;
+  gap: 20px;
+  max-width: 720px;
+  padding: 24px 16px;
+  margin: 0 auto;
+}
+.actaDatos {
+  display: grid;
+  gap: 6px;
+}
+.actaDatos h3 {
+  margin-top: 8px;
+}
+.actaLista {
+  margin: 0;
+  padding-left: 20px;
+}
+.codigoDeActa {
+  font-size: var(--t-2);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.enlacesDeActa {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}

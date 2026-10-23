@@ -267,3 +267,13 @@ describe("CrearSesion", () => {
     });
   });
 });
+
+describe("CrearSesion con orden del día", () => {
+  it("guarda los puntos limpios", async () => {
+    const e = crearEscenario();
+    const sesion = await casoDeUso(e).ejecutar(superadmin, "Asamblea", "SALA_ABIERTA", undefined, {
+      ordenDelDia: [" Saludo ", "", "Presupuesto"],
+    });
+    expect(sesion.ordenDelDia).toEqual(["Saludo", "Presupuesto"]);
+  });
+});

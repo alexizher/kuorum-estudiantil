@@ -77,3 +77,21 @@ export { QuitarMembresia } from "./institucion/quitar-membresia.js";
 export { ListarPersonal } from "./institucion/listar-personal.js";
 export { CrearCuentaDePersonal } from "./institucion/crear-cuenta-de-personal.js";
 export { RestablecerContrasena } from "./institucion/restablecer-contrasena.js";
+export type {
+  FiltroPublico,
+  RepositorioDeDecisiones,
+} from "./puertos/repositorio-de-decisiones.js";
+export type { RepositorioDeActas } from "./puertos/repositorio-de-actas.js";
+export { EditarEnunciado } from "./decisiones/editar-enunciado.js";
+export { ListarDecisionesDeLaSesion } from "./decisiones/listar-decisiones-de-la-sesion.js";
+export { ListarDecisionesPublicas } from "./decisiones/listar-decisiones-publicas.js";
+export type { ConsultaPublica } from "./decisiones/filtro-publico.js";
+export { armarContenidoDeActa } from "./actas/armar-contenido.js";
+export { ObtenerActaDeLaMesa } from "./actas/obtener-acta-de-la-mesa.js";
+export { EditarActa } from "./actas/editar-acta.js";
+export { FinalizarActa } from "./actas/finalizar-acta.js";
+export { ListarActasPublicas } from "./actas/listar-actas-publicas.js";
+export { ObtenerActaPublica } from "./actas/obtener-acta-publica.js";
+export type { ActaPublica } from "./actas/obtener-acta-publica.js";
+export { VerificarActa } from "./actas/verificar-acta.js";
+export type { ResumenDeActaVerificada } from "./actas/verificar-acta.js";

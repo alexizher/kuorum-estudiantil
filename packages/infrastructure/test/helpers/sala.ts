@@ -22,6 +22,8 @@ import { PrismaRepositorioDeCuerpos } from "../../src/institucion/prisma-reposit
 import { PrismaRepositorioDeInstitucion } from "../../src/institucion/prisma-repositorio-de-institucion.js";
 import { PrismaRepositorioDeMembresias } from "../../src/institucion/prisma-repositorio-de-membresias.js";
 import { PrismaDirectorioDePersonal } from "../../src/institucion/prisma-directorio-de-personal.js";
+import { PrismaRepositorioDeDecisiones } from "../../src/decisiones/prisma-repositorio-de-decisiones.js";
+import { PrismaRepositorioDeActas } from "../../src/actas/prisma-repositorio-de-actas.js";
 import { urlDePruebas } from "./url-de-base-local.js";
 
 export function crearBanco() {
@@ -41,6 +43,8 @@ export function crearBanco() {
     institucion: new PrismaRepositorioDeInstitucion(contexto),
     membresias: new PrismaRepositorioDeMembresias(contexto),
     directorio: new PrismaDirectorioDePersonal(contexto),
+    decisiones: new PrismaRepositorioDeDecisiones(contexto),
+    actas: new PrismaRepositorioDeActas(contexto),
   };
 }
 
@@ -73,6 +77,7 @@ export function sesionDePrueba(
     inicio?: Date;
     fin?: Date;
     lugar?: string;
+    ordenDelDia?: string[];
   } = {},
 ): Sesion {
   const inicio = datos.inicio ?? new Date("2026-10-20T15:00:00.000Z");
@@ -91,6 +96,7 @@ export function sesionDePrueba(
     fin: datos.fin ?? new Date(inicio.getTime() + 2 * 3_600_000),
     modalidad: "PRESENCIAL",
     lugar: datos.lugar ?? null,
+    ordenDelDia: datos.ordenDelDia ?? [],
   });
 }
 

@@ -382,5 +382,38 @@ for (const vista of [v(1280, 900, "claro"), v(1280, 900, "oscuro"), v(360, 780, 
   await ctx.close();
 }
 
+// 7. Acta: borrador, acta final y verificación pública
+{
+  await mesa(`sesiones/${sesion.id}/terminar`);
+  const vista = v(1280, 900, "claro");
+  const ctx = await contexto(vista, sesionDeMesa);
+  const page = await ctx.newPage();
+  await page.goto(`/mesa/sesiones/${sesion.id}/acta`);
+  await page
+    .getByLabel("Desarrollo")
+    .fill(
+      "Se instaló la asamblea con el quórum necesario y se leyó el orden del día.\n\nSe presentó el pliego de exigencias de bienestar y se abrió una ronda de intervenciones.",
+    );
+  await page.getByRole("button", { name: "Guardar borrador" }).click();
+  await page.getByText("Borrador guardado.").waitFor();
+  await foto(page, "mesa-acta-borrador", vista, true);
+  await page.getByRole("button", { name: "Finalizar acta" }).click();
+  await page.getByRole("button", { name: "Sí, finalizar" }).click();
+  await page.getByRole("heading", { name: "Acta final" }).waitFor();
+  await foto(page, "mesa-acta-final", vista, true);
+  const codigo = (await page.locator("p", { hasText: "Código de verificación:" }).innerText())
+    .split(":")[1]!
+    .trim();
+  await ctx.close();
+  for (const vv of [v(1280, 800, "claro"), v(360, 780, "claro")]) {
+    const c = await contexto(vv);
+    const p = await c.newPage();
+    await p.goto(`/actas/verificar?codigo=${codigo}`);
+    await p.getByRole("heading", { name: "Acta auténtica" }).waitFor();
+    await foto(p, "actas-verificar", vv, true);
+    await c.close();
+  }
+}
+
 await navegador.close();
 console.log(`Capturas en ${SALIDA}`);

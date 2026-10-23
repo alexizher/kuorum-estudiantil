@@ -1,4 +1,9 @@
-import { CodigoDeAcceso, CodigoDeSala, type GeneradorDeCodigos } from "@kuorum/domain";
+import {
+  CodigoDeAcceso,
+  CodigoDeSala,
+  CodigoDeVerificacion,
+  type GeneradorDeCodigos,
+} from "@kuorum/domain";
 
 const ALFABETO = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
 
@@ -16,6 +21,7 @@ function aTexto(n: number, largo: number): string {
 export class GeneradorDeCodigosGuionado implements GeneradorDeCodigos {
   private salas = 0;
   private accesos = 0;
+  private verificaciones = 0;
 
   constructor(private readonly salasFijas: string[] = []) {}
 
@@ -30,5 +36,11 @@ export class GeneradorDeCodigosGuionado implements GeneradorDeCodigos {
     const n = this.accesos;
     this.accesos += 1;
     return CodigoDeAcceso.crear(`${aTexto(Math.floor(n / 1000), 4)}-${aTexto(n % 1000, 4)}`);
+  }
+
+  codigoDeVerificacion(): CodigoDeVerificacion {
+    const n = this.verificaciones;
+    this.verificaciones += 1;
+    return CodigoDeVerificacion.crear(`${aTexto(Math.floor(n / 1000), 5)}${aTexto(n % 1000, 5)}`);
   }
 }

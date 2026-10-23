@@ -38,3 +38,17 @@ export type { PropiedadesDeInstitucion } from "./institucion/institucion.js";
 export { aHoraLocal, deHoraLocal } from "./calendario/hora-local.js";
 export { seCruzan } from "./calendario/cruces.js";
 export type { Tramo } from "./calendario/cruces.js";
+export { Decision } from "./decisiones/decision.js";
+export type {
+  DatosDeDecision,
+  FotoDeResultado,
+  PropiedadesDeDecision,
+} from "./decisiones/decision.js";
+export { Acta } from "./actas/acta.js";
+export type {
+  ContenidoDeActa,
+  DecisionDeActa,
+  EstadoDeActa,
+  PropiedadesDeActa,
+} from "./actas/acta.js";
+export { CodigoDeVerificacion } from "./actas/codigo-de-verificacion.js";

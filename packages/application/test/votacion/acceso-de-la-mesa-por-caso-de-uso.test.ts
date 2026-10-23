@@ -52,13 +52,22 @@ describe("familia votación: la cuenta de prueba solo toca sus sesiones", () => 
     [
       "CerrarPregunta",
       (e: ReturnType<typeof crearEscenario>) =>
-        new CerrarPregunta(e.preguntas, e.sesiones, e.votos, e.reloj, e.unidad),
+        new CerrarPregunta(
+          e.preguntas,
+          e.sesiones,
+          e.votos,
+          e.reloj,
+          e.unidad,
+          e.decisiones,
+          e.participantes,
+          e.ids,
+        ),
       "ABIERTA" as const,
     ],
     [
       "AnularPregunta",
       (e: ReturnType<typeof crearEscenario>) =>
-        new AnularPregunta(e.preguntas, e.sesiones, e.unidad),
+        new AnularPregunta(e.preguntas, e.sesiones, e.unidad, e.decisiones),
       "BORRADOR" as const,
     ],
     [
@@ -89,7 +98,16 @@ describe("familia votación: la cuenta de prueba solo toca sus sesiones", () => 
     const pregunta = await sembrarPregunta(e, propia.id, "BORRADOR");
     const abrir = new AbrirPregunta(e.sesiones, e.preguntas, e.reloj, e.unidad);
     await expect(abrir.ejecutar(superadmin, pregunta.id)).resolves.toBeUndefined();
-    const cerrar = new CerrarPregunta(e.preguntas, e.sesiones, e.votos, e.reloj, e.unidad);
+    const cerrar = new CerrarPregunta(
+      e.preguntas,
+      e.sesiones,
+      e.votos,
+      e.reloj,
+      e.unidad,
+      e.decisiones,
+      e.participantes,
+      e.ids,
+    );
     await expect(cerrar.ejecutar(mesa, pregunta.id)).rejects.toMatchObject({
       codigo: "PREGUNTA_NO_ENCONTRADA",
     });

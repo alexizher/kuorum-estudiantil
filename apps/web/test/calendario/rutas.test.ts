@@ -31,7 +31,7 @@ beforeEach(() => {
       zonaHoraria: "America/Bogota",
     },
     cuerpos: [artes, vieja],
-    sesiones: [sesion, { ...sesion, id: "s2", estado: "PROGRAMADA", lugar: null }],
+    sesiones: [sesion, { ...sesion, id: "s2", estado: "ACTA_FINAL", lugar: null }],
   });
   vi.mocked(contenedor).mockReturnValue({
     listarCalendario: { ejecutar },
@@ -71,7 +71,9 @@ describe("GET /api/public/v1/calendario", () => {
       modalidad: "MIXTA",
       lugar: "Auditorio",
       estado: "CANCELADA",
+      actaId: null,
     });
+    expect(cuerpo.sesiones[1].actaId).toBe("s2");
     expect(ejecutar).toHaveBeenCalledWith({
       desde: new Date("2026-11-01T00:00:00Z"),
       hasta: new Date("2026-12-01T00:00:00Z"),

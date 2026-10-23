@@ -15,6 +15,7 @@ import { ListaDePreguntas } from "./lista-de-preguntas";
 import estilos from "./mesa.module.css";
 import { SalaDeSesion } from "./sala-de-sesion";
 import type { PanelDeSesion as Panel } from "./use-panel-de-sesion";
+import type { Decisiones } from "./use-decisiones";
 import type { FormularioDePregunta } from "./use-formulario-de-pregunta";
 import { formatearNumero } from "../proyeccion/textos";
 import { VotacionActual, votacionActual } from "./votacion-actual";
@@ -37,6 +38,7 @@ export interface PropiedadesDePanel {
   segundosRestantes: number | null;
   alCopiarEnlace: () => Promise<boolean>;
   esDemo?: boolean;
+  decisiones?: Decisiones;
 }
 
 type Pestana = "fila" | "votacion" | "sala";
@@ -51,6 +53,7 @@ export function PanelDeSesion({
   alCopiarEnlace,
   esDemo = false,
   gestion,
+  decisiones,
 }: PropiedadesDePanel) {
   const [pestana, setPestana] = useState<Pestana>("fila");
   const [reprogramando, setReprogramando] = useState(false);
@@ -98,6 +101,7 @@ export function PanelDeSesion({
         alPedirTerminar={() => setConfirmacion({ tipo: "terminar" })}
         alCopiarEnlace={alCopiarEnlace}
         esDemo={esDemo}
+        enlaceDelActa={`/mesa/sesiones/${encodeURIComponent(sesion.id)}/acta`}
         programacion={sesion.programacion}
         {...(gestion
           ? {
@@ -224,6 +228,8 @@ export function PanelDeSesion({
               enCurso={enCurso}
               ocupado={ocupado}
               alAbrir={(id) => void acciones.abrir(id)}
+              {...(decisiones ? { decisiones } : {})}
+              actaFinal={estadoDeSesion === "ACTA_FINAL"}
             />
             <h3 className={`titular ${estilos.subtitulo}`}>Nueva pregunta</h3>
             <FormularioDePreguntaNueva formulario={formulario} ocupado={ocupado} />

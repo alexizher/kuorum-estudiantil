@@ -4,10 +4,12 @@ import { Boton, CampoDeTexto } from "@kuorum/ui";
 import { useState, type FormEvent } from "react";
 import { AvisoDeCruces } from "./aviso-de-cruces";
 import { CamposDeHorario } from "./campo-de-horario";
+import { CampoDeOrdenDelDia } from "./campo-de-orden-del-dia";
 import { CampoDeModalidad } from "./campo-de-modalidad";
 import type { ClienteDeMesa, ProgramacionDeSesion } from "./cliente-de-mesa";
 import { finLocal, separar } from "./horario";
 import estilos from "./mesa.module.css";
+import { puntosDeTexto } from "./orden-del-dia";
 import { useCruces } from "./use-cruces";
 import type { GestionDeSesion } from "./use-gestion-de-sesion";
 
@@ -37,6 +39,7 @@ export function FormularioDeReprogramar({
   });
   const [modalidad, setModalidad] = useState(programacion.modalidad);
   const [lugar, setLugar] = useState(programacion.lugar ?? "");
+  const [orden, setOrden] = useState(programacion.ordenDelDia.join("\n"));
   const completo = horario.fecha !== "" && horario.desde !== "" && horario.hasta !== "";
   const nuevoInicio = completo ? `${horario.fecha}T${horario.desde}` : "";
   const nuevoFin = completo ? finLocal(horario.fecha, horario.desde, horario.hasta) : "";
@@ -50,6 +53,7 @@ export function FormularioDeReprogramar({
       fin: nuevoFin,
       modalidad,
       lugar: lugar.trim() === "" ? null : lugar.trim(),
+      ordenDelDia: puntosDeTexto(orden),
     });
     if (guardada) alTerminar();
   }
@@ -75,6 +79,7 @@ export function FormularioDeReprogramar({
         maxLength={200}
         autoComplete="off"
       />
+      <CampoDeOrdenDelDia valor={orden} alCambiar={setOrden} />
       <AvisoDeCruces cruces={cruces} />
       {gestion.error ? (
         <p role="alert" className={estilos.errorEnLinea}>

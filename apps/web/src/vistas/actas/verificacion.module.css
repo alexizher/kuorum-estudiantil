@@ -1,0 +1,84 @@
+.pagina {
+  display: grid;
+  gap: 20px;
+  padding: 20px 16px 48px;
+  max-width: 640px;
+  margin: 0 auto;
+  width: 100%;
+}
+.cabecera {
+  display: grid;
+  gap: 4px;
+  border-bottom: 2px solid var(--tinta);
+  padding-bottom: 12px;
+}
+.cabecera h1,
+.cabecera p {
+  margin: 0;
+}
+.cabecera h1 {
+  font-size: var(--t-4);
+}
+.volver {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+}
+.formulario {
+  display: grid;
+  gap: 8px;
+}
+.fila {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.fila input {
+  flex: 1 1 200px;
+  min-height: 44px;
+}
+.fila button {
+  min-height: 44px;
+  min-width: 44px;
+}
+.noEncontrada {
+  margin: 0;
+  padding: 12px;
+  border: 2px solid var(--tinta);
+  font-weight: 700;
+}
+.resultado {
+  display: grid;
+  gap: 12px;
+  border-top: 2px solid var(--tinta);
+  padding-top: 16px;
+}
+.resultado h2 {
+  margin: 0;
+  font-size: var(--t-2);
+}
+.datos {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 6px 16px;
+  margin: 0;
+}
+.datos dt {
+  color: var(--tinta-suave);
+}
+.datos dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.pdf {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+}
+@media (max-width: 480px) {
+  .datos {
+    grid-template-columns: 1fr;
+  }
+}

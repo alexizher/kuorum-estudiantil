@@ -29,6 +29,7 @@ function aDominio(fila: FilaConCreador): Sesion {
     fin: fila.fin,
     modalidad: fila.modalidad,
     lugar: fila.lugar,
+    ordenDelDia: fila.ordenDelDia,
   });
 }
 
@@ -45,6 +46,13 @@ export class PrismaRepositorioDeSesiones implements RepositorioDeSesiones {
       .cliente()
       .sesion.findUnique({ where: { id }, include: CON_CREADOR });
     return fila === null ? null : this.recordar(aDominio(fila));
+  }
+
+  /** Fuera de una unidad de trabajo el candado se suelta enseguida. */
+  async porIdBloqueando(id: string): Promise<Sesion | null> {
+    await this.contexto.cliente()
+      .$queryRaw`SELECT "id" FROM "sesiones" WHERE "id" = ${id} FOR UPDATE`;
+    return this.porId(id);
   }
 
   async porCodigoDeSala(codigo: CodigoDeSala): Promise<Sesion | null> {
@@ -108,6 +116,7 @@ export class PrismaRepositorioDeSesiones implements RepositorioDeSesiones {
       fin: sesion.fin,
       modalidad: sesion.modalidad,
       lugar: sesion.lugar,
+      ordenDelDia: [...sesion.ordenDelDia],
     };
     if (leida === undefined) {
       await this.crear(sesion, datos);

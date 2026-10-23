@@ -13,6 +13,7 @@ export interface SesionVisible {
   modalidad: string;
   lugar: string | null;
   estado: string;
+  actaId: string | null;
 }
 
 export type VistaDeCalendario = "mes" | "lista";
@@ -42,6 +43,15 @@ function Titulo({ sesion }: { sesion: SesionVisible }) {
   return sesion.estado === "CANCELADA" ? <s>{sesion.titulo}</s> : <>{sesion.titulo}</>;
 }
 
+function EnlaceDelActa({ sesion }: { sesion: SesionVisible }) {
+  if (sesion.actaId === null) return null;
+  return (
+    <a className={estilos.acta} href={`/api/public/v1/actas/${sesion.actaId}.pdf`}>
+      Acta<span className="oculto"> de {sesion.titulo} (PDF)</span>
+    </a>
+  );
+}
+
 function ListaDelDia({ sesiones, zona }: { sesiones: SesionVisible[]; zona: string }) {
   return (
     <ul className={estilos.delDia}>
@@ -58,6 +68,7 @@ function ListaDelDia({ sesiones, zona }: { sesiones: SesionVisible[]; zona: stri
             {sesion.lugar ? ` · ${sesion.lugar}` : ""}
             {sesion.estado === "CANCELADA" ? " · Cancelada" : ""}
           </span>
+          <EnlaceDelActa sesion={sesion} />
         </li>
       ))}
     </ul>
@@ -124,6 +135,12 @@ function Mes({ mes, sesiones, zona }: { mes: string; sesiones: SesionVisible[]; 
                     <span className="num">{aHoraLocal(sesion.inicio, zona).hora}</span>{" "}
                     <Titulo sesion={sesion} />
                     <span className={estilos.cuerpoEnCelda}> · {sesion.cuerpo.nombre}</span>
+                    {sesion.actaId === null ? null : (
+                      <>
+                        {" · "}
+                        <EnlaceDelActa sesion={sesion} />
+                      </>
+                    )}
                   </p>
                 ))}
               </td>

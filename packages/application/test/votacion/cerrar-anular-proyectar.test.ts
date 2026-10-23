@@ -25,6 +25,9 @@ describe("CerrarPregunta", () => {
       e.votos,
       e.reloj,
       e.unidad,
+      e.decisiones,
+      e.participantes,
+      e.ids,
     ).ejecutar(superadmin, pregunta.id);
 
     expect(pregunta.estado).toBe("CERRADA");
@@ -37,10 +40,16 @@ describe("CerrarPregunta", () => {
   it("falla si no estaba abierta", async () => {
     const { e, sesion, pregunta } = await montar("BORRADOR");
     await expect(
-      new CerrarPregunta(e.preguntas, e.sesiones, e.votos, e.reloj, e.unidad).ejecutar(
-        superadmin,
-        pregunta.id,
-      ),
+      new CerrarPregunta(
+        e.preguntas,
+        e.sesiones,
+        e.votos,
+        e.reloj,
+        e.unidad,
+        e.decisiones,
+        e.participantes,
+        e.ids,
+      ).ejecutar(superadmin, pregunta.id),
     ).rejects.toMatchObject({ codigo: "TRANSICION_INVALIDA" });
     expect(sesion.version).toBe(0);
   });
@@ -51,7 +60,10 @@ describe("AnularPregunta", () => {
     const { e, sesion, pregunta } = await montar("CERRADA");
     pregunta.proyectarResultado();
 
-    await new AnularPregunta(e.preguntas, e.sesiones, e.unidad).ejecutar(superadmin, pregunta.id);
+    await new AnularPregunta(e.preguntas, e.sesiones, e.unidad, e.decisiones).ejecutar(
+      superadmin,
+      pregunta.id,
+    );
 
     expect(pregunta.estado).toBe("ANULADA");
     expect(pregunta.resultadoVisible).toBe(false);
@@ -60,7 +72,7 @@ describe("AnularPregunta", () => {
 
   it("anular dos veces da TRANSICION_INVALIDA", async () => {
     const { e, pregunta } = await montar("BORRADOR");
-    const caso = new AnularPregunta(e.preguntas, e.sesiones, e.unidad);
+    const caso = new AnularPregunta(e.preguntas, e.sesiones, e.unidad, e.decisiones);
     await caso.ejecutar(superadmin, pregunta.id);
     await expect(caso.ejecutar(superadmin, pregunta.id)).rejects.toMatchObject({
       codigo: "TRANSICION_INVALIDA",

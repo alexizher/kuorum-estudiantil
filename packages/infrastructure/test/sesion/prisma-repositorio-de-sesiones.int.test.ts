@@ -15,6 +15,16 @@ describe("PrismaRepositorioDeSesiones", () => {
   beforeEach(() => limpiar(banco));
   afterAll(() => banco.prisma.$disconnect());
 
+  it("guarda y recupera el orden del día, y lo actualiza al reprogramar", async () => {
+    const sesion = sesionDePrueba({ estado: "PROGRAMADA", ordenDelDia: ["Saludo", "Informe"] });
+    await banco.sesiones.guardar(sesion);
+    const leida = await banco.sesiones.porId(sesion.id);
+    expect(leida?.ordenDelDia).toEqual(["Saludo", "Informe"]);
+    leida?.reprogramar({ ordenDelDia: ["Solo uno"] });
+    if (leida) await banco.sesiones.guardar(leida);
+    expect((await banco.sesiones.porId(sesion.id))?.ordenDelDia).toEqual(["Solo uno"]);
+  });
+
   it("guarda y recupera una sesión por id, por código de sala y en el listado", async () => {
     const sesion = sesionDePrueba({ modo: "CON_CODIGOS", estado: "PROGRAMADA" });
     await banco.sesiones.guardar(sesion);

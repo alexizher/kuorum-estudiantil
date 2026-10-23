@@ -37,6 +37,7 @@ const sesion = {
   fin: new Date("2026-11-04T06:30:00.000Z"),
   modalidad: "MIXTA",
   lugar: "Auditorio",
+  ordenDelDia: ["Quórum"],
 };
 const cuerpoGeneral = {
   id: "c-general",
@@ -172,6 +173,7 @@ describe("API de la mesa", () => {
           finLocal: "2026-11-04T01:30",
           modalidad: "MIXTA",
           lugar: "Auditorio",
+          ordenDelDia: ["Quórum"],
           puedeGestionar: false,
         },
       ],

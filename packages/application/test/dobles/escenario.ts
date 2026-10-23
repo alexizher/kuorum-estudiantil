@@ -10,7 +10,9 @@ import { GeneradorDeCodigosGuionado } from "./generador-de-codigos-guionado.js";
 import { GeneradorDeIdsSecuencial } from "./generador-de-ids-secuencial.js";
 import { HasheadorFalso } from "./hasheador-falso.js";
 import { RelojFijo } from "./reloj-fijo.js";
+import { RepositorioDeActasEnMemoria } from "./repositorio-de-actas-en-memoria.js";
 import { RepositorioDeCuerposEnMemoria } from "./repositorio-de-cuerpos-en-memoria.js";
+import { RepositorioDeDecisionesEnMemoria } from "./repositorio-de-decisiones-en-memoria.js";
 import { RepositorioDeInstitucionEnMemoria } from "./repositorio-de-institucion-en-memoria.js";
 import { RepositorioDeParticipantesEnMemoria } from "./repositorio-de-participantes-en-memoria.js";
 import { RegistroDeVotosEnMemoria } from "./registro-de-votos-en-memoria.js";
@@ -20,8 +22,11 @@ import { RepositorioDeSesionesEnMemoria } from "./repositorio-de-sesiones-en-mem
 import { UnidadDeTrabajoInmediata } from "./unidad-de-trabajo-inmediata.js";
 
 export function crearEscenario(salasFijas: string[] = []) {
+  const sesiones = new RepositorioDeSesionesEnMemoria();
   return {
-    sesiones: new RepositorioDeSesionesEnMemoria(),
+    sesiones,
+    decisiones: new RepositorioDeDecisionesEnMemoria(sesiones),
+    actas: new RepositorioDeActasEnMemoria(sesiones),
     cuerpos: new RepositorioDeCuerposEnMemoria(),
     institucion: new RepositorioDeInstitucionEnMemoria(),
     participantes: new RepositorioDeParticipantesEnMemoria(),

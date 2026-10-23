@@ -53,6 +53,10 @@ La asistencia es anónima y opcional: es el número de códigos activados, sin n
 
 Una instalación sirve a una institución: la asamblea general y una asamblea por facultad (o escuela, o sede; el nombre lo pone la institución). El administrador crea las facultades y las cuentas del personal, y les da un rol en cada cuerpo: encargado (programa y conduce) o mesa (conduce). Cada sesión se programa con fecha, horas, modalidad y lugar, y la mesa ve al momento si choca con otra sesión de la institución. El calendario es público, con vista de mes y de próximas, filtrable por facultad, y se puede suscribir en `.ics` desde Google Calendar u Outlook. Guía: [docs/uso/administrador.md](docs/uso/administrador.md). API: [docs/api.md](docs/api.md).
 
+### Decisiones y actas
+
+Cada votación cerrada deja una decisión con la foto de su resultado, y la mesa puede escribirle un enunciado. La sesión puede llevar orden del día. Al terminar, quien conduce redacta el acta, la finaliza una sola vez y obtiene un código de verificación. El acta final se descarga en PDF y cualquiera comprueba con el código que es auténtica en `/actas/verificar`. Las decisiones y las actas finales también salen por la API pública ([docs/api.md](docs/api.md)). Guía: [docs/uso/mesa.md](docs/uso/mesa.md).
+
 ### Diseño
 
 - Modo claro, oscuro o el del sistema, con un selector que cada persona guarda.
@@ -62,7 +66,6 @@ Una instalación sirve a una institución: la asamblea general y una asamblea po
 ### Pendiente para las próximas versiones
 
 - Vista de la asamblea general sobre las decisiones de cada facultad.
-- Actas en PDF y registro de decisiones.
 - Panel para personalizar colores, logo y textos.
 - Verificación por correo institucional (Microsoft Entra ID o Google), apagada por defecto.
 

@@ -1,4 +1,5 @@
-import { ErrorDeDominio } from "@kuorum/domain";
+import { Acta, ErrorDeDominio } from "@kuorum/domain";
+import type { RepositorioDeActas } from "../puertos/repositorio-de-actas.js";
 import type { RepositorioDePreguntas } from "../puertos/repositorio-de-preguntas.js";
 import type { RepositorioDeSesiones } from "../puertos/repositorio-de-sesiones.js";
 import type { UnidadDeTrabajo } from "../puertos/unidad-de-trabajo.js";
@@ -10,6 +11,7 @@ export class TerminarSesion {
     private readonly sesiones: RepositorioDeSesiones,
     private readonly preguntas: RepositorioDePreguntas,
     private readonly unidad: UnidadDeTrabajo,
+    private readonly actas: RepositorioDeActas,
   ) {}
 
   ejecutar(actor: Actor, sesionId: string): Promise<void> {
@@ -21,6 +23,9 @@ export class TerminarSesion {
       sesion.terminar();
       sesion.registrarCambio();
       await this.sesiones.guardar(sesion);
+      if ((await this.actas.deSesion(sesion.id)) === null) {
+        await this.actas.guardar(Acta.borrador(sesion.id));
+      }
     });
   }
 }

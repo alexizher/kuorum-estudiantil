@@ -16,6 +16,11 @@ export interface FiltroDeRango {
 
 export interface RepositorioDeSesiones {
   porId(id: string): Promise<Sesion | null>;
+  /**
+   * Como porId, pero toma el candado de la sesión hasta que termine la unidad de trabajo:
+   * las acciones que lo piden sobre la misma sesión van una tras otra.
+   */
+  porIdBloqueando(id: string): Promise<Sesion | null>;
   porCodigoDeSala(codigo: CodigoDeSala): Promise<Sesion | null>;
   guardar(sesion: Sesion): Promise<void>;
   /** Sin filtro, todas, de la más antigua a la más reciente según su creación. */
