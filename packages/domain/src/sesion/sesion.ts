@@ -2,6 +2,7 @@ import { ErrorDeDominio } from "../errores.js";
 import type { CodigoDeSala } from "./codigo-de-sala.js";
 import type { EstadoDeSesion } from "./estado-de-sesion.js";
 import type { GeneradorDeCodigos } from "./generador-de-codigos.js";
+import type { Modalidad } from "./modalidad.js";
 import type { ModoDeParticipacion } from "./modo-de-participacion.js";
 
 const TITULO_MIN = 3;
@@ -9,8 +10,49 @@ const TITULO_MAX = 140;
 const SEGUNDOS_MIN = 30;
 const SEGUNDOS_MAX = 900;
 const SEGUNDOS_POR_DEFECTO = 180;
+const LUGAR_MAX = 200;
+const DURACION_MAX_MS = 24 * 3_600_000;
 
-export interface DatosDeNuevaSesion {
+/** Cuándo, dónde y de qué cuerpo es la sesión. */
+export interface Programacion {
+  cuerpoId: string;
+  inicio: Date;
+  fin: Date;
+  modalidad: Modalidad;
+  /** Sala o enlace; opcional. */
+  lugar?: string | null;
+}
+
+export interface CambiosDeProgramacion {
+  titulo?: string;
+  inicio?: Date;
+  fin?: Date;
+  modalidad?: Modalidad;
+  lugar?: string | null;
+}
+
+function tituloValido(titulo: string): string {
+  const limpio = titulo.trim();
+  if (limpio.length < TITULO_MIN || limpio.length > TITULO_MAX) {
+    throw new ErrorDeDominio("TITULO_INVALIDO");
+  }
+  return limpio;
+}
+
+function lugarValido(lugar: string | null | undefined): string | null {
+  const limpio = lugar?.trim() ?? "";
+  if (limpio.length > LUGAR_MAX) throw new ErrorDeDominio("LUGAR_INVALIDO");
+  return limpio === "" ? null : limpio;
+}
+
+function exigirHorario(inicio: Date, fin: Date): void {
+  const duracion = fin.getTime() - inicio.getTime();
+  if (Number.isNaN(duracion) || duracion <= 0 || duracion > DURACION_MAX_MS) {
+    throw new ErrorDeDominio("HORARIO_INVALIDO");
+  }
+}
+
+export interface DatosDeNuevaSesion extends Programacion {
   id: string;
   titulo: string;
   modo: ModoDeParticipacion;
@@ -20,7 +62,7 @@ export interface DatosDeNuevaSesion {
   creadaPorId?: string | null;
 }
 
-export interface PropiedadesDeSesion {
+export interface PropiedadesDeSesion extends Programacion {
   id: string;
   titulo: string;
   codigoDeSala: CodigoDeSala;
@@ -30,15 +72,22 @@ export interface PropiedadesDeSesion {
   version: number;
   creadaEn: Date;
   creadaPorId?: string | null;
+  /** La creó una cuenta de prueba: no sale en el calendario ni en los cruces de otros. */
+  creadaPorDemo?: boolean;
 }
 
 export class Sesion {
+  private _titulo: string;
   private _estado: EstadoDeSesion;
   private _version: number;
+  private _inicio: Date;
+  private _fin: Date;
+  private _modalidad: Modalidad;
+  private _lugar: string | null;
 
   private constructor(
     readonly id: string,
-    readonly titulo: string,
+    titulo: string,
     readonly codigoDeSala: CodigoDeSala,
     readonly modo: ModoDeParticipacion,
     estado: EstadoDeSesion,
@@ -46,9 +95,17 @@ export class Sesion {
     version: number,
     readonly creadaEn: Date,
     readonly creadaPorId: string | null,
+    readonly creadaPorDemo: boolean,
+    readonly cuerpoId: string,
+    programacion: { inicio: Date; fin: Date; modalidad: Modalidad; lugar: string | null },
   ) {
+    this._titulo = titulo;
     this._estado = estado;
     this._version = version;
+    this._inicio = programacion.inicio;
+    this._fin = programacion.fin;
+    this._modalidad = programacion.modalidad;
+    this._lugar = programacion.lugar;
   }
 
   static nueva(datos: DatosDeNuevaSesion, generador: GeneradorDeCodigos): Sesion {
@@ -62,14 +119,16 @@ export class Sesion {
       version: 0,
       creadaEn: datos.creadaEn,
       creadaPorId: datos.creadaPorId ?? null,
+      cuerpoId: datos.cuerpoId,
+      inicio: datos.inicio,
+      fin: datos.fin,
+      modalidad: datos.modalidad,
+      lugar: datos.lugar ?? null,
     });
   }
 
   static reconstruir(props: PropiedadesDeSesion): Sesion {
-    const titulo = props.titulo.trim();
-    if (titulo.length < TITULO_MIN || titulo.length > TITULO_MAX) {
-      throw new ErrorDeDominio("TITULO_INVALIDO");
-    }
+    const titulo = tituloValido(props.titulo);
     const { segundosPorIntervencion } = props;
     if (
       !Number.isInteger(segundosPorIntervencion) ||
@@ -81,6 +140,7 @@ export class Sesion {
     if (!Number.isInteger(props.version) || props.version < 0) {
       throw new ErrorDeDominio("VERSION_INVALIDA");
     }
+    exigirHorario(props.inicio, props.fin);
     return new Sesion(
       props.id,
       titulo,
@@ -91,7 +151,35 @@ export class Sesion {
       props.version,
       props.creadaEn,
       props.creadaPorId ?? null,
+      props.creadaPorDemo ?? false,
+      props.cuerpoId,
+      {
+        inicio: props.inicio,
+        fin: props.fin,
+        modalidad: props.modalidad,
+        lugar: lugarValido(props.lugar),
+      },
     );
+  }
+
+  get titulo(): string {
+    return this._titulo;
+  }
+
+  get inicio(): Date {
+    return this._inicio;
+  }
+
+  get fin(): Date {
+    return this._fin;
+  }
+
+  get modalidad(): Modalidad {
+    return this._modalidad;
+  }
+
+  get lugar(): string | null {
+    return this._lugar;
   }
 
   get estado(): EstadoDeSesion {
@@ -121,6 +209,28 @@ export class Sesion {
       throw new ErrorDeDominio("TRANSICION_INVALIDA");
     }
     this._estado = "CERRADA";
+  }
+
+  /** Solo antes de abrirla. Valida todo antes de cambiar nada. */
+  reprogramar(cambios: CambiosDeProgramacion): void {
+    if (this._estado !== "PROGRAMADA") throw new ErrorDeDominio("TRANSICION_INVALIDA");
+    const titulo = cambios.titulo === undefined ? this._titulo : tituloValido(cambios.titulo);
+    const inicio = cambios.inicio ?? this._inicio;
+    const fin = cambios.fin ?? this._fin;
+    exigirHorario(inicio, fin);
+    const lugar = cambios.lugar === undefined ? this._lugar : lugarValido(cambios.lugar);
+    this._titulo = titulo;
+    this._inicio = inicio;
+    this._fin = fin;
+    this._modalidad = cambios.modalidad ?? this._modalidad;
+    this._lugar = lugar;
+  }
+
+  cancelar(): void {
+    if (this._estado !== "PROGRAMADA" && this._estado !== "ABIERTA") {
+      throw new ErrorDeDominio("TRANSICION_INVALIDA");
+    }
+    this._estado = "CANCELADA";
   }
 
   exigirEnCurso(): void {
