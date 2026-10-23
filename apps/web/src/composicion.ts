@@ -48,6 +48,7 @@ import {
   TerminarIntervencion,
   TerminarSesion,
   type RepositorioDeSesiones,
+  ListarDecisionesDeLaInstitucion,
 } from "@kuorum/application";
 import type { Reloj } from "@kuorum/domain";
 import {
@@ -108,6 +109,7 @@ export interface Contenedor {
   listarActasPublicas: ListarActasPublicas;
   obtenerActaPublica: ObtenerActaPublica;
   verificarActa: VerificarActa;
+  listarDecisionesDeLaInstitucion: ListarDecisionesDeLaInstitucion;
   // Votación
   crearPregunta: CrearPregunta;
   listarPreguntasDeSesion: ListarPreguntasDeSesion;
@@ -216,6 +218,7 @@ export function contenedor(): Contenedor {
         unidad,
       ),
       listarDecisionesPublicas: new ListarDecisionesPublicas(decisiones, cuerpos),
+      listarDecisionesDeLaInstitucion: new ListarDecisionesDeLaInstitucion(decisiones, cuerpos),
       listarActasPublicas: new ListarActasPublicas(actas, cuerpos),
       obtenerActaPublica: new ObtenerActaPublica(actas, sesiones),
       verificarActa: new VerificarActa(actas, sesiones),

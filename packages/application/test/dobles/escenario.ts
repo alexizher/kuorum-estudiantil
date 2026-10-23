@@ -23,11 +23,12 @@ import { UnidadDeTrabajoInmediata } from "./unidad-de-trabajo-inmediata.js";
 
 export function crearEscenario(salasFijas: string[] = []) {
   const sesiones = new RepositorioDeSesionesEnMemoria();
+  const cuerpos = new RepositorioDeCuerposEnMemoria();
   return {
     sesiones,
-    decisiones: new RepositorioDeDecisionesEnMemoria(sesiones),
+    decisiones: new RepositorioDeDecisionesEnMemoria(sesiones, cuerpos),
     actas: new RepositorioDeActasEnMemoria(sesiones),
-    cuerpos: new RepositorioDeCuerposEnMemoria(),
+    cuerpos,
     institucion: new RepositorioDeInstitucionEnMemoria(),
     participantes: new RepositorioDeParticipantesEnMemoria(),
     preguntas: new RepositorioDePreguntasEnMemoria(),
