@@ -12,6 +12,11 @@ export function rangoAlrededorDeHoy(atras: number, adelante: number): { desde: D
   return { desde: new Date(ahora - atras * DIA_MS), hasta: new Date(ahora + adelante * DIA_MS) };
 }
 
+/** Con acta final hay acta pública: su id es el de la sesión. */
+export function actaIdDeSesion(s: { id: string; estado: string }): string | null {
+  return s.estado === "ACTA_FINAL" ? s.id : null;
+}
+
 /** El JSON público: sin ids internos de cuerpos ni código de sala. */
 export function calendarioPublico({ institucion, cuerpos, sesiones }: Calendario) {
   return {
@@ -36,6 +41,7 @@ export function calendarioPublico({ institucion, cuerpos, sesiones }: Calendario
       modalidad: s.modalidad,
       lugar: s.lugar,
       estado: s.estado,
+      actaId: actaIdDeSesion(s),
     })),
   };
 }
