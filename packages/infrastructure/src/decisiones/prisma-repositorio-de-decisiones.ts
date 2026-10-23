@@ -1,7 +1,10 @@
 import { Decision, ErrorDeDominio, type FotoDeResultado } from "@kuorum/domain";
 import type { FiltroPublico, RepositorioDeDecisiones } from "@kuorum/application";
 import type { Prisma, Decision as FilaDeDecision } from "../generated/prisma/client.js";
-import type { ContextoTransaccional } from "../prisma/contexto-transaccional.js";
+import {
+  esViolacionDeUnico,
+  type ContextoTransaccional,
+} from "../prisma/contexto-transaccional.js";
 
 function reglaValida(regla: string): "MAYORIA_SIMPLE" {
   if (regla !== "MAYORIA_SIMPLE") throw new ErrorDeDominio("REGLA_DESCONOCIDA");
@@ -50,11 +53,17 @@ export class PrismaRepositorioDeDecisiones implements RepositorioDeDecisiones {
       consultaId: decision.consultaId,
       cerradaEn: decision.cerradaEn,
     };
-    await cliente.decision.upsert({
-      where: { id: decision.id },
-      create: { id: decision.id, preguntaId: decision.preguntaId, ...datos },
-      update: datos,
-    });
+    try {
+      await cliente.decision.upsert({
+        where: { id: decision.id },
+        create: { id: decision.id, preguntaId: decision.preguntaId, ...datos },
+        update: datos,
+      });
+    } catch (error) {
+      // Otro cierre la insertó sin confirmar todavía cuando se comprobó.
+      if (esViolacionDeUnico(error)) throw new ErrorDeDominio("DECISION_REPETIDA");
+      throw error;
+    }
   }
 
   async eliminarDePregunta(preguntaId: string): Promise<void> {

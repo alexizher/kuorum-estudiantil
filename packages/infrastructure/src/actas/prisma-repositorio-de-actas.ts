@@ -6,7 +6,10 @@ import type {
   Acta as FilaDeActa,
   Sesion as FilaDeSesion,
 } from "../generated/prisma/client.js";
-import type { ContextoTransaccional } from "../prisma/contexto-transaccional.js";
+import {
+  esViolacionDeUnico,
+  type ContextoTransaccional,
+} from "../prisma/contexto-transaccional.js";
 
 function aDominio(fila: FilaDeActa): Acta {
   if (fila.estado === "FINAL" && (fila.codigo === null || fila.contenido === null)) {
@@ -66,11 +69,25 @@ export class PrismaRepositorioDeActas implements RepositorioDeActas {
         ? {}
         : { contenido: acta.contenido as unknown as Prisma.InputJsonValue }),
     };
-    await this.contexto.cliente().acta.upsert({
-      where: { sesionId: acta.sesionId },
-      create: { sesionId: acta.sesionId, ...datos },
-      update: datos,
-    });
+    const cliente = this.contexto.cliente();
+    try {
+      // Solo se escribe sobre un borrador: un acta final no vuelve atrás ni cambia de código.
+      const { count } = await cliente.acta.updateMany({
+        where: { sesionId: acta.sesionId, estado: "BORRADOR" },
+        data: datos,
+      });
+      if (count > 0) return;
+      if ((await cliente.acta.count({ where: { sesionId: acta.sesionId } })) > 0) {
+        throw new ErrorDeDominio("ACTA_FINALIZADA");
+      }
+      await cliente.acta.create({ data: { sesionId: acta.sesionId, ...datos } });
+    } catch (error) {
+      if (!esViolacionDeUnico(error)) throw error;
+      if (JSON.stringify(error).includes("actas_codigo_key")) {
+        throw new ErrorDeDominio("CODIGO_DE_VERIFICACION_REPETIDO");
+      }
+      throw new ErrorDeDominio("ACTA_EN_CONFLICTO", "Otra acción creó el acta al mismo tiempo");
+    }
   }
 
   async publicas(filtro: FiltroPublico): Promise<{ acta: Acta; sesion: Sesion }[]> {

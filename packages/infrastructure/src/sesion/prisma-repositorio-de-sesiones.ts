@@ -48,6 +48,13 @@ export class PrismaRepositorioDeSesiones implements RepositorioDeSesiones {
     return fila === null ? null : this.recordar(aDominio(fila));
   }
 
+  /** Fuera de una unidad de trabajo el candado se suelta enseguida. */
+  async porIdBloqueando(id: string): Promise<Sesion | null> {
+    await this.contexto.cliente()
+      .$queryRaw`SELECT "id" FROM "sesiones" WHERE "id" = ${id} FOR UPDATE`;
+    return this.porId(id);
+  }
+
   async porCodigoDeSala(codigo: CodigoDeSala): Promise<Sesion | null> {
     const fila = await this.contexto
       .cliente()
