@@ -40,6 +40,7 @@ export function POST(request: Request): Promise<Response> {
       finLocal: cuerpo.fin,
       modalidad: cuerpo.modalidad,
       ...(cuerpo.lugar === undefined ? {} : { lugar: cuerpo.lugar }),
+      ...(cuerpo.ordenDelDia === undefined ? {} : { ordenDelDia: cuerpo.ordenDelDia }),
     });
     const [cuerpos, institucion] = await Promise.all([c.cuerpos.listar(), c.institucion.obtener()]);
     return accion(vistaDeSesion(sesion, cuerpos, institucion.zonaHoraria, actor), 201);

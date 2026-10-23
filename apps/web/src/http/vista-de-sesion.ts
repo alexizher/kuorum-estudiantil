@@ -31,6 +31,7 @@ export function vistaDeSesion(
     finLocal: horaLocal(sesion.fin, zona),
     modalidad: sesion.modalidad,
     lugar: sesion.lugar,
+    ordenDelDia: [...sesion.ordenDelDia],
     puedeGestionar: puedeGestionar(actor, sesion),
   };
 }

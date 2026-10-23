@@ -19,6 +19,15 @@ import {
   type RepositorioDeMembresias,
   CerrarPregunta,
   ConsultarEstadoDeSala,
+  EditarActa,
+  EditarEnunciado,
+  FinalizarActa,
+  ListarActasPublicas,
+  ListarDecisionesDeLaSesion,
+  ListarDecisionesPublicas,
+  ObtenerActaDeLaMesa,
+  ObtenerActaPublica,
+  VerificarActa,
   CrearPregunta,
   CrearSesion,
   DarLaPalabra,
@@ -89,6 +98,16 @@ export interface Contenedor {
   listarPersonal: ListarPersonal;
   crearCuentaDePersonal: CrearCuentaDePersonal;
   restablecerContrasena: RestablecerContrasena;
+  // Decisiones y actas
+  editarEnunciado: EditarEnunciado;
+  listarDecisionesDeLaSesion: ListarDecisionesDeLaSesion;
+  obtenerActaDeLaMesa: ObtenerActaDeLaMesa;
+  editarActa: EditarActa;
+  finalizarActa: FinalizarActa;
+  listarDecisionesPublicas: ListarDecisionesPublicas;
+  listarActasPublicas: ListarActasPublicas;
+  obtenerActaPublica: ObtenerActaPublica;
+  verificarActa: VerificarActa;
   // Votación
   crearPregunta: CrearPregunta;
   listarPreguntasDeSesion: ListarPreguntasDeSesion;
@@ -170,6 +189,36 @@ export function contenedor(): Contenedor {
       listarPersonal: new ListarPersonal(directorio),
       crearCuentaDePersonal: new CrearCuentaDePersonal(cuentas, generadorDeContrasenas),
       restablecerContrasena: new RestablecerContrasena(cuentas, directorio, generadorDeContrasenas),
+      editarEnunciado: new EditarEnunciado(decisiones, sesiones, unidad),
+      listarDecisionesDeLaSesion: new ListarDecisionesDeLaSesion(decisiones, sesiones),
+      obtenerActaDeLaMesa: new ObtenerActaDeLaMesa(
+        sesiones,
+        actas,
+        cuerpos,
+        institucion,
+        decisiones,
+        preguntas,
+        solicitudes,
+        participantes,
+      ),
+      editarActa: new EditarActa(sesiones, actas, unidad),
+      finalizarActa: new FinalizarActa(
+        sesiones,
+        actas,
+        cuerpos,
+        institucion,
+        decisiones,
+        preguntas,
+        solicitudes,
+        participantes,
+        codigos,
+        reloj,
+        unidad,
+      ),
+      listarDecisionesPublicas: new ListarDecisionesPublicas(decisiones, cuerpos),
+      listarActasPublicas: new ListarActasPublicas(actas, cuerpos),
+      obtenerActaPublica: new ObtenerActaPublica(actas, sesiones),
+      verificarActa: new VerificarActa(actas, sesiones),
       iniciarSesion: new IniciarSesion(sesiones, unidad),
       terminarSesion: new TerminarSesion(sesiones, preguntas, unidad, actas),
       generarCodigosDeAcceso: new GenerarCodigosDeAcceso(

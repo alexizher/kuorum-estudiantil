@@ -15,4 +15,6 @@ export {
   esquemaCambioDeCuerpo,
   esquemaPersona,
   esquemaMembresia,
+  esquemaEnunciado,
+  esquemaActa,
 } from "./acciones.js";

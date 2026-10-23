@@ -3,6 +3,7 @@ import {
   AnularPregunta,
   CerrarPregunta,
   EditarEnunciado,
+  ListarDecisionesDeLaSesion,
   ListarDecisionesPublicas,
 } from "../../src/index.js";
 import { crearEscenario, opcionDe, sembrarPregunta, sembrarSesion } from "../dobles/escenario.js";
@@ -201,6 +202,22 @@ describe("ListarDecisionesPublicas", () => {
     ).rejects.toMatchObject({ codigo: "RANGO_INVALIDO" });
     await expect(caso.ejecutar({ ...rango, cuerpoSlug: "no-existe" })).rejects.toMatchObject({
       codigo: "CUERPO_NO_EXISTE",
+    });
+  });
+});
+
+describe("ListarDecisionesDeLaSesion", () => {
+  it("quien conduce ve las decisiones de la sesión; lo ajeno es SESION_AJENA", async () => {
+    const { e, sesion, pregunta } = await montar();
+    await cerrar(e).ejecutar(superadmin, pregunta.id);
+    const caso = new ListarDecisionesDeLaSesion(e.decisiones, e.sesiones);
+    const lista = await caso.ejecutar(superadmin, sesion.id);
+    expect(lista.map((d) => d.preguntaId)).toEqual([pregunta.id]);
+    await expect(caso.ejecutar(encargadoDeMedicina, sesion.id)).rejects.toMatchObject({
+      codigo: "SESION_AJENA",
+    });
+    await expect(caso.ejecutar(superadmin, "nada")).rejects.toMatchObject({
+      codigo: "SESION_NO_ENCONTRADA",
     });
   });
 });

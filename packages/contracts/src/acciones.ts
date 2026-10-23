@@ -23,6 +23,8 @@ const horaLocal = z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/);
 const modalidad = z.enum(["PRESENCIAL", "VIRTUAL", "MIXTA"]);
 const lugar = z.string().max(200).nullable().optional();
 
+const ordenDelDia = z.array(texto(200)).max(30);
+
 const alMenosUno = (objeto: object) => Object.keys(objeto).length > 0;
 
 export const esquemaCrearSesion = z.object({
@@ -34,6 +36,7 @@ export const esquemaCrearSesion = z.object({
   fin: horaLocal,
   modalidad,
   lugar,
+  ordenDelDia: ordenDelDia.optional(),
 });
 
 export const esquemaReprogramar = z
@@ -43,6 +46,7 @@ export const esquemaReprogramar = z
     fin: horaLocal.optional(),
     modalidad: modalidad.optional(),
     lugar,
+    ordenDelDia: ordenDelDia.optional(),
   })
   .refine(alMenosUno);
 
@@ -77,3 +81,7 @@ export const esquemaCrearPregunta = z.object({
 });
 
 export const esquemaDarLaPalabra = z.object({ solicitudId: texto(100).optional() });
+
+export const esquemaEnunciado = z.object({ enunciado: z.string().max(1000).nullable() });
+
+export const esquemaActa = z.object({ desarrollo: z.string().max(20_000) });

@@ -83,6 +83,7 @@ export type {
 } from "./puertos/repositorio-de-decisiones.js";
 export type { RepositorioDeActas } from "./puertos/repositorio-de-actas.js";
 export { EditarEnunciado } from "./decisiones/editar-enunciado.js";
+export { ListarDecisionesDeLaSesion } from "./decisiones/listar-decisiones-de-la-sesion.js";
 export { ListarDecisionesPublicas } from "./decisiones/listar-decisiones-publicas.js";
 export type { ConsultaPublica } from "./decisiones/filtro-publico.js";
 export { armarContenidoDeActa } from "./actas/armar-contenido.js";

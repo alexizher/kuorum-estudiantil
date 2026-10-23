@@ -29,6 +29,7 @@ export async function cargarSesionDeMesa(actor: Actor, id: string): Promise<Sesi
         finLocal: horaLocal(sesion.fin, institucion.zonaHoraria),
         modalidad: sesion.modalidad,
         lugar: sesion.lugar,
+        ordenDelDia: vista.ordenDelDia,
         puedeGestionar: vista.puedeGestionar,
       },
     };

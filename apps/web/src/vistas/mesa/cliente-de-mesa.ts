@@ -27,6 +27,7 @@ export interface ProgramacionDeSesion {
   finLocal: string;
   modalidad: Modalidad;
   lugar: string | null;
+  ordenDelDia?: string[];
   puedeGestionar: boolean;
 }
 

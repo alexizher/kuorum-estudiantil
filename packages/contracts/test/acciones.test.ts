@@ -13,6 +13,8 @@ import {
   esquemaIngresar,
   esquemaMocion,
   esquemaVoto,
+  esquemaActa,
+  esquemaEnunciado,
 } from "../src/index.js";
 
 describe("esquemas de acciones", () => {
@@ -130,5 +132,37 @@ describe("esquemas de acciones", () => {
       expect(esquemaMembresia.safeParse({ cuerpoId: "c1", rol: "MESA" }).success).toBe(true);
       expect(esquemaMembresia.safeParse({ cuerpoId: "c1", rol: "SUPERADMIN" }).success).toBe(false);
     });
+  });
+
+  it("orden del día: hasta 30 textos de 1 a 200 caracteres, al crear y al reprogramar", () => {
+    const base = {
+      titulo: "A",
+      modo: "SALA_ABIERTA",
+      cuerpoId: "c",
+      inicio: "2026-11-03T14:00",
+      fin: "2026-11-03T16:00",
+      modalidad: "PRESENCIAL",
+    };
+    const con = (ordenDelDia: unknown) => esquemaCrearSesion.safeParse({ ...base, ordenDelDia });
+    expect(con(["Quórum", "Informe"]).success).toBe(true);
+    expect(con(Array(30).fill("x")).success).toBe(true);
+    expect(con(Array(31).fill("x")).success).toBe(false);
+    expect(con(["x".repeat(201)]).success).toBe(false);
+    expect(con([""]).success).toBe(false);
+    expect(esquemaReprogramar.safeParse({ ordenDelDia: [] }).success).toBe(true);
+  });
+
+  it("enunciado acepta texto o null, no otra cosa", () => {
+    expect(esquemaEnunciado.safeParse({ enunciado: "Se aprueba." }).success).toBe(true);
+    expect(esquemaEnunciado.safeParse({ enunciado: null }).success).toBe(true);
+    expect(esquemaEnunciado.safeParse({}).success).toBe(false);
+    expect(esquemaEnunciado.safeParse({ enunciado: 3 }).success).toBe(false);
+  });
+
+  it("acta pide el desarrollo como texto, vacío permitido, hasta 20.000", () => {
+    expect(esquemaActa.safeParse({ desarrollo: "" }).success).toBe(true);
+    expect(esquemaActa.safeParse({ desarrollo: "x".repeat(20_000) }).success).toBe(true);
+    expect(esquemaActa.safeParse({ desarrollo: "x".repeat(20_001) }).success).toBe(false);
+    expect(esquemaActa.safeParse({}).success).toBe(false);
   });
 });
