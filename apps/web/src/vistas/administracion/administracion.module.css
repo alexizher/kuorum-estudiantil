@@ -88,3 +88,19 @@
   margin: 0;
   min-height: 1.2em;
 }
+.persona {
+  display: grid;
+  gap: 8px;
+  padding: 16px 0;
+  border-top: 2px solid var(--tinta);
+}
+.persona p {
+  margin: 0;
+}
+.contrasena {
+  font-family: ui-monospace, "Cascadia Mono", monospace;
+  font-size: var(--t-3);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+  user-select: all;
+}
