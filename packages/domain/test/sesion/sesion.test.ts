@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   CodigoDeAcceso,
   CodigoDeSala,
+  CodigoDeVerificacion,
   ErrorDeDominio,
   Sesion,
   type GeneradorDeCodigos,
@@ -13,6 +14,7 @@ const creadaEn = new Date("2026-10-19T12:00:00Z");
 const generador: GeneradorDeCodigos = {
   codigoDeSala: () => CodigoDeSala.crear("K7F2"),
   codigoDeAcceso: () => CodigoDeAcceso.crear("K7F2-9QH3"),
+  codigoDeVerificacion: () => CodigoDeVerificacion.crear("K7F2A9QH3B"),
 };
 
 const inicio = new Date("2026-11-03T19:00:00Z");
@@ -362,4 +364,54 @@ describe("Sesion.cancelar", () => {
       expect(codigoDeError(() => sesion.cancelar())).toBe("TRANSICION_INVALIDA");
     },
   );
+
+  describe("orden del día", () => {
+    it("descarta líneas vacías y recorta bordes", () => {
+      const sesion = Sesion.nueva(
+        { ...datosBase, ordenDelDia: ["  Apertura ", "", "   ", "Votación"] },
+        generador,
+      );
+      expect(sesion.ordenDelDia).toEqual(["Apertura", "Votación"]);
+    });
+
+    it("por defecto está vacío", () => {
+      expect(Sesion.nueva(datosBase, generador).ordenDelDia).toEqual([]);
+    });
+
+    it("rechaza 31 puntos", () => {
+      const puntos = Array.from({ length: 31 }, (_, i) => `Punto ${i}`);
+      expect(
+        codigoDeError(() => Sesion.nueva({ ...datosBase, ordenDelDia: puntos }, generador)),
+      ).toBe("ORDEN_DEL_DIA_INVALIDO");
+    });
+
+    it("rechaza un punto de más de 200 caracteres", () => {
+      expect(
+        codigoDeError(() =>
+          Sesion.nueva({ ...datosBase, ordenDelDia: ["a".repeat(201)] }, generador),
+        ),
+      ).toBe("ORDEN_DEL_DIA_INVALIDO");
+    });
+
+    it("se cambia al reprogramar", () => {
+      const sesion = Sesion.nueva(datosBase, generador);
+      sesion.reprogramar({ ordenDelDia: ["Uno", " "] });
+      expect(sesion.ordenDelDia).toEqual(["Uno"]);
+    });
+  });
+
+  describe("finalizarActa", () => {
+    it("pasa de CERRADA a ACTA_FINAL", () => {
+      const sesion = Sesion.nueva(datosBase, generador);
+      sesion.iniciar();
+      sesion.terminar();
+      sesion.finalizarActa();
+      expect(sesion.estado).toBe("ACTA_FINAL");
+    });
+
+    it("falla desde otro estado", () => {
+      const sesion = Sesion.nueva(datosBase, generador);
+      expect(codigoDeError(() => sesion.finalizarActa())).toBe("TRANSICION_INVALIDA");
+    });
+  });
 });

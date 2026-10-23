@@ -11,6 +11,8 @@ const SEGUNDOS_MIN = 30;
 const SEGUNDOS_MAX = 900;
 const SEGUNDOS_POR_DEFECTO = 180;
 const LUGAR_MAX = 200;
+const ORDEN_PUNTOS_MAX = 30;
+const ORDEN_PUNTO_MAX = 200;
 const DURACION_MAX_MS = 24 * 3_600_000;
 
 /** Cuándo, dónde y de qué cuerpo es la sesión. */
@@ -29,6 +31,15 @@ export interface CambiosDeProgramacion {
   fin?: Date;
   modalidad?: Modalidad;
   lugar?: string | null;
+  ordenDelDia?: readonly string[];
+}
+
+function ordenValido(puntos: readonly string[] | undefined): readonly string[] {
+  const limpios = (puntos ?? []).map((p) => p.trim()).filter((p) => p !== "");
+  if (limpios.length > ORDEN_PUNTOS_MAX || limpios.some((p) => p.length > ORDEN_PUNTO_MAX)) {
+    throw new ErrorDeDominio("ORDEN_DEL_DIA_INVALIDO");
+  }
+  return limpios;
 }
 
 function tituloValido(titulo: string): string {
@@ -61,6 +72,7 @@ export interface DatosDeNuevaSesion extends Programacion {
   /** Quién la creó; null si no se sabe. */
   creadaPorId?: string | null;
   creadaPorDemo?: boolean;
+  ordenDelDia?: readonly string[];
 }
 
 export interface PropiedadesDeSesion extends Programacion {
@@ -75,6 +87,7 @@ export interface PropiedadesDeSesion extends Programacion {
   creadaPorId?: string | null;
   /** La creó una cuenta de prueba: no sale en el calendario ni en los cruces de otros. */
   creadaPorDemo?: boolean;
+  ordenDelDia?: readonly string[];
 }
 
 export class Sesion {
@@ -85,6 +98,7 @@ export class Sesion {
   private _fin: Date;
   private _modalidad: Modalidad;
   private _lugar: string | null;
+  private _ordenDelDia: readonly string[];
 
   private constructor(
     readonly id: string,
@@ -98,7 +112,13 @@ export class Sesion {
     readonly creadaPorId: string | null,
     readonly creadaPorDemo: boolean,
     readonly cuerpoId: string,
-    programacion: { inicio: Date; fin: Date; modalidad: Modalidad; lugar: string | null },
+    programacion: {
+      inicio: Date;
+      fin: Date;
+      modalidad: Modalidad;
+      lugar: string | null;
+      ordenDelDia: readonly string[];
+    },
   ) {
     this._titulo = titulo;
     this._estado = estado;
@@ -107,6 +127,7 @@ export class Sesion {
     this._fin = programacion.fin;
     this._modalidad = programacion.modalidad;
     this._lugar = programacion.lugar;
+    this._ordenDelDia = programacion.ordenDelDia;
   }
 
   static nueva(datos: DatosDeNuevaSesion, generador: GeneradorDeCodigos): Sesion {
@@ -126,6 +147,7 @@ export class Sesion {
       fin: datos.fin,
       modalidad: datos.modalidad,
       lugar: datos.lugar ?? null,
+      ordenDelDia: datos.ordenDelDia ?? [],
     });
   }
 
@@ -160,6 +182,7 @@ export class Sesion {
         fin: props.fin,
         modalidad: props.modalidad,
         lugar: lugarValido(props.lugar),
+        ordenDelDia: ordenValido(props.ordenDelDia),
       },
     );
   }
@@ -182,6 +205,10 @@ export class Sesion {
 
   get lugar(): string | null {
     return this._lugar;
+  }
+
+  get ordenDelDia(): readonly string[] {
+    return this._ordenDelDia;
   }
 
   get estado(): EstadoDeSesion {
@@ -213,6 +240,11 @@ export class Sesion {
     this._estado = "CERRADA";
   }
 
+  finalizarActa(): void {
+    if (this._estado !== "CERRADA") throw new ErrorDeDominio("TRANSICION_INVALIDA");
+    this._estado = "ACTA_FINAL";
+  }
+
   /** Solo antes de abrirla. Valida todo antes de cambiar nada. */
   reprogramar(cambios: CambiosDeProgramacion): void {
     if (this._estado !== "PROGRAMADA") throw new ErrorDeDominio("TRANSICION_INVALIDA");
@@ -221,7 +253,10 @@ export class Sesion {
     const fin = cambios.fin ?? this._fin;
     exigirHorario(inicio, fin);
     const lugar = cambios.lugar === undefined ? this._lugar : lugarValido(cambios.lugar);
+    const ordenDelDia =
+      cambios.ordenDelDia === undefined ? this._ordenDelDia : ordenValido(cambios.ordenDelDia);
     this._titulo = titulo;
+    this._ordenDelDia = ordenDelDia;
     this._inicio = inicio;
     this._fin = fin;
     this._modalidad = cambios.modalidad ?? this._modalidad;

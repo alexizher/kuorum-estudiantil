@@ -3,6 +3,7 @@ import {
   ALFABETO_DE_CODIGOS as ALFABETO,
   CodigoDeAcceso,
   CodigoDeSala,
+  CodigoDeVerificacion,
   type GeneradorDeCodigos,
 } from "@kuorum/domain";
 
@@ -20,5 +21,9 @@ export class GeneradorDeCodigosAleatorio implements GeneradorDeCodigos {
 
   codigoDeAcceso(): CodigoDeAcceso {
     return CodigoDeAcceso.crear(`${aleatorio(4)}-${aleatorio(4)}`);
+  }
+
+  codigoDeVerificacion(): CodigoDeVerificacion {
+    return CodigoDeVerificacion.crear(aleatorio(10));
   }
 }
