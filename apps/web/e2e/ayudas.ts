@@ -31,12 +31,14 @@ export async function crearSesion(
   page: Page,
   titulo: string,
   modo: "Con códigos" | "Sala abierta",
+  ordenDelDia?: string,
 ): Promise<{ sala: string; ruta: string }> {
   // Título único por corrida, para no abrir una sesión de una corrida anterior.
   titulo = `${titulo} ${Date.now().toString(36)}`;
   await page.goto("/mesa");
   await page.getByLabel("Título").fill(titulo);
   await page.getByRole("radio", { name: new RegExp(modo) }).check();
+  if (ordenDelDia) await page.getByLabel("Orden del día (un punto por línea)").fill(ordenDelDia);
   await page.getByRole("button", { name: "Crear sesión" }).click();
   await page
     .getByRole("link", { name: new RegExp(titulo) })
