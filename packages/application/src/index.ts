@@ -1,5 +1,21 @@
-export type { Actor, RolDeMesa } from "./sala/actor.js";
-export { exigirAccesoASesion } from "./sala/acceso-a-sesion.js";
+export type { Actor, RolDeMesa, RolEnCuerpo } from "./sala/actor.js";
+export { exigirAccesoASesion, exigirGestionDeSesion } from "./sala/acceso-a-sesion.js";
+export {
+  exigirAdministrador,
+  puedeConducir,
+  puedeGestionar,
+  puedeProgramarEn,
+} from "./institucion/permisos.js";
+export type { RepositorioDeCuerpos } from "./puertos/repositorio-de-cuerpos.js";
+export type { RepositorioDeInstitucion } from "./puertos/repositorio-de-institucion.js";
+export { BuscarCruces } from "./calendario/buscar-cruces.js";
+export type { TramoLocal } from "./calendario/buscar-cruces.js";
+export { ListarCalendario } from "./calendario/listar-calendario.js";
+export type { Calendario } from "./calendario/listar-calendario.js";
+export type { ResumenDeSesion } from "./calendario/resumen-de-sesion.js";
+export { ReprogramarSesion } from "./sala/reprogramar-sesion.js";
+export type { CambiosLocales } from "./sala/reprogramar-sesion.js";
+export { CancelarSesion } from "./sala/cancelar-sesion.js";
 export {
   CODIGOS_MAXIMOS_POR_SESION_DE_DEMO,
   CODIGOS_MAXIMOS_POR_SOLICITUD_DE_DEMO,
@@ -13,13 +29,18 @@ export { ObtenerSesionDeLaMesa } from "./sala/obtener-sesion-de-la-mesa.js";
 export { LimpiarSesionesDeDemo } from "./sala/limpiar-sesiones-de-demo.js";
 export type { LimpiezaDeDemo } from "./puertos/limpieza-de-demo.js";
 export { CrearSesion } from "./sala/crear-sesion.js";
+export type { DatosParaCrearSesion } from "./sala/crear-sesion.js";
 export { IniciarSesion } from "./sala/iniciar-sesion.js";
 export { TerminarSesion } from "./sala/terminar-sesion.js";
 export { GenerarCodigosDeAcceso } from "./sala/generar-codigos-de-acceso.js";
 export { IngresarASala } from "./sala/ingresar-a-sala.js";
 export type { CredencialDeIngreso, ResultadoDeIngreso } from "./sala/ingresar-a-sala.js";
 export type { Participante } from "./sala/participante.js";
-export type { RepositorioDeSesiones } from "./puertos/repositorio-de-sesiones.js";
+export type {
+  FiltroDeRango,
+  FiltroDeSesiones,
+  RepositorioDeSesiones,
+} from "./puertos/repositorio-de-sesiones.js";
 export type {
   RepositorioDeParticipantes,
   ResultadoDeActivacion,

@@ -84,12 +84,15 @@ describe("familia votación: la cuenta de prueba solo toca sus sesiones", () => 
     });
   });
 
-  it("SUPERADMIN y MESA operan preguntas de cualquier sesión", async () => {
+  it("SUPERADMIN opera preguntas de cualquier sesión; el personal no toca las de la cuenta de prueba", async () => {
     const { e, propia } = await montar();
     const pregunta = await sembrarPregunta(e, propia.id, "BORRADOR");
     const abrir = new AbrirPregunta(e.sesiones, e.preguntas, e.reloj, e.unidad);
     await expect(abrir.ejecutar(superadmin, pregunta.id)).resolves.toBeUndefined();
     const cerrar = new CerrarPregunta(e.preguntas, e.sesiones, e.votos, e.reloj, e.unidad);
-    await expect(cerrar.ejecutar(mesa, pregunta.id)).resolves.toBeDefined();
+    await expect(cerrar.ejecutar(mesa, pregunta.id)).rejects.toMatchObject({
+      codigo: "PREGUNTA_NO_ENCONTRADA",
+    });
+    await expect(cerrar.ejecutar(superadmin, pregunta.id)).resolves.toBeDefined();
   });
 });

@@ -60,6 +60,7 @@ export interface DatosDeNuevaSesion extends Programacion {
   creadaEn: Date;
   /** Quién la creó; null si no se sabe. */
   creadaPorId?: string | null;
+  creadaPorDemo?: boolean;
 }
 
 export interface PropiedadesDeSesion extends Programacion {
@@ -119,6 +120,7 @@ export class Sesion {
       version: 0,
       creadaEn: datos.creadaEn,
       creadaPorId: datos.creadaPorId ?? null,
+      creadaPorDemo: datos.creadaPorDemo ?? false,
       cuerpoId: datos.cuerpoId,
       inicio: datos.inicio,
       fin: datos.fin,

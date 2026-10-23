@@ -291,6 +291,7 @@ describe("horario de la sesión", () => {
 
   it("no es de la cuenta de prueba salvo que se diga al reconstruir", () => {
     expect(Sesion.nueva(datosBase, generador).creadaPorDemo).toBe(false);
+    expect(Sesion.nueva({ ...datosBase, creadaPorDemo: true }, generador).creadaPorDemo).toBe(true);
     expect(Sesion.reconstruir({ ...datosDeSesion(), creadaPorDemo: true }).creadaPorDemo).toBe(
       true,
     );

@@ -5,10 +5,13 @@ import {
   type EstadoDeSesion,
   type ModoDeParticipacion,
 } from "@kuorum/domain";
+import { CUENTAS_DE_DEMO, CUERPO_GENERAL } from "./actores.js";
 import { GeneradorDeCodigosGuionado } from "./generador-de-codigos-guionado.js";
 import { GeneradorDeIdsSecuencial } from "./generador-de-ids-secuencial.js";
 import { HasheadorFalso } from "./hasheador-falso.js";
 import { RelojFijo } from "./reloj-fijo.js";
+import { RepositorioDeCuerposEnMemoria } from "./repositorio-de-cuerpos-en-memoria.js";
+import { RepositorioDeInstitucionEnMemoria } from "./repositorio-de-institucion-en-memoria.js";
 import { RepositorioDeParticipantesEnMemoria } from "./repositorio-de-participantes-en-memoria.js";
 import { RegistroDeVotosEnMemoria } from "./registro-de-votos-en-memoria.js";
 import { RepositorioDePreguntasEnMemoria } from "./repositorio-de-preguntas-en-memoria.js";
@@ -19,6 +22,8 @@ import { UnidadDeTrabajoInmediata } from "./unidad-de-trabajo-inmediata.js";
 export function crearEscenario(salasFijas: string[] = []) {
   return {
     sesiones: new RepositorioDeSesionesEnMemoria(),
+    cuerpos: new RepositorioDeCuerposEnMemoria(),
+    institucion: new RepositorioDeInstitucionEnMemoria(),
     participantes: new RepositorioDeParticipantesEnMemoria(),
     preguntas: new RepositorioDePreguntasEnMemoria(),
     solicitudes: new RepositorioDeSolicitudesEnMemoria(),
@@ -35,11 +40,21 @@ export type Escenario = ReturnType<typeof crearEscenario>;
 
 export async function sembrarSesion(
   escenario: Escenario,
-  opciones: { modo?: ModoDeParticipacion; estado?: EstadoDeSesion; creadaPorId?: string } = {},
+  opciones: {
+    modo?: ModoDeParticipacion;
+    estado?: EstadoDeSesion;
+    creadaPorId?: string;
+    cuerpoId?: string;
+    /** Por defecto, a la hora del reloj, por dos horas. */
+    inicio?: Date;
+    fin?: Date;
+    titulo?: string;
+  } = {},
 ): Promise<Sesion> {
+  const inicio = opciones.inicio ?? escenario.reloj.ahora();
   const sesion = Sesion.reconstruir({
     id: escenario.ids.nuevo(),
-    titulo: "Asamblea general",
+    titulo: opciones.titulo ?? "Asamblea general",
     codigoDeSala: escenario.codigos.codigoDeSala(),
     modo: opciones.modo ?? "SALA_ABIERTA",
     estado: opciones.estado ?? "PROGRAMADA",
@@ -47,6 +62,11 @@ export async function sembrarSesion(
     version: 0,
     creadaEn: escenario.reloj.ahora(),
     creadaPorId: opciones.creadaPorId ?? null,
+    creadaPorDemo: CUENTAS_DE_DEMO.includes(opciones.creadaPorId ?? ""),
+    cuerpoId: opciones.cuerpoId ?? CUERPO_GENERAL,
+    inicio,
+    fin: opciones.fin ?? new Date(inicio.getTime() + 2 * 3_600_000),
+    modalidad: "PRESENCIAL",
   });
   await escenario.sesiones.guardar(sesion);
   return sesion;
