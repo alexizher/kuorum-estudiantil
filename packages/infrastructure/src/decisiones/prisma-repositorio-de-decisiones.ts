@@ -57,6 +57,10 @@ export class PrismaRepositorioDeDecisiones implements RepositorioDeDecisiones {
     });
   }
 
+  async eliminarDePregunta(preguntaId: string): Promise<void> {
+    await this.contexto.cliente().decision.deleteMany({ where: { preguntaId } });
+  }
+
   async deSesion(sesionId: string): Promise<Decision[]> {
     const filas = await this.contexto.cliente().decision.findMany({
       where: { sesionId },

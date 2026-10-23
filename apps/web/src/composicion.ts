@@ -195,7 +195,7 @@ export function contenedor(): Contenedor {
         participantes,
         ids,
       ),
-      anularPregunta: new AnularPregunta(preguntas, sesiones, unidad),
+      anularPregunta: new AnularPregunta(preguntas, sesiones, unidad, decisiones),
       proyectarResultado: new ProyectarResultado(preguntas, sesiones, unidad),
       emitirVoto: new EmitirVoto(participantes, preguntas, sesiones, votos),
       pedirLaPalabra: new PedirLaPalabra(participantes, sesiones, solicitudes, reloj, ids, unidad),

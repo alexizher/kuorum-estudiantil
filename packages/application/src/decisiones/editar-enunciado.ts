@@ -20,6 +20,7 @@ export class EditarEnunciado {
       if (decision === null || sesion === null || !puedeConducir(actor, sesion)) {
         throw new ErrorDeDominio("DECISION_NO_ENCONTRADA");
       }
+      if (sesion.estado === "ACTA_FINAL") throw new ErrorDeDominio("ACTA_FINALIZADA");
       decision.cambiarEnunciado(texto);
       sesion.registrarCambio();
       await this.decisiones.guardar(decision);

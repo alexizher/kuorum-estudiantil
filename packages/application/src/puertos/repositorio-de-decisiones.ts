@@ -11,6 +11,8 @@ export interface RepositorioDeDecisiones {
   guardar(decision: Decision): Promise<void>;
   deSesion(sesionId: string): Promise<Decision[]>;
   porId(id: string): Promise<Decision | null>;
+  /** Al anular una votación cerrada; no falla si no hay. */
+  eliminarDePregunta(preguntaId: string): Promise<void>;
   /** Solo de sesiones con acta final y no creadas por cuentas DEMO, por fecha de cierre. */
   publicas(filtro: FiltroPublico): Promise<Decision[]>;
 }

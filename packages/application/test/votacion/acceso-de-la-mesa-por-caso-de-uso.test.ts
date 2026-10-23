@@ -67,7 +67,7 @@ describe("familia votación: la cuenta de prueba solo toca sus sesiones", () => 
     [
       "AnularPregunta",
       (e: ReturnType<typeof crearEscenario>) =>
-        new AnularPregunta(e.preguntas, e.sesiones, e.unidad),
+        new AnularPregunta(e.preguntas, e.sesiones, e.unidad, e.decisiones),
       "BORRADOR" as const,
     ],
     [

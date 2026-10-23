@@ -60,7 +60,10 @@ describe("AnularPregunta", () => {
     const { e, sesion, pregunta } = await montar("CERRADA");
     pregunta.proyectarResultado();
 
-    await new AnularPregunta(e.preguntas, e.sesiones, e.unidad).ejecutar(superadmin, pregunta.id);
+    await new AnularPregunta(e.preguntas, e.sesiones, e.unidad, e.decisiones).ejecutar(
+      superadmin,
+      pregunta.id,
+    );
 
     expect(pregunta.estado).toBe("ANULADA");
     expect(pregunta.resultadoVisible).toBe(false);
@@ -69,7 +72,7 @@ describe("AnularPregunta", () => {
 
   it("anular dos veces da TRANSICION_INVALIDA", async () => {
     const { e, pregunta } = await montar("BORRADOR");
-    const caso = new AnularPregunta(e.preguntas, e.sesiones, e.unidad);
+    const caso = new AnularPregunta(e.preguntas, e.sesiones, e.unidad, e.decisiones);
     await caso.ejecutar(superadmin, pregunta.id);
     await expect(caso.ejecutar(superadmin, pregunta.id)).rejects.toMatchObject({
       codigo: "TRANSICION_INVALIDA",

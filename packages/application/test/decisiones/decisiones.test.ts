@@ -85,9 +85,22 @@ describe("CerrarPregunta registra la decisión", () => {
     });
   });
 
+  it("anular una votación cerrada borra su decisión", async () => {
+    const { e, sesion, pregunta } = await montar();
+    await cerrar(e).ejecutar(superadmin, pregunta.id);
+    await new AnularPregunta(e.preguntas, e.sesiones, e.unidad, e.decisiones).ejecutar(
+      superadmin,
+      pregunta.id,
+    );
+    expect(await e.decisiones.deSesion(sesion.id)).toHaveLength(0);
+  });
+
   it("anular una pregunta abierta no crea decisión", async () => {
     const { e, sesion, pregunta } = await montar();
-    await new AnularPregunta(e.preguntas, e.sesiones, e.unidad).ejecutar(superadmin, pregunta.id);
+    await new AnularPregunta(e.preguntas, e.sesiones, e.unidad, e.decisiones).ejecutar(
+      superadmin,
+      pregunta.id,
+    );
     expect(await e.decisiones.deSesion(sesion.id)).toHaveLength(0);
   });
 });
@@ -108,6 +121,22 @@ describe("EditarEnunciado", () => {
     await caso.ejecutar(superadmin, id, "  Se aprueba el acta anterior.  ");
     expect((await e.decisiones.porId(id))?.enunciado).toBe("Se aprueba el acta anterior.");
     await caso.ejecutar(superadmin, id, null);
+    expect((await e.decisiones.porId(id))?.enunciado).toBeNull();
+  });
+
+  it("con el acta final da ACTA_FINALIZADA y no cambia; lo ajeno sigue siendo 404", async () => {
+    const { e, sesion, pregunta } = await montar();
+    await cerrar(e).ejecutar(superadmin, pregunta.id);
+    const id = await idDeLaDecision(e, sesion.id);
+    sesion.terminar();
+    sesion.finalizarActa();
+    const caso = new EditarEnunciado(e.decisiones, e.sesiones, e.unidad);
+    await expect(caso.ejecutar(superadmin, id, "Tarde")).rejects.toMatchObject({
+      codigo: "ACTA_FINALIZADA",
+    });
+    await expect(caso.ejecutar(encargadoDeMedicina, id, "Tarde")).rejects.toMatchObject({
+      codigo: "DECISION_NO_ENCONTRADA",
+    });
     expect((await e.decisiones.porId(id))?.enunciado).toBeNull();
   });
 

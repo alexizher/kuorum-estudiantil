@@ -1,5 +1,6 @@
 import {
   Decision,
+  ErrorDeDominio,
   Resultado,
   type GeneradorDeIds,
   type RegistroDeVotos,
@@ -38,6 +39,8 @@ export class CerrarPregunta {
       sesion.registrarCambio();
       await this.preguntas.guardar(pregunta);
       await this.sesiones.guardar(sesion);
+      const cerradaEn = pregunta.cerradaEn;
+      if (cerradaEn === null) throw new ErrorDeDominio("PREGUNTA_NO_CERRADA");
       const resultado = Resultado.calcular(pregunta, await this.votos.conteos(pregunta.id));
       const asistentes =
         sesion.modo === "CON_CODIGOS" ? await this.participantes.contarActivos(sesion.id) : null;
@@ -48,7 +51,7 @@ export class CerrarPregunta {
           sesion,
           resultado,
           asistentes,
-          cerradaEn: pregunta.cerradaEn ?? this.reloj.ahora(),
+          cerradaEn,
         }),
       );
       return resultado;

@@ -61,6 +61,18 @@ describe("PrismaRepositorioDeDecisiones", () => {
     expect(await banco.decisiones.porId(randomUUID())).toBeNull();
   });
 
+  it("elimina la decisión de una pregunta y no falla si no hay", async () => {
+    const sesion = sesionDePrueba();
+    await banco.sesiones.guardar(sesion);
+    const decision = await decisionEn(sesion, new Date());
+    const otra = await decisionEn(sesion, new Date());
+    await banco.decisiones.guardar(decision);
+    await banco.decisiones.guardar(otra);
+    await banco.decisiones.eliminarDePregunta(decision.preguntaId);
+    await banco.decisiones.eliminarDePregunta(decision.preguntaId);
+    expect((await banco.decisiones.deSesion(sesion.id)).map((d) => d.id)).toEqual([otra.id]);
+  });
+
   it("guarda de nuevo el enunciado editado", async () => {
     const sesion = sesionDePrueba();
     await banco.sesiones.guardar(sesion);

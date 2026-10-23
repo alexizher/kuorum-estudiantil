@@ -1,3 +1,4 @@
+import type { RepositorioDeDecisiones } from "../puertos/repositorio-de-decisiones.js";
 import type { RepositorioDePreguntas } from "../puertos/repositorio-de-preguntas.js";
 import type { RepositorioDeSesiones } from "../puertos/repositorio-de-sesiones.js";
 import type { UnidadDeTrabajo } from "../puertos/unidad-de-trabajo.js";
@@ -9,6 +10,7 @@ export class AnularPregunta {
     private readonly preguntas: RepositorioDePreguntas,
     private readonly sesiones: RepositorioDeSesiones,
     private readonly unidad: UnidadDeTrabajo,
+    private readonly decisiones: RepositorioDeDecisiones,
   ) {}
 
   ejecutar(actor: Actor, preguntaId: string): Promise<void> {
@@ -23,6 +25,8 @@ export class AnularPregunta {
       sesion.registrarCambio();
       await this.preguntas.guardar(pregunta);
       await this.sesiones.guardar(sesion);
+      // Una votación anulada no deja decisión.
+      await this.decisiones.eliminarDePregunta(pregunta.id);
     });
   }
 }

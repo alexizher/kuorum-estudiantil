@@ -87,7 +87,7 @@ async function solicitud(
   );
 }
 
-/** Sesión con una decisión, una votación anulada después de cerrar y la sala terminada. */
+/** Sesión con una decisión, una votación anulada después de cerrar (sin decisión) y la sala terminada. */
 async function sesionTerminada(opciones: { modo?: "CON_CODIGOS"; creadaPorId?: string } = {}) {
   const e = crearEscenario();
   const c = casos(e);
@@ -102,7 +102,10 @@ async function sesionTerminada(opciones: { modo?: "CON_CODIGOS"; creadaPorId?: s
   await c.cerrar.ejecutar(superadmin, pregunta.id);
   const anulada = await sembrarPregunta(e, sesion.id, "ABIERTA");
   await c.cerrar.ejecutar(superadmin, anulada.id);
-  await new AnularPregunta(e.preguntas, e.sesiones, e.unidad).ejecutar(superadmin, anulada.id);
+  await new AnularPregunta(e.preguntas, e.sesiones, e.unidad, e.decisiones).ejecutar(
+    superadmin,
+    anulada.id,
+  );
   await c.terminar.ejecutar(superadmin, sesion.id);
   return { e, c, sesion, pregunta };
 }
@@ -138,7 +141,7 @@ describe("ObtenerActaDeLaMesa y EditarActa", () => {
     expect(vistaPrevia.cuerpo).toBe("Ingeniería");
     expect(vistaPrevia.titulo).toBe("Asamblea de Ingeniería");
     expect(vistaPrevia.decisiones).toHaveLength(1);
-    expect(await e.decisiones.deSesion(sesion.id)).toHaveLength(2);
+    expect(await e.decisiones.deSesion(sesion.id)).toHaveLength(1);
   });
 
   it("quien no conduce recibe SESION_AJENA", async () => {

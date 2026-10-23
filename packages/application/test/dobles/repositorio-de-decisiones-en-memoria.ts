@@ -28,6 +28,11 @@ export class RepositorioDeDecisionesEnMemoria implements RepositorioDeDecisiones
     return this.decisiones.get(id) ?? null;
   }
 
+  async eliminarDePregunta(preguntaId: string): Promise<void> {
+    for (const [id, d] of this.decisiones)
+      if (d.preguntaId === preguntaId) this.decisiones.delete(id);
+  }
+
   async publicas(filtro: FiltroPublico): Promise<Decision[]> {
     const resultado: Decision[] = [];
     for (const d of this.decisiones.values()) {
