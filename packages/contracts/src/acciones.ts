@@ -1,6 +1,9 @@
 import { z } from "zod";
 
 const texto = (maximo: number) => z.string().min(1).max(maximo);
+const colorHex = z.string().regex(/^#[0-9a-fA-F]{6}$/);
+const url = z.string().url();
+const proveedorOAuth = z.enum(["microsoft", "google"]);
 
 export const esquemaIngresar = z
   .object({
@@ -56,6 +59,14 @@ export const esquemaInstitucion = z
     tipoDeCuerpoSingular: texto(40).optional(),
     tipoDeCuerpoPlural: texto(40).optional(),
     zonaHoraria: texto(80).optional(),
+    logoUrl: url.nullable().optional(),
+    colorPrimario: colorHex.nullable().optional(),
+    colorSecundario: colorHex.nullable().optional(),
+    pieDePagina: z.string().max(500).nullable().optional(),
+    textoBienvenida: z.string().max(1000).nullable().optional(),
+    proveedorOAuth: proveedorOAuth.nullable().optional(),
+    clientIdOAuth: z.string().max(200).nullable().optional(),
+    clientSecretOAuth: z.string().max(500).nullable().optional(),
   })
   .refine(alMenosUno);
 

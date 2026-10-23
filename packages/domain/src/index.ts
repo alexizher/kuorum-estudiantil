@@ -34,7 +34,7 @@ export type { CambiosDeProgramacion } from "./sesion/sesion.js";
 export { Cuerpo } from "./institucion/cuerpo.js";
 export type { PropiedadesDeCuerpo, TipoDeCuerpo } from "./institucion/cuerpo.js";
 export { Institucion } from "./institucion/institucion.js";
-export type { PropiedadesDeInstitucion } from "./institucion/institucion.js";
+export type { PropiedadesDeInstitucion, ProveedorOAuth } from "./institucion/institucion.js";
 export { aHoraLocal, deHoraLocal } from "./calendario/hora-local.js";
 export { seCruzan } from "./calendario/cruces.js";
 export type { Tramo } from "./calendario/cruces.js";

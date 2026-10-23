@@ -92,14 +92,15 @@ async function principal(): Promise<number> {
   // Import dinámico: las pruebas importan este archivo sin tocar la base ni el entorno.
   const { contenedor } = await import("../src/composicion");
   const { actualizarCuentaDeMesa, crearCuentaDeMesa } = await import("../src/auth/crear-cuenta");
+  const auth = await contenedor().autenticacion();
   return ejecutarCrearAdmin(process.argv.slice(2), {
     leerStdin,
     stdout: (texto) => process.stdout.write(texto),
     stderr: (texto) => process.stderr.write(texto),
     crearCuenta: async (datos) => {
-      await crearCuentaDeMesa(contenedor().autenticacion(), datos);
+      await crearCuentaDeMesa(auth, datos);
     },
-    actualizarCuenta: (datos) => actualizarCuentaDeMesa(contenedor().autenticacion(), datos),
+    actualizarCuenta: (datos) => actualizarCuentaDeMesa(auth, datos),
   });
 }
 

@@ -5,14 +5,16 @@ import { cambiarContrasenaDeMesa, crearCuentaDeMesa } from "./crear-cuenta";
 
 /** Las cuentas del personal se crean con Better Auth, igual que las de crear-admin. */
 export class CuentasDePersonalConBetterAuth implements CuentasDePersonal {
-  constructor(private readonly auth: () => Autenticacion) {}
+  constructor(private readonly auth: () => Promise<Autenticacion>) {}
 
-  crear(correo: string, nombre: string, contrasena: string): Promise<string> {
-    return crearCuentaDeMesa(this.auth(), { correo, nombre, contrasena, rol: "MESA" });
+  async crear(correo: string, nombre: string, contrasena: string): Promise<string> {
+    const auth = await this.auth();
+    return crearCuentaDeMesa(auth, { correo, nombre, contrasena, rol: "MESA" });
   }
 
-  cambiarContrasena(usuarioId: string, contrasena: string): Promise<void> {
-    return cambiarContrasenaDeMesa(this.auth(), usuarioId, contrasena);
+  async cambiarContrasena(usuarioId: string, contrasena: string): Promise<void> {
+    const auth = await this.auth();
+    return cambiarContrasenaDeMesa(auth, usuarioId, contrasena);
   }
 }
 

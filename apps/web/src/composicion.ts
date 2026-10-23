@@ -73,7 +73,7 @@ import {
   createPrismaClient,
   verificarConexion,
 } from "@kuorum/infrastructure";
-import { crearAuth, urlBaseDesdeEntorno, type Autenticacion } from "./auth/crear-auth";
+import { crearAuth, urlBaseDesdeEntorno, type Autenticacion, type ConfigOAuth } from "./auth/crear-auth";
 import { CuentasDePersonalConBetterAuth, generadorDeContrasenas } from "./auth/cuentas-de-personal";
 
 export interface Contenedor {
@@ -139,7 +139,7 @@ export interface Contenedor {
   membresias: RepositorioDeMembresias;
   verificarBaseDeDatos: () => Promise<boolean>;
   /** Se construye en el primer uso: exige BETTER_AUTH_SECRET solo a quien la pide. */
-  autenticacion: () => Autenticacion;
+  autenticacion: () => Promise<Autenticacion>;
 }
 
 let instancia: Contenedor | undefined;
@@ -171,7 +171,7 @@ export function contenedor(): Contenedor {
     const ids = new GeneradorDeIdsUuid();
     const codigos = new GeneradorDeCodigosAleatorio();
     const hasheador = new HasheadorSha256();
-    let auth: Autenticacion | undefined;
+    let authPromise: Promise<Autenticacion> | undefined;
     const cuentas = new CuentasDePersonalConBetterAuth(() => {
       if (instancia === undefined) throw new Error("Contenedor sin construir");
       return instancia.autenticacion();
@@ -286,12 +286,31 @@ export function contenedor(): Contenedor {
         if (secreto === undefined || secreto === "") {
           throw new Error("Falta la variable de entorno BETTER_AUTH_SECRET");
         }
-        auth ??= crearAuth({
-          adaptador: crearAdaptadorDeAutenticacion(prisma),
-          secreto,
-          urlBase: urlBaseDesdeEntorno(process.env),
-        });
-        return auth;
+        if (!authPromise) {
+          authPromise = (async () => {
+            // Obtener configuración OAuth de la institución (si existe)
+            let oauth: ConfigOAuth | null = null;
+            try {
+              const inst = await institucion.obtener();
+              if (inst.proveedorOAuth && inst.clientIdOAuth && inst.clientSecretOAuth) {
+                oauth = {
+                  proveedor: inst.proveedorOAuth,
+                  clientId: inst.clientIdOAuth,
+                  clientSecret: inst.clientSecretOAuth,
+                };
+              }
+            } catch {
+              // Si falla (ej. primera vez sin institución), continuamos sin OAuth
+            }
+            return crearAuth({
+              adaptador: crearAdaptadorDeAutenticacion(prisma),
+              secreto,
+              urlBase: urlBaseDesdeEntorno(process.env),
+              oauth,
+            });
+          })();
+        }
+        return authPromise;
       },
     };
   }

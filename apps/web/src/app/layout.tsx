@@ -3,6 +3,7 @@ import "@kuorum/ui/estilos.css";
 import type { Metadata, Viewport } from "next";
 import { Archivo } from "next/font/google";
 import type { ReactNode } from "react";
+import { BrandingProvider } from "@/components/branding-provider";
 
 // Archivo variable con ejes de ancho y peso: titulares condensados, texto en ancho normal.
 const archivo = Archivo({
@@ -32,7 +33,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       </head>
       <body>
         <DefinicionesDeTinta />
-        <TemaProvider>{children}</TemaProvider>
+        <TemaProvider>
+          <BrandingProvider>{children}</BrandingProvider>
+        </TemaProvider>
       </body>
     </html>
   );
