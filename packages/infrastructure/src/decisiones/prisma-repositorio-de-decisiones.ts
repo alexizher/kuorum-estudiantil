@@ -3,6 +3,11 @@ import type { FiltroPublico, RepositorioDeDecisiones } from "@kuorum/application
 import type { Prisma, Decision as FilaDeDecision } from "../generated/prisma/client.js";
 import type { ContextoTransaccional } from "../prisma/contexto-transaccional.js";
 
+function reglaValida(regla: string): "MAYORIA_SIMPLE" {
+  if (regla !== "MAYORIA_SIMPLE") throw new ErrorDeDominio("REGLA_DESCONOCIDA");
+  return regla;
+}
+
 function aDominio(fila: FilaDeDecision): Decision {
   return Decision.reconstruir({
     id: fila.id,
@@ -10,7 +15,7 @@ function aDominio(fila: FilaDeDecision): Decision {
     sesionId: fila.sesionId,
     cuerpoId: fila.cuerpoId,
     pregunta: fila.pregunta,
-    regla: "MAYORIA_SIMPLE",
+    regla: reglaValida(fila.regla),
     resultado: fila.resultado as unknown as FotoDeResultado,
     aprobada: fila.aprobada,
     indicativa: fila.indicativa,

@@ -79,6 +79,7 @@ export class PrismaRepositorioDeActas implements RepositorioDeActas {
         estado: "FINAL",
         finalizadaEn: { gte: filtro.desde, lt: filtro.hasta },
         sesion: {
+          estado: "ACTA_FINAL",
           ...(filtro.cuerpoId === undefined ? {} : { cuerpoId: filtro.cuerpoId }),
           OR: [{ creadaPorId: null }, { creadaPor: { rol: { not: "DEMO" } } }],
         },

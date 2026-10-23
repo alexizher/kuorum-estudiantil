@@ -98,6 +98,16 @@ describe("PrismaRepositorioDeActas", () => {
     expect(una.map((x) => x.sesion.id)).toEqual([b.id]);
   });
 
+  it("publicas no trae un acta final si la sesión no está en ACTA_FINAL", async () => {
+    const sesion = sesionDePrueba({ estado: "CERRADA" });
+    await finalDe(sesion, "23456-789AB", new Date("2026-10-20T18:00:00Z"));
+    const rango = {
+      desde: new Date("2026-10-01T00:00:00Z"),
+      hasta: new Date("2026-11-01T00:00:00Z"),
+    };
+    expect(await banco.actas.publicas(rango)).toEqual([]);
+  });
+
   it("borrar la sesión borra el acta", async () => {
     const sesion = sesionDePrueba({ estado: "ACTA_FINAL" });
     await finalDe(sesion, "23456-789AB", new Date());
