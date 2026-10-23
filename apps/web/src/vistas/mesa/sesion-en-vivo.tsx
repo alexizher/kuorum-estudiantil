@@ -1,10 +1,12 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useMemo } from "react";
 import { FuenteDeEstadoPorConsulta } from "../../tiempo-real/fuente-por-consulta";
 import { PoliticaFija } from "../../tiempo-real/intervalo-adaptativo";
-import { ClienteDeMesaPorFetch, type ModoDeSala } from "./cliente-de-mesa";
-import { PanelDeSesion } from "./panel-de-sesion";
+import { ClienteDeMesaPorFetch } from "./cliente-de-mesa";
+import { PanelDeSesion, type SesionDelPanel } from "./panel-de-sesion";
+import { useGestionDeSesion } from "./use-gestion-de-sesion";
 import { enlaceParaParticipantes } from "./textos";
 import { useFormularioDePregunta } from "./use-formulario-de-pregunta";
 import { usePanelDeSesion } from "./use-panel-de-sesion";
@@ -13,7 +15,7 @@ import { useSegundosRestantes } from "./use-segundos-restantes";
 const INTERVALO_DE_LA_MESA_MS = 3000;
 
 interface Propiedades {
-  sesion: { id: string; titulo: string; codigo: string; modo: ModoDeSala; estado: string };
+  sesion: SesionDelPanel;
   esDemo?: boolean;
   /** Para pruebas; por defecto el fetch del navegador. */
   dependencias?: { fetch?: typeof globalThis.fetch };
@@ -38,7 +40,10 @@ export function SesionEnVivo({ sesion, esDemo = false, dependencias }: Propiedad
     };
   }, [dependencias]);
 
+  const router = useRouter();
   const panel = usePanelDeSesion({ id: sesion.id, codigo: sesion.codigo }, fuente, cliente);
+  // Los datos de la sesión vienen del servidor: tras reprogramar o cancelar se vuelven a pedir.
+  const gestion = useGestionDeSesion(cliente, sesion.id, () => router.refresh());
   const formulario = useFormularioDePregunta(panel.acciones.crearPregunta);
   const segundosRestantes = useSegundosRestantes(panel.estado);
 
@@ -47,6 +52,7 @@ export function SesionEnVivo({ sesion, esDemo = false, dependencias }: Propiedad
       sesion={sesion}
       esDemo={esDemo}
       panel={panel}
+      gestion={{ acciones: gestion, cliente }}
       formulario={formulario}
       segundosRestantes={segundosRestantes}
       alCopiarEnlace={() =>

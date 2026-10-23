@@ -1,10 +1,12 @@
 "use client";
 
-import { Boton, Pestanas, type ElementoDePestana } from "@kuorum/ui";
+import { Boton, HojaInferior, Pestanas, type ElementoDePestana } from "@kuorum/ui";
 import { useState } from "react";
 import { TEXTO_DE_ALERTA_DE_VOTOS } from "./alerta";
 import { CabeceraDeSesion } from "./cabecera-de-sesion";
-import type { ModoDeSala } from "./cliente-de-mesa";
+import type { ClienteDeMesa, ModoDeSala, ProgramacionDeSesion } from "./cliente-de-mesa";
+import { FormularioDeReprogramar } from "./formulario-de-reprogramar";
+import type { GestionDeSesion } from "./use-gestion-de-sesion";
 import { FilaDePalabra } from "./fila-de-palabra";
 import { FormularioDePreguntaNueva } from "./formulario-de-pregunta";
 import { HojaDeConfirmacion } from "./hoja-de-confirmacion";
@@ -17,8 +19,19 @@ import type { FormularioDePregunta } from "./use-formulario-de-pregunta";
 import { formatearNumero } from "../proyeccion/textos";
 import { VotacionActual, votacionActual } from "./votacion-actual";
 
+export interface SesionDelPanel {
+  id: string;
+  titulo: string;
+  codigo: string;
+  modo: ModoDeSala;
+  estado: string;
+  programacion?: ProgramacionDeSesion;
+}
+
 export interface PropiedadesDePanel {
-  sesion: { id: string; titulo: string; codigo: string; modo: ModoDeSala; estado: string };
+  sesion: SesionDelPanel;
+  /** Reprogramar y cancelar; sin ella no se ofrecen. */
+  gestion?: { acciones: GestionDeSesion; cliente: Pick<ClienteDeMesa, "buscarCruces"> };
   panel: Panel;
   formulario: FormularioDePregunta;
   segundosRestantes: number | null;
@@ -27,7 +40,8 @@ export interface PropiedadesDePanel {
 }
 
 type Pestana = "fila" | "votacion" | "sala";
-type Confirmacion = { tipo: "terminar" } | { tipo: "anular"; preguntaId: string } | null;
+type Confirmacion =
+  { tipo: "terminar" } | { tipo: "cancelar" } | { tipo: "anular"; preguntaId: string } | null;
 
 export function PanelDeSesion({
   sesion,
@@ -36,8 +50,10 @@ export function PanelDeSesion({
   segundosRestantes,
   alCopiarEnlace,
   esDemo = false,
+  gestion,
 }: PropiedadesDePanel) {
   const [pestana, setPestana] = useState<Pestana>("fila");
+  const [reprogramando, setReprogramando] = useState(false);
   const [confirmacion, setConfirmacion] = useState<Confirmacion>(null);
   const { estado, acciones, ocupado } = panel;
   const estadoDeSesion = estado?.sala.estado ?? sesion.estado;
@@ -65,6 +81,7 @@ export function PanelDeSesion({
     const pendiente = confirmacion;
     setConfirmacion(null);
     if (pendiente?.tipo === "terminar") await acciones.terminar();
+    else if (pendiente?.tipo === "cancelar") await gestion?.acciones.cancelar();
     else if (pendiente?.tipo === "anular") await acciones.anular(pendiente.preguntaId);
   }
 
@@ -81,7 +98,40 @@ export function PanelDeSesion({
         alPedirTerminar={() => setConfirmacion({ tipo: "terminar" })}
         alCopiarEnlace={alCopiarEnlace}
         esDemo={esDemo}
+        programacion={sesion.programacion}
+        {...(gestion
+          ? {
+              alReprogramar: () => setReprogramando(true),
+              alPedirCancelar: () => setConfirmacion({ tipo: "cancelar" }),
+            }
+          : {})}
       />
+      {gestion && sesion.programacion ? (
+        <HojaInferior
+          abierta={reprogramando}
+          titulo="Reprogramar sesión"
+          alCerrar={() => setReprogramando(false)}
+        >
+          {reprogramando ? (
+            <FormularioDeReprogramar
+              sesionId={sesion.id}
+              titulo={sesion.titulo}
+              programacion={sesion.programacion}
+              gestion={gestion.acciones}
+              cliente={gestion.cliente}
+              alTerminar={() => setReprogramando(false)}
+            />
+          ) : null}
+        </HojaInferior>
+      ) : null}
+      {gestion?.acciones.error && !reprogramando ? (
+        <div role="alert" className={estilos.alerta}>
+          <p>{gestion.acciones.error}</p>
+          <Boton variante="plano" onClick={gestion.acciones.descartarError}>
+            Cerrar aviso
+          </Boton>
+        </div>
+      ) : null}
 
       {panel.alerta ? (
         <p role="alert" className={estilos.alerta}>
@@ -203,6 +253,14 @@ export function PanelDeSesion({
           titulo="Anular la votación"
           texto="La pregunta queda anulada y no cuenta como resultado. No se puede deshacer."
           textoDeConfirmar="Anular votación"
+          alConfirmar={() => void confirmar()}
+          alCancelar={() => setConfirmacion(null)}
+        />
+        <HojaDeConfirmacion
+          abierta={confirmacion?.tipo === "cancelar"}
+          titulo="Cancelar la sesión"
+          texto="La sesión queda cancelada y sale tachada en el calendario. No se puede deshacer."
+          textoDeConfirmar="Sí, cancelarla"
           alConfirmar={() => void confirmar()}
           alCancelar={() => setConfirmacion(null)}
         />

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { TemaProvider } from "@kuorum/ui";
-import { cleanup, render as renderizar, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render as renderizar, screen, waitFor } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import type { ReactElement } from "react";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
@@ -8,6 +8,8 @@ import { MesaEnVivo } from "../../src/vistas/mesa/mesa-en-vivo";
 import { SesionEnVivo } from "../../src/vistas/mesa/sesion-en-vivo";
 import { violacionesDeAxe } from "../proyeccion/axe";
 import { salaVacia } from "../proyeccion/estados";
+import type { InstitucionDeMesa } from "../../src/vistas/mesa/cliente-de-mesa";
+import { INSTITUCION, sesionDeLista } from "./falsos";
 
 const empujar = vi.fn();
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: empujar }) }));
@@ -23,33 +25,52 @@ afterEach(() => {
   document.documentElement.removeAttribute("data-tema");
 });
 
-const sesion = {
-  id: "s1",
-  titulo: "Asamblea General",
-  codigoDeSala: "K7F2",
-  estado: "EN_CURSO",
-  modo: "CON_CODIGOS",
-  creadaEn: "2026-10-20T10:00:00.000Z",
-};
+const sesion = sesionDeLista({ titulo: "Asamblea General" });
 
-function fetchDeLaLista(sesiones: unknown[] = [sesion]) {
-  return vi.fn<typeof fetch>(async (url, opciones) => {
-    if (String(url) === "/api/mesa/v1/sesiones" && opciones?.method === "POST") {
+function fetchDeLaLista(
+  sesiones: unknown[] = [sesion],
+  opciones: { institucion?: InstitucionDeMesa; cruces?: unknown[] } = {},
+) {
+  return vi.fn<typeof fetch>(async (url, pedido) => {
+    const ruta = String(url);
+    if (ruta === "/api/mesa/v1/sesiones" && pedido?.method === "POST") {
       return Response.json({ ...sesion, id: "s2" }, { status: 201 });
     }
+    if (ruta === "/api/mesa/v1/institucion") {
+      return Response.json(opciones.institucion ?? INSTITUCION);
+    }
+    if (ruta.startsWith("/api/mesa/v1/cruces"))
+      return Response.json({ cruces: opciones.cruces ?? [] });
     return Response.json({ sesiones });
   });
 }
 
+const llamadasDeLista = (f: ReturnType<typeof fetchDeLaLista>) =>
+  f.mock.calls.filter(
+    (c) => String(c[0]).startsWith("/api/mesa/v1/sesiones") && c[1]?.method === "GET",
+  );
+
+function elegirHorario(fecha: string, desde: string, hasta: string) {
+  fireEvent.change(screen.getByLabelText("Fecha"), { target: { value: fecha } });
+  fireEvent.change(screen.getByLabelText("Desde"), { target: { value: desde } });
+  fireEvent.change(screen.getByLabelText("Hasta"), { target: { value: hasta } });
+}
+
 describe("MesaEnVivo", () => {
-  it("lista las sesiones con título, sala, estado, modo y fecha, y enlaza a cada una", async () => {
+  it("lista las sesiones con título, sala, cuerpo, fecha y hora local, estado y modo", async () => {
     render(<MesaEnVivo dependencias={{ fetch: fetchDeLaLista() }} />);
     const enlace = await screen.findByRole("link", { name: /Asamblea General/ });
     expect(enlace.getAttribute("href")).toBe("/mesa/sesiones/s1");
     expect(enlace.textContent).toContain("K7F2");
     expect(enlace.textContent).toContain("En curso");
     expect(enlace.textContent).toContain("Con códigos");
-    expect(enlace.textContent).toMatch(/oct/);
+    expect(enlace.textContent).toContain("Asamblea general");
+    expect(enlace.textContent).toContain("3 nov 2026, 14:00");
+  });
+
+  it("una cuenta del personal sin cuerpos ve a quién pedírselos", async () => {
+    render(<MesaEnVivo sinCuerpos dependencias={{ fetch: fetchDeLaLista([]) }} />);
+    expect(await screen.findByText(/Todavía no tienes cuerpos asignados/)).toBeTruthy();
   });
 
   it("sin sesiones lo dice", async () => {
@@ -59,7 +80,7 @@ describe("MesaEnVivo", () => {
 
   it("explica los dos modos y arranca con 180 segundos", async () => {
     render(<MesaEnVivo dependencias={{ fetch: fetchDeLaLista() }} />);
-    expect(screen.getByText("Un voto por código, para decisiones.")).toBeTruthy();
+    expect(await screen.findByText("Un voto por código, para decisiones.")).toBeTruthy();
     expect(screen.getByText("Un voto por navegador, votación indicativa.")).toBeTruthy();
     expect((screen.getByLabelText("Segundos por intervención") as HTMLInputElement).value).toBe(
       "180",
@@ -70,11 +91,15 @@ describe("MesaEnVivo", () => {
     await screen.findByRole("link", { name: /Asamblea/ });
   });
 
-  it("crea una sesión con los datos del formulario y recarga la lista", async () => {
+  it("crea una sesión con cuerpo, fecha, horas, modalidad y lugar, y recarga la lista", async () => {
     const fetchFalso = fetchDeLaLista();
     render(<MesaEnVivo dependencias={{ fetch: fetchFalso }} />);
     await screen.findByRole("link", { name: /Asamblea/ });
     await userEvent.type(screen.getByLabelText("Título"), "Consejo de facultad");
+    await userEvent.selectOptions(await screen.findByLabelText("Cuerpo"), "Artes");
+    elegirHorario("2026-11-03", "23:30", "01:00");
+    await userEvent.click(screen.getByRole("radio", { name: /Mixta/ }));
+    await userEvent.type(screen.getByLabelText("Lugar (opcional)"), "Auditorio");
     await userEvent.click(screen.getByRole("radio", { name: /Sala abierta/ }));
     const segundos = screen.getByLabelText("Segundos por intervención");
     await userEvent.clear(segundos);
@@ -86,12 +111,65 @@ describe("MesaEnVivo", () => {
         titulo: "Consejo de facultad",
         modo: "SALA_ABIERTA",
         segundosPorIntervencion: 120,
+        cuerpoId: "c-a",
+        inicio: "2026-11-03T23:30",
+        fin: "2026-11-04T01:00",
+        modalidad: "MIXTA",
+        lugar: "Auditorio",
       });
     });
-    await waitFor(() =>
-      expect(fetchFalso.mock.calls.filter((c) => c[1]?.method === "GET")).toHaveLength(2),
-    );
+    await waitFor(() => expect(llamadasDeLista(fetchFalso)).toHaveLength(2));
     expect((screen.getByLabelText("Título") as HTMLInputElement).value).toBe("");
+  });
+
+  it("solo ofrece los cuerpos donde la cuenta puede programar", async () => {
+    render(<MesaEnVivo dependencias={{ fetch: fetchDeLaLista() }} />);
+    const selector = (await screen.findByLabelText("Cuerpo")) as HTMLSelectElement;
+    expect([...selector.options].map((o) => o.textContent)).toEqual(["Asamblea general", "Artes"]);
+  });
+
+  it("con un solo cuerpo posible, lo deja fijo y a la vista", async () => {
+    const soloArtes = {
+      ...INSTITUCION,
+      cuerpos: INSTITUCION.cuerpos.map((c) => ({ ...c, puedeProgramar: c.id === "c-a" })),
+    };
+    render(<MesaEnVivo dependencias={{ fetch: fetchDeLaLista([], { institucion: soloArtes }) }} />);
+    expect(await screen.findByText("Artes")).toBeTruthy();
+    expect(screen.queryByLabelText("Cuerpo")).toBeNull();
+  });
+
+  it("sin cuerpos donde programar no muestra el formulario", async () => {
+    const ninguno = {
+      ...INSTITUCION,
+      cuerpos: INSTITUCION.cuerpos.map((c) => ({ ...c, puedeProgramar: false })),
+    };
+    render(<MesaEnVivo dependencias={{ fetch: fetchDeLaLista([], { institucion: ninguno }) }} />);
+    expect(await screen.findByText(/No puedes programar sesiones/)).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Crear sesión" })).toBeNull();
+  });
+
+  it("avisa de los cruces y deja crear igual", async () => {
+    const cruce = {
+      id: "s9",
+      titulo: "Asamblea de Medicina",
+      cuerpo: "Medicina",
+      inicioLocal: "2026-11-03T15:00",
+      finLocal: "2026-11-03T17:00",
+    };
+    const fetchFalso = fetchDeLaLista([sesion], { cruces: [cruce] });
+    render(<MesaEnVivo dependencias={{ fetch: fetchFalso }} />);
+    await screen.findByLabelText("Cuerpo");
+    await userEvent.type(screen.getByLabelText("Título"), "Consejo de facultad");
+    elegirHorario("2026-11-03", "14:00", "16:00");
+    const aviso = await screen.findByText(/Se cruza con/);
+    expect(aviso.closest("[role=status]")?.textContent).toContain(
+      "Asamblea de Medicina (Medicina), 3 nov 2026, 15:00 a 17:00",
+    );
+    expect(screen.getByText("Puedes guardarla igual.")).toBeTruthy();
+    await userEvent.click(screen.getByRole("button", { name: "Crear sesión" }));
+    await waitFor(() =>
+      expect(fetchFalso.mock.calls.some((c) => c[1]?.method === "POST")).toBe(true),
+    );
   });
 
   it("muestra la insignia de cuenta de prueba solo si la cuenta es de prueba", async () => {
@@ -108,7 +186,9 @@ describe("MesaEnVivo", () => {
     const llamadas: string[] = [];
     const fetchConRegistro = vi.fn<typeof fetch>(async (url) => {
       llamadas.push(String(url));
-      return Response.json({ sesiones: [] });
+      return String(url) === "/api/mesa/v1/institucion"
+        ? Response.json(INSTITUCION)
+        : Response.json({ sesiones: [] });
     });
     const interruptor = () => screen.queryByLabelText("Mostrar sesiones de la cuenta de prueba");
 

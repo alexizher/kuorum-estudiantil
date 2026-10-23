@@ -8,6 +8,10 @@ export const metadata: Metadata = { title: "Mesa", robots: { index: false } };
 export default async function PaginaDeMesa() {
   const actor = await exigirSesionDeMesa();
   return (
-    <MesaEnVivo esDemo={actor.rol === "DEMO"} puedeVerCuentaDePrueba={actor.rol === "SUPERADMIN"} />
+    <MesaEnVivo
+      esDemo={actor.rol === "DEMO"}
+      puedeVerCuentaDePrueba={actor.rol === "SUPERADMIN"}
+      sinCuerpos={actor.rol === "MESA" && actor.membresias.length === 0}
+    />
   );
 }
