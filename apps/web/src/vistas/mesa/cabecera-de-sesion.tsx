@@ -20,6 +20,8 @@ interface Propiedades {
   alPedirTerminar: () => void;
   alCopiarEnlace: () => Promise<boolean>;
   esDemo?: boolean;
+  /** Se ofrece cuando la sesión terminó. */
+  enlaceDelActa?: string;
   programacion?: ProgramacionDeSesion | undefined;
   alReprogramar?: () => void;
   alPedirCancelar?: () => void;
@@ -36,6 +38,7 @@ export function CabeceraDeSesion({
   alPedirTerminar,
   alCopiarEnlace,
   esDemo = false,
+  enlaceDelActa,
   programacion,
   alReprogramar,
   alPedirCancelar,
@@ -105,6 +108,11 @@ export function CabeceraDeSesion({
           <p id="aviso-terminar" className="suave">
             Cierra la votación abierta para poder terminar la sesión.
           </p>
+        ) : null}
+        {enlaceDelActa && (estado === "CERRADA" || estado === "ACTA_FINAL") ? (
+          <Link className={clasesDeBoton({})} href={enlaceDelActa}>
+            Acta
+          </Link>
         ) : null}
         <a
           className={clasesDeBoton({})}

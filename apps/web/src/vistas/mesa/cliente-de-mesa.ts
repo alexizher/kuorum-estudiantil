@@ -27,7 +27,7 @@ export interface ProgramacionDeSesion {
   finLocal: string;
   modalidad: Modalidad;
   lugar: string | null;
-  ordenDelDia?: string[];
+  ordenDelDia: string[];
   puedeGestionar: boolean;
 }
 
@@ -64,6 +64,7 @@ export interface CambiosDeSesion {
   fin?: string;
   modalidad?: Modalidad;
   lugar?: string | null;
+  ordenDelDia?: string[];
 }
 
 export interface ResultadoDeVotacion {
@@ -92,6 +93,48 @@ export interface DatosDeSesion {
   fin: string;
   modalidad: Modalidad;
   lugar?: string | null;
+  ordenDelDia?: string[];
+}
+
+export interface DecisionDeMesa {
+  id: string;
+  preguntaId: string;
+  pregunta: string;
+  enunciado: string | null;
+  aprobada: boolean | null;
+  indicativa: boolean;
+  resultado: unknown;
+}
+
+/** Lo que el acta dice al finalizar, armado por el servidor. */
+export interface ContenidoDeActaDeMesa {
+  institucion: string;
+  cuerpo: string;
+  titulo: string;
+  inicio: string;
+  fin: string;
+  zonaHoraria: string;
+  modalidad: Modalidad;
+  lugar: string | null;
+  ordenDelDia: string[];
+  asistentes: number | null;
+  intervenciones: number;
+  mociones: Record<string, number>;
+  desarrollo: string;
+  decisiones: {
+    pregunta: string;
+    enunciado: string | null;
+    aprobada: boolean | null;
+    indicativa: boolean;
+  }[];
+}
+
+export interface ActaDeMesa {
+  estado: "BORRADOR" | "FINAL";
+  desarrollo: string;
+  codigo: string | null;
+  finalizadaEn: string | null;
+  vistaPrevia: ContenidoDeActaDeMesa;
 }
 
 /** Acciones de la mesa. Todas lanzan ErrorDeMesa si algo falla. */
@@ -119,6 +162,13 @@ export interface ClienteDeMesa {
   terminarIntervencion(sesionId: string): Promise<void>;
   sumarMinuto(sesionId: string): Promise<void>;
   rechazarMocion(sesionId: string, solicitudId: string): Promise<void>;
+  leerActa(sesionId: string): Promise<ActaDeMesa>;
+  guardarActa(sesionId: string, desarrollo: string): Promise<void>;
+  /** Devuelve el código de verificación. */
+  finalizarActa(sesionId: string): Promise<string>;
+  listarDecisiones(sesionId: string): Promise<DecisionDeMesa[]>;
+  /** null borra el enunciado. */
+  editarEnunciado(decisionId: string, enunciado: string | null): Promise<void>;
 }
 
 const MENSAJE_POR_CODIGO: Readonly<Record<string, string>> = {
@@ -139,6 +189,7 @@ const MENSAJE_POR_CODIGO: Readonly<Record<string, string>> = {
   OPCIONES_INVALIDAS: "Las opciones van de 2 a 10.",
   OPCIONES_DUPLICADAS: "Las opciones no pueden repetirse.",
   TEXTO_OPCION_INVALIDO: "Cada opción debe tener entre 1 y 80 caracteres.",
+  ACTA_FINALIZADA: "El acta ya está finalizada y no se puede cambiar.",
   HORARIO_INVALIDO:
     "La hora de fin tiene que ser después del inicio, y la sesión puede durar hasta 24 horas.",
 };
@@ -315,6 +366,38 @@ export class ClienteDeMesaPorFetch implements ClienteDeMesa {
     );
   }
 
+  async leerActa(sesionId: string): Promise<ActaDeMesa> {
+    const cuerpo = await this.pedir("GET", this.sesion(sesionId, "acta"));
+    leer<unknown>(cuerpo, "vistaPrevia");
+    return cuerpo as ActaDeMesa;
+  }
+
+  async guardarActa(sesionId: string, desarrollo: string): Promise<void> {
+    await this.pedir("PUT", this.sesion(sesionId, "acta"), { desarrollo });
+  }
+
+  async finalizarActa(sesionId: string): Promise<string> {
+    return leer<string>(
+      await this.pedir("POST", this.sesion(sesionId, "acta/finalizar")),
+      "codigo",
+    );
+  }
+
+  async listarDecisiones(sesionId: string): Promise<DecisionDeMesa[]> {
+    const lista = leer<unknown>(
+      await this.pedir("GET", this.sesion(sesionId, "decisiones")),
+      "decisiones",
+    );
+    if (!Array.isArray(lista)) throw new ErrorDeMesa(0, "RESPUESTA_INVALIDA");
+    return lista as DecisionDeMesa[];
+  }
+
+  async editarEnunciado(decisionId: string, enunciado: string | null): Promise<void> {
+    await this.pedir("PATCH", `${MESA}/decisiones/${encodeURIComponent(decisionId)}`, {
+      enunciado,
+    });
+  }
+
   private sesion(id: string, ruta: string): string {
     return `${MESA}/sesiones/${encodeURIComponent(id)}/${ruta}`;
   }
@@ -323,7 +406,7 @@ export class ClienteDeMesaPorFetch implements ClienteDeMesa {
     return `${MESA}/preguntas/${encodeURIComponent(id)}/${ruta}`;
   }
 
-  private pedir(metodo: "GET" | "POST", url: string, cuerpo?: unknown): Promise<unknown> {
+  private pedir(metodo: MetodoHttp, url: string, cuerpo?: unknown): Promise<unknown> {
     return pedirJson(this.fetch, metodo, url, cuerpo);
   }
 }

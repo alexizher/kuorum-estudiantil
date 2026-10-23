@@ -4,9 +4,11 @@ import { Boton, CampoDeTexto } from "@kuorum/ui";
 import { useState, type FormEvent } from "react";
 import { AvisoDeCruces } from "./aviso-de-cruces";
 import { CamposDeHorario } from "./campo-de-horario";
+import { CampoDeOrdenDelDia } from "./campo-de-orden-del-dia";
 import { CampoDeModalidad } from "./campo-de-modalidad";
 import type { ClienteDeMesa, CuerpoDeMesa, Modalidad, ModoDeSala } from "./cliente-de-mesa";
 import { finLocal, inicioPorDefecto } from "./horario";
+import { puntosDeTexto } from "./orden-del-dia";
 import estilos from "./mesa.module.css";
 import { ETIQUETA_DE_MODO, EXPLICACION_DE_MODO } from "./textos";
 import { useCruces } from "./use-cruces";
@@ -40,6 +42,7 @@ export function FormularioDeSesion({
   const [horario, setHorario] = useState(() => inicioPorDefecto(ahora()));
   const [modalidad, setModalidad] = useState<Modalidad>("PRESENCIAL");
   const [lugar, setLugar] = useState("");
+  const [orden, setOrden] = useState("");
   const cuerpoId = cuerpoElegido !== "" ? cuerpoElegido : (cuerpos[0]?.id ?? "");
   const completo = horario.fecha !== "" && horario.desde !== "" && horario.hasta !== "";
   const { cruces } = useCruces(cliente, {
@@ -66,8 +69,12 @@ export function FormularioDeSesion({
       ...horario,
       modalidad,
       lugar,
+      ordenDelDia: puntosDeTexto(orden),
     });
-    if (creada) setTitulo("");
+    if (creada) {
+      setTitulo("");
+      setOrden("");
+    }
   }
 
   return (
@@ -115,6 +122,7 @@ export function FormularioDeSesion({
         maxLength={200}
         autoComplete="off"
       />
+      <CampoDeOrdenDelDia valor={orden} alCambiar={setOrden} />
       <fieldset className={estilos.conjunto}>
         <legend>Modo</legend>
         {MODOS.map((valor) => (

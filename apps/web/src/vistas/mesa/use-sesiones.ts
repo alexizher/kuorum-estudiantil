@@ -25,6 +25,7 @@ export interface DatosDelFormulario {
   hasta: string;
   modalidad: Modalidad;
   lugar: string;
+  ordenDelDia?: string[];
 }
 
 export interface Sesiones {
@@ -97,6 +98,9 @@ export function useSesiones(cliente: ClienteDeMesa, incluirCuentaDePrueba = fals
           fin: finLocal(datos.fecha, datos.desde, datos.hasta),
           modalidad: datos.modalidad,
           ...(lugar === "" ? {} : { lugar }),
+          ...(datos.ordenDelDia === undefined || datos.ordenDelDia.length === 0
+            ? {}
+            : { ordenDelDia: datos.ordenDelDia }),
         });
         await recargar();
         return true;

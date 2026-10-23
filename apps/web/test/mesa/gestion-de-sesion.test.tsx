@@ -26,6 +26,7 @@ const programacion = {
   finLocal: "2026-11-03T16:00",
   modalidad: "PRESENCIAL" as const,
   lugar: "Auditorio",
+  ordenDelDia: ["Quórum", "Informe"],
   puedeGestionar: true,
 };
 
@@ -113,6 +114,11 @@ describe("gestión de una sesión programada", () => {
     await userEvent.click(await screen.findByRole("button", { name: "Reprogramar" }));
     expect((screen.getByLabelText("Título") as HTMLInputElement).value).toBe("Asamblea de Artes");
     expect((screen.getByLabelText("Fecha") as HTMLInputElement).value).toBe("2026-11-03");
+    const orden = screen.getByLabelText(
+      "Orden del día (un punto por línea)",
+    ) as HTMLTextAreaElement;
+    expect(orden.value).toBe("Quórum\nInforme");
+    fireEvent.change(orden, { target: { value: "Quórum\nInforme\n\nCierre " } });
     fireEvent.change(screen.getByLabelText("Hasta"), { target: { value: "17:00" } });
     expect(await screen.findByText(/Se cruza con/)).toBeTruthy();
     expect(
@@ -129,6 +135,7 @@ describe("gestión de una sesión programada", () => {
         fin: "2026-11-03T17:00",
         modalidad: "PRESENCIAL",
         lugar: "Auditorio",
+        ordenDelDia: ["Quórum", "Informe", "Cierre"],
       });
     });
     await waitFor(() => expect(refrescar).toHaveBeenCalled());

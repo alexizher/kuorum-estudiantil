@@ -175,4 +175,42 @@ describe("ClienteDeMesaPorFetch", () => {
     const { cliente } = conRespuesta(Response.json({ otra: 1 }));
     await expect(cliente.listarSesiones()).rejects.toMatchObject({ codigo: "RESPUESTA_INVALIDA" });
   });
+
+  it("lee y guarda el acta, la finaliza y devuelve el código", async () => {
+    const acta = {
+      estado: "BORRADOR",
+      desarrollo: "x",
+      codigo: null,
+      finalizadaEn: null,
+      vistaPrevia: {},
+    };
+    const a = conRespuesta(Response.json(acta));
+    expect(await a.cliente.leerActa("s1")).toMatchObject({ estado: "BORRADOR" });
+    expect(a.fetchFalso.mock.calls[0]?.[0]).toBe("/api/mesa/v1/sesiones/s1/acta");
+    const b = conRespuesta(new Response(null, { status: 204 }));
+    await b.cliente.guardarActa("s1", "texto");
+    const [url, op] = b.fetchFalso.mock.calls[0] as [string, RequestInit];
+    expect([url, op.method, op.body]).toEqual([
+      "/api/mesa/v1/sesiones/s1/acta",
+      "PUT",
+      JSON.stringify({ desarrollo: "texto" }),
+    ]);
+    const c = conRespuesta(Response.json({ codigo: "ABCDE-23456" }));
+    expect(await c.cliente.finalizarActa("s1")).toBe("ABCDE-23456");
+    expect(c.fetchFalso.mock.calls[0]?.[0]).toBe("/api/mesa/v1/sesiones/s1/acta/finalizar");
+  });
+
+  it("lista decisiones y edita el enunciado", async () => {
+    const a = conRespuesta(Response.json({ decisiones: [{ id: "d1" }] }));
+    expect(await a.cliente.listarDecisiones("s1")).toEqual([{ id: "d1" }]);
+    expect(a.fetchFalso.mock.calls[0]?.[0]).toBe("/api/mesa/v1/sesiones/s1/decisiones");
+    const b = conRespuesta(new Response(null, { status: 204 }));
+    await b.cliente.editarEnunciado("d1", null);
+    const [url, op] = b.fetchFalso.mock.calls[0] as [string, RequestInit];
+    expect([url, op.method, op.body]).toEqual([
+      "/api/mesa/v1/decisiones/d1",
+      "PATCH",
+      JSON.stringify({ enunciado: null }),
+    ]);
+  });
 });
