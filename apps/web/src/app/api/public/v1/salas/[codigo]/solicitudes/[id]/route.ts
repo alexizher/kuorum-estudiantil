@@ -1,6 +1,6 @@
-import { contenedor } from "../../../../../../../../composicion";
-import { accionDeParticipante } from "../../../../../../../../http/accion-de-sala";
-import { sinContenido } from "../../../../../../../../http/respuestas";
+import { contenedor } from "@/composicion";
+import { accionDeParticipante } from "@/http/accion-de-sala";
+import { sinContenido } from "@/http/respuestas";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";

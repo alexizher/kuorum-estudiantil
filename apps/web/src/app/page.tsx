@@ -2,9 +2,9 @@
 
 import { SelectorDeTema } from "@kuorum/ui";
 import Link from "next/link";
-import { FormularioDeCodigo } from "../portada/formulario-de-codigo";
+import { FormularioDeCodigo } from "@/portada/formulario-de-codigo";
 import { useEffect, useState } from "react";
-import estilos from "../portada/portada.module.css";
+import estilos from "@/portada/portada.module.css";
 
 const REPOSITORIO = "https://github.com/alexizher/kuorum-estudiantil";
 const DOCUMENTACION = `${REPOSITORIO}/tree/main/docs`;

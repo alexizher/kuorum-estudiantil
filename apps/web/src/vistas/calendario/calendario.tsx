@@ -1,6 +1,6 @@
 import { aHoraLocal } from "@kuorum/domain";
 import Link from "next/link";
-import { agruparPorDia, mesDesplazado, semanasDelMes } from "../../calendario/vista-de-calendario";
+import { agruparPorDia, mesDesplazado, semanasDelMes } from "@/calendario/vista-de-calendario";
 import estilos from "./calendario.module.css";
 import { diaLargo, diaYMes, etiquetaDeModalidad, nombreDelMes } from "./textos";
 

@@ -1,9 +1,9 @@
-import { generarIcs } from "../../../../../calendario/ics";
+import { generarIcs } from "@/calendario/ics";
 import {
   CACHE_DEL_CALENDARIO,
   consultarCalendario,
   rangoAlrededorDeHoy,
-} from "../../../../../calendario/consulta-publica";
+} from "@/calendario/consulta-publica";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";

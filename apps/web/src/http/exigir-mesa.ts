@@ -1,5 +1,5 @@
 import type { Actor as ActorDeAplicacion, RolDeMesa } from "@kuorum/application";
-import { contenedor } from "../composicion";
+import { contenedor } from "@/composicion";
 
 export interface Actor extends ActorDeAplicacion {
   correo: string;

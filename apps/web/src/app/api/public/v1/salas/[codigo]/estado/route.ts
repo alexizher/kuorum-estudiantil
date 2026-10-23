@@ -1,11 +1,11 @@
 import { etiquetaDeEstado } from "@kuorum/application";
-import { contenedor } from "../../../../../../../composicion";
-import { respuestaConEtag } from "../../../../../../../http/estado-condicional";
+import { contenedor } from "@/composicion";
+import { respuestaConEtag } from "@/http/estado-condicional";
 import {
   CACHE_NO_ENCONTRADO,
   respuestaDeError,
-} from "../../../../../../../http/respuesta-de-error";
-import { codigoDeSalaDeLaUrl } from "../../../../../../../http/sesion-de-participante";
+} from "@/http/respuesta-de-error";
+import { codigoDeSalaDeLaUrl } from "@/http/sesion-de-participante";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";

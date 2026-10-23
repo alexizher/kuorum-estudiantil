@@ -1,4 +1,4 @@
-import type { ContextoDeIntervalo } from "../../tiempo-real/intervalo-adaptativo";
+import type { ContextoDeIntervalo } from "@/tiempo-real/intervalo-adaptativo";
 
 /** Lo que decide a cuánto consulta el celular: hay algo que votar o se espera turno. */
 export function contextoDeIntervalo(

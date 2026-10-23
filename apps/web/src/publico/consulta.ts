@@ -1,6 +1,6 @@
 import type { ConsultaPublica } from "@kuorum/application";
-import { CACHE_DEL_CALENDARIO, rangoAlrededorDeHoy } from "../calendario/consulta-publica";
-import { respuestaDeError } from "../http/respuesta-de-error";
+import { CACHE_DEL_CALENDARIO, rangoAlrededorDeHoy } from "@/calendario/consulta-publica";
+import { respuestaDeError } from "@/http/respuesta-de-error";
 
 export { CACHE_DEL_CALENDARIO };
 

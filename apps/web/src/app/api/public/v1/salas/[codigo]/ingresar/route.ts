@@ -1,18 +1,18 @@
 import { esquemaIngresar } from "@kuorum/contracts";
-import { contenedor } from "../../../../../../../composicion";
-import { leerCuerpo } from "../../../../../../../http/cuerpo";
-import { excedeElLimiteDeIngreso } from "../../../../../../../http/limite-de-tasa";
-import { respuestaDeError } from "../../../../../../../http/respuesta-de-error";
+import { contenedor } from "@/composicion";
+import { leerCuerpo } from "@/http/cuerpo";
+import { excedeElLimiteDeIngreso } from "@/http/limite-de-tasa";
+import { respuestaDeError } from "@/http/respuesta-de-error";
 import {
   accion,
   demasiadasSolicitudes,
   solicitudInvalida,
-} from "../../../../../../../http/respuestas";
+} from "@/http/respuestas";
 import {
   codigoDeSalaDeLaUrl,
   cookieDeParticipante,
   leer,
-} from "../../../../../../../http/sesion-de-participante";
+} from "@/http/sesion-de-participante";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";

@@ -3,8 +3,8 @@ import {
   calendarioPublico,
   consultarCalendario,
   rangoAlrededorDeHoy,
-} from "../../../../../calendario/consulta-publica";
-import { solicitudInvalida } from "../../../../../http/respuestas";
+} from "@/calendario/consulta-publica";
+import { solicitudInvalida } from "@/http/respuestas";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";

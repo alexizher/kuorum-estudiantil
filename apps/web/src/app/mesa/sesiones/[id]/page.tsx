@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import { exigirSesionDeMesa } from "../../../../auth/exigir-sesion-de-mesa";
+import { exigirSesionDeMesa } from "@/auth/exigir-sesion-de-mesa";
 import { cargarSesionDeMesa } from "../../cargar-sesion";
-import { SesionEnVivo } from "../../../../vistas/mesa/sesion-en-vivo";
+import { SesionEnVivo } from "@/vistas/mesa/sesion-en-vivo";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Sesión", robots: { index: false } };

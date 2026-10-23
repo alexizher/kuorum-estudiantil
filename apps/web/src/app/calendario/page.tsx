@@ -2,10 +2,10 @@ import { ErrorDeDominio } from "@kuorum/domain";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
-import { actaIdDeSesion, rangoAlrededorDeHoy } from "../../calendario/consulta-publica";
-import { esMes, mesActual, rangoDelMes } from "../../calendario/vista-de-calendario";
-import { contenedor } from "../../composicion";
-import { Calendario, type VistaDeCalendario } from "../../vistas/calendario/calendario";
+import { actaIdDeSesion, rangoAlrededorDeHoy } from "@/calendario/consulta-publica";
+import { esMes, mesActual, rangoDelMes } from "@/calendario/vista-de-calendario";
+import { contenedor } from "@/composicion";
+import { Calendario, type VistaDeCalendario } from "@/vistas/calendario/calendario";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Calendario" };

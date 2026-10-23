@@ -2,7 +2,7 @@
 
 import { Boton, CampoDeTexto } from "@kuorum/ui";
 import { useState, type FormEvent } from "react";
-import { clienteDeAuth } from "../../auth/cliente-de-auth";
+import { clienteDeAuth } from "@/auth/cliente-de-auth";
 import estilos from "./mesa.module.css";
 
 const LARGO_MINIMO = 12;

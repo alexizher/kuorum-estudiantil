@@ -1,8 +1,8 @@
 import { esquemaVoto } from "@kuorum/contracts";
-import { contenedor } from "../../../../../../../composicion";
-import { accionDeParticipante } from "../../../../../../../http/accion-de-sala";
-import { leerCuerpo } from "../../../../../../../http/cuerpo";
-import { accion, solicitudInvalida } from "../../../../../../../http/respuestas";
+import { contenedor } from "@/composicion";
+import { accionDeParticipante } from "@/http/accion-de-sala";
+import { leerCuerpo } from "@/http/cuerpo";
+import { accion, solicitudInvalida } from "@/http/respuestas";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";

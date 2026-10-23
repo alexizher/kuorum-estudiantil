@@ -1,5 +1,5 @@
-import { contenedor } from "../../../../../composicion";
-import { responderJson } from "../../../../../publico/consulta";
+import { contenedor } from "@/composicion";
+import { responderJson } from "@/publico/consulta";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";

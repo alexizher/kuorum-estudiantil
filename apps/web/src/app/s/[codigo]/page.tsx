@@ -1,7 +1,7 @@
 import { CodigoDeSala } from "@kuorum/domain";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { ParticipanteEnVivo } from "../../../vistas/participante/participante-en-vivo";
+import { ParticipanteEnVivo } from "@/vistas/participante/participante-en-vivo";
 
 export const metadata: Metadata = {
   title: "Sala",

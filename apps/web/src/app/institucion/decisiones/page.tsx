@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { rangoAlrededorDeHoy } from "../../../calendario/consulta-publica";
-import { contenedor } from "../../../composicion";
+import { rangoAlrededorDeHoy } from "@/calendario/consulta-publica";
+import { contenedor } from "@/composicion";
 import type { DecisionesPorCuerpo } from "@kuorum/application";
 import { DecisionesInstitucion } from "./decisiones-institucion";
 
