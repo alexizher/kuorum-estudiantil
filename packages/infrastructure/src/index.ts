@@ -19,3 +19,5 @@ export { PrismaRepositorioDeInstitucion } from "./institucion/prisma-repositorio
 export { PrismaRepositorioDeCuerpos } from "./institucion/prisma-repositorio-de-cuerpos.js";
 export { PrismaRepositorioDeMembresias } from "./institucion/prisma-repositorio-de-membresias.js";
 export { PrismaDirectorioDePersonal } from "./institucion/prisma-directorio-de-personal.js";
+export { PrismaRepositorioDeDecisiones } from "./decisiones/prisma-repositorio-de-decisiones.js";
+export { PrismaRepositorioDeActas } from "./actas/prisma-repositorio-de-actas.js";

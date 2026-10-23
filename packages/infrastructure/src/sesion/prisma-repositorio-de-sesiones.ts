@@ -29,6 +29,7 @@ function aDominio(fila: FilaConCreador): Sesion {
     fin: fila.fin,
     modalidad: fila.modalidad,
     lugar: fila.lugar,
+    ordenDelDia: fila.ordenDelDia,
   });
 }
 
@@ -108,6 +109,7 @@ export class PrismaRepositorioDeSesiones implements RepositorioDeSesiones {
       fin: sesion.fin,
       modalidad: sesion.modalidad,
       lugar: sesion.lugar,
+      ordenDelDia: [...sesion.ordenDelDia],
     };
     if (leida === undefined) {
       await this.crear(sesion, datos);

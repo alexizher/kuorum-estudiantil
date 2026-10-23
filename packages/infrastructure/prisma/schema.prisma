@@ -135,6 +135,7 @@ model Sesion {
   fin                     DateTime
   modalidad               Modalidad           @default(PRESENCIAL)
   lugar                   String?
+  ordenDelDia             String[]            @default([])
 
   creadaPor     User?                @relation(fields: [creadaPorId], references: [id], onDelete: SetNull)
   cuerpo        Cuerpo               @relation(fields: [cuerpoId], references: [id], onDelete: Restrict)
@@ -142,6 +143,8 @@ model Sesion {
   codigos       CodigoDeAcceso[]
   preguntas     Pregunta[]
   solicitudes   SolicitudDePalabra[]
+  decisiones    Decision[]
+  acta          Acta?
 
   @@index([creadaPorId])
   @@index([inicio])
@@ -331,4 +334,44 @@ model RateLimit {
   lastRequest BigInt
 
   @@map("auth_rate_limits")
+}
+
+enum EstadoDeActa {
+  BORRADOR
+  FINAL
+}
+
+// Foto del resultado de una votación cerrada; no se recalcula.
+model Decision {
+  id         String   @id
+  preguntaId String   @unique
+  sesionId   String
+  cuerpoId   String
+  pregunta   String
+  regla      String
+  resultado  Json
+  aprobada   Boolean?
+  indicativa Boolean
+  enunciado  String?
+  consultaId String?
+  cerradaEn  DateTime
+
+  sesion Sesion @relation(fields: [sesionId], references: [id], onDelete: Cascade)
+
+  @@index([cuerpoId, cerradaEn])
+  @@index([sesionId])
+  @@map("decisiones")
+}
+
+model Acta {
+  sesionId     String       @id
+  desarrollo   String       @default("")
+  estado       EstadoDeActa @default(BORRADOR)
+  codigo       String?      @unique
+  finalizadaEn DateTime?
+  contenido    Json?
+
+  sesion Sesion @relation(fields: [sesionId], references: [id], onDelete: Cascade)
+
+  @@map("actas")
 }

@@ -77,3 +77,8 @@ export { QuitarMembresia } from "./institucion/quitar-membresia.js";
 export { ListarPersonal } from "./institucion/listar-personal.js";
 export { CrearCuentaDePersonal } from "./institucion/crear-cuenta-de-personal.js";
 export { RestablecerContrasena } from "./institucion/restablecer-contrasena.js";
+export type {
+  FiltroPublico,
+  RepositorioDeDecisiones,
+} from "./puertos/repositorio-de-decisiones.js";
+export type { RepositorioDeActas } from "./puertos/repositorio-de-actas.js";
