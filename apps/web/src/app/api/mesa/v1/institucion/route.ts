@@ -19,6 +19,14 @@ export function GET(request: Request): Promise<Response> {
         tipoDeCuerpoSingular: institucion.tipoDeCuerpoSingular,
         tipoDeCuerpoPlural: institucion.tipoDeCuerpoPlural,
         zonaHoraria: institucion.zonaHoraria,
+        logoUrl: institucion.logoUrl,
+        colorPrimario: institucion.colorPrimario,
+        colorSecundario: institucion.colorSecundario,
+        pieDePagina: institucion.pieDePagina,
+        textoBienvenida: institucion.textoBienvenida,
+        proveedorOAuth: institucion.proveedorOAuth,
+        clientIdOAuth: institucion.clientIdOAuth,
+        clientSecretOAuth: institucion.clientSecretOAuth,
       },
       cuerpos: cuerpos.map((cuerpo) => ({
         id: cuerpo.id,
@@ -38,7 +46,7 @@ export function PATCH(request: Request): Promise<Response> {
     if (cambios === undefined) return solicitudInvalida();
     const definidos = Object.fromEntries(
       Object.entries(cambios).filter(([, valor]) => valor !== undefined),
-    ) as Record<string, string>;
+    ) as Record<string, string | null>;
     await contenedor().configurarInstitucion.ejecutar(actor, definidos);
     return sinContenido();
   });

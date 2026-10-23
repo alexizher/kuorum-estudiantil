@@ -8,11 +8,13 @@ function bloque(selector: string): Record<string, string> {
   const inicio = css.indexOf(selector + " {");
   expect(inicio, selector).toBeGreaterThanOrEqual(0);
   const cuerpo = css.slice(css.indexOf("{", inicio) + 1, css.indexOf("}", inicio));
-  return Object.fromEntries(
-    [...cuerpo.matchAll(/--([\w-]+):\s*(#[0-9A-Fa-f]{6});/g)].flatMap((m) =>
-      m[1] && m[2] ? [[m[1], m[2]]] : [],
-    ),
-  );
+  const tokens: Record<string, string> = {};
+  for (const m of cuerpo.matchAll(/--([\w-]+):\s*(?:var\(--[\w-]+,\s*(#[0-9A-Fa-f]{6})\)|(#[0-9A-Fa-f]{6}))/g)) {
+    const nombre = m[1];
+    const valor = m[2] ?? m[3];
+    if (nombre && valor) tokens[nombre] = valor;
+  }
+  return tokens;
 }
 
 function token(tokens: Record<string, string>, nombre: string): string {
@@ -77,7 +79,9 @@ describe("contraste AA de los tokens", () => {
     const inicio = css.indexOf("@media (prefers-color-scheme: dark)");
     const media = css.slice(inicio, css.indexOf('\n:root[data-tema="oscuro"]'));
     for (const [nombre, valor] of Object.entries(temas.oscuro)) {
-      expect(media, nombre).toContain(`--${nombre}: ${valor};`);
+      // El media query puede tener var(--color-primario, #valor) o #valor directamente
+      const patron = new RegExp(`--${nombre}:\\s*(?:var\\(--[\\w-]+,\\s*${valor}\\)|${valor});`);
+      expect(media, nombre).toMatch(patron);
     }
   });
 });

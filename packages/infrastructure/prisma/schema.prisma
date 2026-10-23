@@ -85,6 +85,14 @@ model Institucion {
   tipoDeCuerpoSingular String
   tipoDeCuerpoPlural   String
   zonaHoraria          String
+  logoUrl              String?
+  colorPrimario        String?
+  colorSecundario      String?
+  pieDePagina          String?
+  textoBienvenida      String?
+  proveedorOAuth       String?
+  clientIdOAuth        String?
+  clientSecretOAuth    String?
   actualizadaEn        DateTime @updatedAt
 
   @@map("institucion")

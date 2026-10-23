@@ -15,6 +15,14 @@ export const INSTITUCION: InstitucionDeMesa = {
     tipoDeCuerpoSingular: "Facultad",
     tipoDeCuerpoPlural: "Facultades",
     zonaHoraria: "America/Bogota",
+    logoUrl: null,
+    colorPrimario: null,
+    colorSecundario: null,
+    pieDePagina: null,
+    textoBienvenida: null,
+    proveedorOAuth: null,
+    clientIdOAuth: null,
+    clientSecretOAuth: null,
   },
   cuerpos: [
     {

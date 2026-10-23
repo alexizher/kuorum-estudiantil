@@ -20,11 +20,14 @@ function noAutenticado(): Response {
   );
 }
 
+function getAuthPromise() {
+  return contenedor().autenticacion();
+}
+
 export async function exigirMesa(solicitud: Request): Promise<Actor | Response> {
   try {
-    const sesion = await contenedor()
-      .autenticacion()
-      .api.getSession({ headers: solicitud.headers });
+    const auth = await getAuthPromise();
+    const sesion = await auth.api.getSession({ headers: solicitud.headers });
     if (sesion === null || sesion === undefined) return noAutenticado();
     const membresias = await contenedor().membresias.deUsuario(sesion.user.id);
     return {

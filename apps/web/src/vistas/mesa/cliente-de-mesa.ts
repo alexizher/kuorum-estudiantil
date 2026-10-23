@@ -46,6 +46,14 @@ export interface InstitucionDeMesa {
     tipoDeCuerpoSingular: string;
     tipoDeCuerpoPlural: string;
     zonaHoraria: string;
+    logoUrl: string | null;
+    colorPrimario: string | null;
+    colorSecundario: string | null;
+    pieDePagina: string | null;
+    textoBienvenida: string | null;
+    proveedorOAuth: "microsoft" | "google" | null;
+    clientIdOAuth: string | null;
+    clientSecretOAuth: string | null;
   };
   cuerpos: CuerpoDeMesa[];
 }

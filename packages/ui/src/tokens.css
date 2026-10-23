@@ -5,7 +5,7 @@
   color-scheme: light;
   --papel: #e8ebe4;
   --superficie: #f6f7f3;
-  --tinta: #1b2242;
+  --tinta: var(--color-primario, #1b2242);
   --tinta-suave: #4a5270;
   --linea: #c9cec3;
   --borde-control: #7c8299;
@@ -13,16 +13,16 @@
   --si-texto: #17663f;
   --no: #c4302a;
   --no-texto: #a82822;
-  --ambar: #e2a11b;
+  --ambar: var(--color-secundario, #e2a11b);
   --ambar-texto: #7a4e00;
   --ambar-fondo: #f3e3bc;
   --sobre-tinta: #e8ebe4;
   --sobre-color: #ffffff;
-  --sobre-ambar: #1b2242;
+  --sobre-ambar: var(--color-primario, #1b2242);
   --mezcla: multiply;
-  --foco: #1b2242;
+  --foco: var(--color-primario, #1b2242);
   --qr-fondo: #f6f7f3;
-  --qr-tinta: #1b2242;
+  --qr-tinta: var(--color-primario, #1b2242);
   --u: clamp(5px, min(1vw, 1.7vh), 24px);
   --fuente: var(--font-archivo, "Archivo"), system-ui, sans-serif;
 
@@ -48,7 +48,7 @@
     color-scheme: dark;
     --papel: #121831;
     --superficie: #1a2142;
-    --tinta: #e6e9e1;
+    --tinta: var(--color-primario, #e6e9e1);
     --tinta-suave: #a9b0c8;
     --linea: #2e3762;
     --borde-control: #6b7495;
@@ -56,14 +56,14 @@
     --si-texto: #3dbe7e;
     --no: #f0574f;
     --no-texto: #ff6b62;
-    --ambar: #f2b640;
+    --ambar: var(--color-secundario, #f2b640);
     --ambar-texto: #f2b640;
     --ambar-fondo: #3a2f14;
-    --sobre-tinta: #121831;
-    --sobre-color: #121831;
-    --sobre-ambar: #121831;
+    --sobre-tinta: var(--color-primario, #121831);
+    --sobre-color: var(--color-primario, #121831);
+    --sobre-ambar: var(--color-primario, #121831);
     --mezcla: normal;
-    --foco: #f2b640;
+    --foco: var(--color-primario, #f2b640);
   }
 }
 
@@ -71,7 +71,7 @@
   color-scheme: dark;
   --papel: #121831;
   --superficie: #1a2142;
-  --tinta: #e6e9e1;
+  --tinta: var(--color-primario, #e6e9e1);
   --tinta-suave: #a9b0c8;
   --linea: #2e3762;
   --borde-control: #6b7495;
@@ -79,12 +79,12 @@
   --si-texto: #3dbe7e;
   --no: #f0574f;
   --no-texto: #ff6b62;
-  --ambar: #f2b640;
+  --ambar: var(--color-secundario, #f2b640);
   --ambar-texto: #f2b640;
   --ambar-fondo: #3a2f14;
-  --sobre-tinta: #121831;
-  --sobre-color: #121831;
-  --sobre-ambar: #121831;
+  --sobre-tinta: var(--color-primario, #121831);
+  --sobre-color: var(--color-primario, #121831);
+  --sobre-ambar: var(--color-primario, #121831);
   --mezcla: normal;
-  --foco: #f2b640;
+  --foco: var(--color-primario, #f2b640);
 }

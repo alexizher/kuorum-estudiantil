@@ -1,21 +1,53 @@
+"use client";
+
 import { SelectorDeTema } from "@kuorum/ui";
 import Link from "next/link";
 import { FormularioDeCodigo } from "../portada/formulario-de-codigo";
+import { useEffect, useState } from "react";
 import estilos from "../portada/portada.module.css";
 
 const REPOSITORIO = "https://github.com/alexizher/kuorum-estudiantil";
 const DOCUMENTACION = `${REPOSITORIO}/tree/main/docs`;
 
+interface InstitucionData {
+  nombre: string;
+  logoUrl: string | null;
+  colorPrimario: string | null;
+  colorSecundario: string | null;
+  pieDePagina: string | null;
+  textoBienvenida: string | null;
+}
+
 export default function Inicio() {
+  const [institucion, setInstitucion] = useState<InstitucionData | null>(null);
+
+  useEffect(() => {
+    fetch("/api/public/v1/institucion")
+      .then((res) => res.json())
+      .then((data: InstitucionData) => setInstitucion(data))
+      .catch(() => {
+        // Silently ignore errors
+      });
+  }, []);
+
   return (
     <main className={estilos.pagina}>
       <header className={estilos.cabecera}>
+        {institucion?.logoUrl ? (
+          <img
+            src={institucion.logoUrl}
+            alt={institucion.nombre}
+            className={estilos.logo}
+            width={48}
+            height={48}
+          />
+        ) : null}
         <h1 className={`titular ${estilos.marca}`}>
-          Kuorum <span>Estudiantil</span>
+          {institucion?.nombre ?? "Kuorum"} <span>Estudiantil</span>
         </h1>
         <p className={estilos.intro}>
-          Votación secreta y turnos de palabra para asambleas estudiantiles. La mesa modera desde su
-          panel, el auditorio ve la proyección y cada persona participa desde su celular.
+          {institucion?.textoBienvenida ??
+            "Votación secreta y turnos de palabra para asambleas estudiantiles. La mesa modera desde su panel, el auditorio ve la proyección y cada persona participa desde su celular."}
         </p>
       </header>
 
@@ -70,6 +102,7 @@ export default function Inicio() {
       </nav>
 
       <footer className={estilos.pie}>
+        {institucion?.pieDePagina && <p className={estilos.pieTexto}>{institucion.pieDePagina}</p>}
         <SelectorDeTema />
       </footer>
     </main>

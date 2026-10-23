@@ -7,6 +7,14 @@ export class RepositorioDeInstitucionEnMemoria implements RepositorioDeInstituci
     tipoDeCuerpoSingular: "Facultad",
     tipoDeCuerpoPlural: "Facultades",
     zonaHoraria: "America/Bogota",
+    logoUrl: null,
+    colorPrimario: null,
+    colorSecundario: null,
+    pieDePagina: null,
+    textoBienvenida: null,
+    proveedorOAuth: null,
+    clientIdOAuth: null,
+    clientSecretOAuth: null,
   });
 
   async obtener(): Promise<Institucion> {
