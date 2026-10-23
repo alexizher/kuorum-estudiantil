@@ -63,6 +63,7 @@ Transporte por defecto: consulta periódica con la caché del borde (2 s) y un i
 
 - 3 s mientras hay una votación abierta o la persona está en la fila de palabra.
 - 12 s en el resto del tiempo.
+- 3 s durante los primeros 30 s en la sala del celular, aunque no haya nada abierto (`PoliticaConArranque`). Así, si la caché devuelve el estado de antes de abrirse una votación, la persona la ve en unos 5 s y no en 15. Cuesta unas 8 peticiones más por persona al entrar: 24.000 en una general de 3.000.
 - En pausa mientras la pestaña está oculta.
 
 Los intervalos son constantes con nombre en `apps/web/src/tiempo-real/intervalo-adaptativo.ts`, y `FuenteDeEstadoPorConsulta` los toma de un `PoliticaDeIntervalo`.
@@ -77,7 +78,7 @@ Guía de capacidad:
 
 ## Consecuencias
 
-- La fase 1 usa `FuenteDeEstadoPorConsulta` con `PoliticaAdaptativa`. El contexto (votación abierta, fila de palabra) lo aporta la pantalla que se suscribe.
+- La fase 1 usa `FuenteDeEstadoPorConsulta` con `PoliticaAdaptativa`, envuelta en `PoliticaConArranque` en el celular. El contexto (votación abierta, fila de palabra) lo aporta la pantalla que se suscribe.
 - El panel de administración estimará el uso mensual a partir de las sesiones programadas y avisará si se acerca a la cuota.
 - La documentación recomienda Cloudflare para asambleas generales de más de unas 300 personas.
 - Con un intervalo de 12 s en reposo, un cambio puede tardar hasta unos 14 a 16 s en llegar a quien no está en votación ni en la fila (12 s de intervalo más hasta 4 s de la caché: 2 de `s-maxage` y 2 de `stale-while-revalidate`).

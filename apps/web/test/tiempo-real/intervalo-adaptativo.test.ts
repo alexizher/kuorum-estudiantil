@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
+  ARRANQUE_MS,
   INTERVALO_ACTIVO_MS,
   INTERVALO_EN_REPOSO_MS,
   PoliticaAdaptativa,
+  PoliticaConArranque,
   PoliticaFija,
   type PoliticaDeIntervalo,
 } from "../../src/tiempo-real/intervalo-adaptativo";
@@ -33,5 +35,36 @@ describe("PoliticaFija", () => {
     const politica: PoliticaDeIntervalo = new PoliticaFija(500);
     expect(politica.intervaloMs({ votacionAbierta: true, enFilaDePalabra: true })).toBe(500);
     expect(politica.intervaloMs({ votacionAbierta: false, enFilaDePalabra: false })).toBe(500);
+  });
+});
+
+describe("PoliticaConArranque", () => {
+  const enReposo = { votacionAbierta: false, enFilaDePalabra: false };
+
+  function conReloj(base: PoliticaDeIntervalo = new PoliticaAdaptativa()) {
+    let ahora = 1_000_000;
+    const politica = new PoliticaConArranque(base, () => ahora);
+    return { politica, avanzar: (ms: number) => (ahora += ms) };
+  }
+
+  it("consulta con el intervalo activo durante los primeros 30 s aunque no haya nada abierto", () => {
+    const { politica, avanzar } = conReloj();
+    expect(politica.intervaloMs(enReposo)).toBe(INTERVALO_ACTIVO_MS);
+    avanzar(ARRANQUE_MS - 1);
+    expect(politica.intervaloMs(enReposo)).toBe(INTERVALO_ACTIVO_MS);
+  });
+
+  it("pasado el arranque vuelve a la política de base", () => {
+    const { politica, avanzar } = conReloj();
+    avanzar(ARRANQUE_MS);
+    expect(politica.intervaloMs(enReposo)).toBe(INTERVALO_EN_REPOSO_MS);
+    expect(politica.intervaloMs({ votacionAbierta: true, enFilaDePalabra: false })).toBe(
+      INTERVALO_ACTIVO_MS,
+    );
+  });
+
+  it("nunca alarga un intervalo de base más corto", () => {
+    const { politica } = conReloj(new PoliticaFija(500));
+    expect(politica.intervaloMs(enReposo)).toBe(500);
   });
 });

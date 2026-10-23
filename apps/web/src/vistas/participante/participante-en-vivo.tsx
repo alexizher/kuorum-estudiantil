@@ -5,6 +5,7 @@ import { FuenteDeEstadoPorConsulta } from "../../tiempo-real/fuente-por-consulta
 import {
   CONTEXTO_EN_REPOSO,
   PoliticaAdaptativa,
+  PoliticaConArranque,
   type ContextoDeIntervalo,
 } from "../../tiempo-real/intervalo-adaptativo";
 import { almacenDelNavegador, type Almacen } from "./almacen";
@@ -34,7 +35,7 @@ export function ParticipanteEnVivo({ codigo, codigoInicial, dependencias }: Prop
       cliente: new ClienteDeSalaPorFetch(llamar),
       fuente: new FuenteDeEstadoPorConsulta(
         llamar,
-        new PoliticaAdaptativa(),
+        new PoliticaConArranque(new PoliticaAdaptativa()),
         undefined,
         undefined,
         () => contexto.current,
