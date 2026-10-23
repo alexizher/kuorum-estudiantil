@@ -6,13 +6,19 @@ Para quien modera la asamblea: crea la sala, reparte los códigos, abre y cierra
 
 La cuenta de la mesa la crea quien instaló el sitio con `pnpm --filter @kuorum/web crear-admin`. Entra en `/mesa/ingresar` con el correo y la contraseña. Después de cinco intentos fallidos en un minuto el ingreso se bloquea un rato.
 
-Cada cuenta tiene un rol. `SUPERADMIN` (quien instaló el sitio) y `MESA` ven y operan todas las sesiones. `DEMO` es la cuenta de prueba pública: solo ve las sesiones que ella creó, no tiene acceso a las de las demás cuentas, puede tener hasta 5 sesiones sin terminar, genera hasta 50 códigos por vez y 200 por sesión, y no puede cambiar su contraseña. Si el sitio la ofrece, el ingreso muestra su correo y su contraseña en un bloque aparte, con un botón que llena el formulario, y la cabecera de la mesa lleva la insignia "Cuenta de prueba". Sus sesiones se borran cada día.
+Cada cuenta tiene un rol. `SUPERADMIN` (quien instaló el sitio) ve y opera todas las sesiones. Las cuentas del personal (`MESA`) las crea el administrador en **Personal** y ven solo las sesiones de los cuerpos donde las agregó: como encargadas programan y conducen, como mesa solo conducen (ver la [guía del administrador](administrador.md)). Una cuenta del personal cambia su contraseña en **Mi cuenta**. `DEMO` es la cuenta de prueba pública: solo ve las sesiones que ella creó, no tiene acceso a las de las demás cuentas, puede tener hasta 5 sesiones sin terminar, genera hasta 50 códigos por vez y 200 por sesión, y no puede cambiar su contraseña. Si el sitio la ofrece, el ingreso muestra su correo y su contraseña en un bloque aparte, con un botón que llena el formulario, y la cabecera de la mesa lleva la insignia "Cuenta de prueba". Sus sesiones se borran cada día.
 
 ![Ingreso de la mesa](capturas/mesa-ingresar-1280-claro.png)
 
-## 2. Crear la sesión
+## 2. Programar la sesión
 
-En `/mesa` escribe el título, elige el modo y los segundos que dura cada intervención.
+En `/mesa` escribe el título y elige el cuerpo (si solo puedes programar en uno, aparece fijo), la fecha, la hora de inicio y la de fin, la modalidad (presencial, virtual o mixta) y, si quieres, el lugar o el enlace de la videollamada. Las horas son las de la institución. Si la hora de fin es igual o anterior a la de inicio, la sesión termina al día siguiente, y el formulario lo dice.
+
+Mientras escribes las horas, el formulario busca otras sesiones de la institución en el mismo horario, de cualquier cuerpo, y las muestra bajo **Se cruza con**. Es un aviso: puedes guardarla igual.
+
+![Programar con aviso de cruces](capturas/mesa-programar-con-cruces-1280-claro.png)
+
+Luego elige el modo y los segundos que dura cada intervención.
 
 - **Con códigos.** Cada participante entra con un código anónimo de un solo uso. Es el modo para decisiones.
 - **Sala abierta.** Se entra solo con el QR, con un voto por navegador. Las votaciones salen marcadas como "Votación indicativa".
@@ -22,6 +28,8 @@ Al crearla recibe un código de sala de cuatro caracteres (en las capturas, `Y3X
 | Celular                                                   | Escritorio                                                  |
 | --------------------------------------------------------- | ----------------------------------------------------------- |
 | ![Sesiones, 360 px](capturas/mesa-sesiones-360-claro.png) | ![Sesiones, 1440 px](capturas/mesa-sesiones-1440-claro.png) |
+
+Mientras la sesión no empiece, quien la programó (o cualquier encargado de su cuerpo) puede **Reprogramar** el título, la fecha, las horas, la modalidad y el lugar, o **Cancelar sesión**. Una sesión cancelada sale tachada en el calendario.
 
 ## 3. Repartir los códigos (modo con códigos)
 
