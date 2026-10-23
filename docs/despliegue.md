@@ -147,7 +147,7 @@ Las cifras vigentes están en https://vercel.com/docs/limits y https://neon.com/
 
 ## Capacidad del plan gratuito
 
-La pantalla pública consulta el estado de la sesión cada 3 s mientras hay una votación abierta o la persona está en la fila de palabra, y cada 12 s en el resto del tiempo. En pausa si la pestaña está oculta. El límite que se alcanza primero es el de peticiones de CDN de Vercel Hobby (unos 1M al mes). Las mediciones y el cálculo están en [ADR 0001](adr/0001-transporte-de-tiempo-real.md).
+La pantalla pública consulta el estado de la sesión cada 3 s mientras hay una votación abierta o la persona está en la fila de palabra, y cada 12 s en el resto del tiempo, salvo los primeros 30 s después de entrar, que van a 3 s. En pausa si la pestaña está oculta. El límite que se alcanza primero es el de peticiones de CDN de Vercel Hobby (unos 1M al mes). Las mediciones y el cálculo están en [ADR 0001](adr/0001-transporte-de-tiempo-real.md).
 
 - Sin dominio propio: unas 830 persona-hora al mes si todos consultan cada 3 s, o unas 2.000 con el intervalo adaptativo. Una persona conectada una hora son 1.200 peticiones a 3 s y 300 a 12 s.
 - Con dominio propio y Cloudflare gratuito delante: las consultas las responde Cloudflare y Vercel recibe unas 0,5 peticiones por segundo por sesión abierta. Una general de 3.000 personas durante 3 horas cabe.

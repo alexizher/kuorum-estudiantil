@@ -31,3 +31,28 @@ export class PoliticaFija implements PoliticaDeIntervalo {
     return this.ms;
   }
 }
+
+/** Cuánto dura el arranque a ritmo activo al entrar a la sala. */
+export const ARRANQUE_MS = 30_000;
+
+/**
+ * Al entrar, la caché del borde puede devolver el estado de antes de que se abriera una
+ * votación; en reposo eso costaría 12 s más. Durante el arranque se consulta al ritmo activo.
+ */
+export class PoliticaConArranque implements PoliticaDeIntervalo {
+  private readonly inicio: number;
+
+  constructor(
+    private readonly base: PoliticaDeIntervalo,
+    private readonly ahora: () => number = Date.now,
+  ) {
+    this.inicio = ahora();
+  }
+
+  intervaloMs(contexto: ContextoDeIntervalo): number {
+    const intervalo = this.base.intervaloMs(contexto);
+    return this.ahora() - this.inicio < ARRANQUE_MS
+      ? Math.min(intervalo, INTERVALO_ACTIVO_MS)
+      : intervalo;
+  }
+}

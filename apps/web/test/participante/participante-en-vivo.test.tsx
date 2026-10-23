@@ -132,24 +132,29 @@ describe("ParticipanteEnVivo", () => {
       });
     }
 
-    it("en reposo consulta cada 12 s", async () => {
+    it("al entrar consulta cada 3 s durante 30 s y después, en reposo, cada 12 s", async () => {
       vi.useFakeTimers({ shouldAdvanceTime: false });
       const s = servidor(salaVacia());
       pintar(s);
       await pasar(0);
       expect(s.consultasDeEstado()).toBe(1);
-      await pasar(11_000);
-      expect(s.consultasDeEstado()).toBe(1);
-      await pasar(1_000);
+      await pasar(3_000);
       expect(s.consultasDeEstado()).toBe(2);
+      // Consultas a los 0, 3, 6 ... 30 s; la de los 30 s ya programa la siguiente a 12 s.
+      await pasar(27_000);
+      expect(s.consultasDeEstado()).toBe(11);
+      await pasar(11_000);
+      expect(s.consultasDeEstado()).toBe(11);
+      await pasar(1_000);
+      expect(s.consultasDeEstado()).toBe(12);
     });
 
     it("con una votación abierta sin votar consulta cada 3 s", async () => {
       vi.useFakeTimers({ shouldAdvanceTime: false });
       const s = servidor(salaVacia({ pregunta: preguntaAbierta() }));
       pintar(s);
-      await pasar(0);
-      // El contexto se actualiza al llegar el primer estado: ya no espera 12 s.
+      // Pasado el arranque, lo que mantiene los 3 s es la votación abierta.
+      await pasar(30_000);
       const antes = s.consultasDeEstado();
       await pasar(3_000);
       expect(s.consultasDeEstado()).toBe(antes + 1);
