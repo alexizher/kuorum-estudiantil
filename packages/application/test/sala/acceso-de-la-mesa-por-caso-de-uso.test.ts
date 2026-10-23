@@ -59,7 +59,7 @@ describe("familia sala: la cuenta de prueba solo toca sus sesiones", () => {
 
   it("TerminarSesion", async () => {
     const { e, propia, deSuper } = await montar();
-    const caso = new TerminarSesion(e.sesiones, e.preguntas, e.unidad);
+    const caso = new TerminarSesion(e.sesiones, e.preguntas, e.unidad, e.actas);
     await expect(caso.ejecutar(demo, deSuper.id)).rejects.toMatchObject({ codigo: "SESION_AJENA" });
     expect(deSuper.estado).toBe("EN_CURSO");
     await expect(caso.ejecutar(demo, propia.id)).resolves.toBeUndefined();

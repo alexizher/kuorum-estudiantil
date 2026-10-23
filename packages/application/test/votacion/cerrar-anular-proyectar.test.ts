@@ -25,6 +25,9 @@ describe("CerrarPregunta", () => {
       e.votos,
       e.reloj,
       e.unidad,
+      e.decisiones,
+      e.participantes,
+      e.ids,
     ).ejecutar(superadmin, pregunta.id);
 
     expect(pregunta.estado).toBe("CERRADA");
@@ -37,10 +40,16 @@ describe("CerrarPregunta", () => {
   it("falla si no estaba abierta", async () => {
     const { e, sesion, pregunta } = await montar("BORRADOR");
     await expect(
-      new CerrarPregunta(e.preguntas, e.sesiones, e.votos, e.reloj, e.unidad).ejecutar(
-        superadmin,
-        pregunta.id,
-      ),
+      new CerrarPregunta(
+        e.preguntas,
+        e.sesiones,
+        e.votos,
+        e.reloj,
+        e.unidad,
+        e.decisiones,
+        e.participantes,
+        e.ids,
+      ).ejecutar(superadmin, pregunta.id),
     ).rejects.toMatchObject({ codigo: "TRANSICION_INVALIDA" });
     expect(sesion.version).toBe(0);
   });

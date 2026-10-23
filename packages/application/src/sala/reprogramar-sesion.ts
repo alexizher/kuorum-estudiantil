@@ -12,6 +12,7 @@ export interface CambiosLocales {
   finLocal?: string;
   modalidad?: Modalidad;
   lugar?: string | null;
+  ordenDelDia?: string[];
 }
 
 export class ReprogramarSesion {
@@ -36,6 +37,7 @@ export class ReprogramarSesion {
           : { fin: deHoraLocal(cambios.finLocal, zonaHoraria) }),
         ...(cambios.modalidad === undefined ? {} : { modalidad: cambios.modalidad }),
         ...(cambios.lugar === undefined ? {} : { lugar: cambios.lugar }),
+        ...(cambios.ordenDelDia === undefined ? {} : { ordenDelDia: cambios.ordenDelDia }),
       });
       sesion.registrarCambio();
       await this.sesiones.guardar(sesion);

@@ -48,6 +48,8 @@ import {
   HasheadorSha256,
   PrismaLimpiezaDeDemo,
   PrismaRegistroDeVotos,
+  PrismaRepositorioDeActas,
+  PrismaRepositorioDeDecisiones,
   PrismaRepositorioDeParticipantes,
   PrismaRepositorioDePreguntas,
   PrismaRepositorioDeSesiones,
@@ -141,6 +143,8 @@ export function contenedor(): Contenedor {
     const cuerpos = new PrismaRepositorioDeCuerpos(contexto);
     const institucion = new PrismaRepositorioDeInstitucion(contexto);
     const membresias = new PrismaRepositorioDeMembresias(contexto);
+    const decisiones = new PrismaRepositorioDeDecisiones(contexto);
+    const actas = new PrismaRepositorioDeActas(contexto);
     const directorio = new PrismaDirectorioDePersonal(contexto);
     const votos = new PrismaRegistroDeVotos(contexto);
     const ids = new GeneradorDeIdsUuid();
@@ -167,7 +171,7 @@ export function contenedor(): Contenedor {
       crearCuentaDePersonal: new CrearCuentaDePersonal(cuentas, generadorDeContrasenas),
       restablecerContrasena: new RestablecerContrasena(cuentas, directorio, generadorDeContrasenas),
       iniciarSesion: new IniciarSesion(sesiones, unidad),
-      terminarSesion: new TerminarSesion(sesiones, preguntas, unidad),
+      terminarSesion: new TerminarSesion(sesiones, preguntas, unidad, actas),
       generarCodigosDeAcceso: new GenerarCodigosDeAcceso(
         sesiones,
         participantes,
@@ -181,7 +185,16 @@ export function contenedor(): Contenedor {
       crearPregunta: new CrearPregunta(sesiones, preguntas, ids, unidad),
       listarPreguntasDeSesion: new ListarPreguntasDeSesion(sesiones, preguntas, votos),
       abrirPregunta: new AbrirPregunta(sesiones, preguntas, reloj, unidad),
-      cerrarPregunta: new CerrarPregunta(preguntas, sesiones, votos, reloj, unidad),
+      cerrarPregunta: new CerrarPregunta(
+        preguntas,
+        sesiones,
+        votos,
+        reloj,
+        unidad,
+        decisiones,
+        participantes,
+        ids,
+      ),
       anularPregunta: new AnularPregunta(preguntas, sesiones, unidad),
       proyectarResultado: new ProyectarResultado(preguntas, sesiones, unidad),
       emitirVoto: new EmitirVoto(participantes, preguntas, sesiones, votos),

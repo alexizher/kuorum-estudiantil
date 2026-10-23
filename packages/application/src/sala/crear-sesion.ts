@@ -31,6 +31,7 @@ export interface DatosParaCrearSesion {
   finLocal: string;
   modalidad: Modalidad;
   lugar?: string | null;
+  ordenDelDia?: string[];
 }
 
 export class CrearSesion {
@@ -79,6 +80,7 @@ export class CrearSesion {
             fin,
             modalidad: datos.modalidad,
             lugar: datos.lugar ?? null,
+            ...(datos.ordenDelDia === undefined ? {} : { ordenDelDia: datos.ordenDelDia }),
             ...(datos.segundosPorIntervencion === undefined
               ? {}
               : { segundosPorIntervencion: datos.segundosPorIntervencion }),
