@@ -49,6 +49,10 @@ La asistencia es anónima y opcional: es el número de códigos activados, sin n
 - Las mociones pasan adelante según su prioridad: de orden, de procedimiento, de aclaración y de suficiente ilustración.
 - La mesa da la palabra en orden o fuera de turno, suma un minuto o rechaza una moción. El cronómetro se sincroniza con la hora del servidor.
 
+### Institución, facultades y calendario
+
+Una instalación sirve a una institución: la asamblea general y una asamblea por facultad (o escuela, o sede; el nombre lo pone la institución). El administrador crea las facultades y las cuentas del personal, y les da un rol en cada cuerpo: encargado (programa y conduce) o mesa (conduce). Cada sesión se programa con fecha, horas, modalidad y lugar, y la mesa ve al momento si choca con otra sesión de la institución. El calendario es público, con vista de mes y de próximas, filtrable por facultad, y se puede suscribir en `.ics` desde Google Calendar u Outlook. Guía: [docs/uso/administrador.md](docs/uso/administrador.md). API: [docs/api.md](docs/api.md).
+
 ### Diseño
 
 - Modo claro, oscuro o el del sistema, con un selector que cada persona guarda.
@@ -57,8 +61,7 @@ La asistencia es anónima y opcional: es el número de códigos activados, sin n
 
 ### Pendiente para las próximas versiones
 
-- Facultades, roles por facultad y la vista de la asamblea general sobre las decisiones de cada una.
-- Calendario de sesiones con aviso de cruces y exportación a `.ics`.
+- Vista de la asamblea general sobre las decisiones de cada facultad.
 - Actas en PDF y registro de decisiones.
 - Panel para personalizar colores, logo y textos.
 - Verificación por correo institucional (Microsoft Entra ID o Google), apagada por defecto.

@@ -4,11 +4,52 @@ import {
   LIMITE_DE_SESIONES_ACTIVAS_DE_DEMO,
   MAXIMO_DE_SESIONES_DE_DEMO,
 } from "../../src/index.js";
+import type { Actor, DatosParaCrearSesion } from "../../src/index.js";
 import { crearEscenario, sembrarSesion } from "../dobles/escenario.js";
-import { demo, mesa, otraDemo, superadmin } from "../dobles/actores.js";
+import {
+  CUERPO_ARCHIVADO,
+  CUERPO_GENERAL,
+  CUERPO_INGENIERIA,
+  CUERPO_MEDICINA,
+  demo,
+  encargadoDeArchivado,
+  encargadoDeIngenieria,
+  mesa,
+  mesaDeIngenieria,
+  otraDemo,
+  superadmin,
+} from "../dobles/actores.js";
 
 function casoDeUso(e: ReturnType<typeof crearEscenario>) {
-  return new CrearSesion(e.sesiones, e.unidad, e.ids, e.reloj, e.codigos);
+  const caso = new CrearSesion(
+    e.sesiones,
+    e.cuerpos,
+    e.institucion,
+    e.unidad,
+    e.ids,
+    e.reloj,
+    e.codigos,
+  );
+  // Atajo con la firma vieja: el horario y el cuerpo no importan en la mayoría de las pruebas.
+  return {
+    ejecutar: (
+      actor: Actor,
+      titulo: string,
+      modo: DatosParaCrearSesion["modo"],
+      segundosPorIntervencion?: number,
+      extra: Partial<DatosParaCrearSesion> = {},
+    ) =>
+      caso.ejecutar(actor, {
+        titulo,
+        modo,
+        ...(segundosPorIntervencion === undefined ? {} : { segundosPorIntervencion }),
+        cuerpoId: CUERPO_GENERAL,
+        inicioLocal: "2026-11-03T14:00",
+        finLocal: "2026-11-03T16:00",
+        modalidad: "PRESENCIAL",
+        ...extra,
+      }),
+  };
 }
 
 describe("CrearSesion", () => {
@@ -114,6 +155,115 @@ describe("CrearSesion", () => {
         await casoDeUso(e).ejecutar(superadmin, `Sesión de la mesa ${i}`, "SALA_ABIERTA");
         await casoDeUso(e).ejecutar(mesa, `Sesión de la otra mesa ${i}`, "SALA_ABIERTA");
       }
+    });
+  });
+
+  describe("cuerpo y horario", () => {
+    it("convierte la hora local con la zona de la institución y guarda cuerpo, modalidad y lugar", async () => {
+      const e = crearEscenario();
+      const sesion = await casoDeUso(e).ejecutar(
+        superadmin,
+        "Asamblea de noche",
+        "SALA_ABIERTA",
+        undefined,
+        {
+          cuerpoId: CUERPO_MEDICINA,
+          inicioLocal: "2026-11-03T23:30",
+          finLocal: "2026-11-04T01:00",
+          modalidad: "MIXTA",
+          lugar: "Auditorio",
+        },
+      );
+      expect(sesion.inicio.toISOString()).toBe("2026-11-04T04:30:00.000Z");
+      expect(sesion.fin.toISOString()).toBe("2026-11-04T06:00:00.000Z");
+      expect(sesion.cuerpoId).toBe(CUERPO_MEDICINA);
+      expect(sesion.modalidad).toBe("MIXTA");
+      expect(sesion.lugar).toBe("Auditorio");
+    });
+
+    it("el encargado de Ingeniería programa en Ingeniería y no en Medicina", async () => {
+      const e = crearEscenario();
+      await expect(
+        casoDeUso(e).ejecutar(
+          encargadoDeIngenieria,
+          "Asamblea de Ingeniería",
+          "SALA_ABIERTA",
+          undefined,
+          {
+            cuerpoId: CUERPO_INGENIERIA,
+          },
+        ),
+      ).resolves.toBeDefined();
+      await expect(
+        casoDeUso(e).ejecutar(
+          encargadoDeIngenieria,
+          "Asamblea de Medicina",
+          "SALA_ABIERTA",
+          undefined,
+          {
+            cuerpoId: CUERPO_MEDICINA,
+          },
+        ),
+      ).rejects.toMatchObject({ codigo: "CUERPO_AJENO" });
+    });
+
+    it("la mesa de un cuerpo no programa", async () => {
+      const e = crearEscenario();
+      await expect(
+        casoDeUso(e).ejecutar(
+          mesaDeIngenieria,
+          "Asamblea de Ingeniería",
+          "SALA_ABIERTA",
+          undefined,
+          {
+            cuerpoId: CUERPO_INGENIERIA,
+          },
+        ),
+      ).rejects.toMatchObject({ codigo: "CUERPO_AJENO" });
+    });
+
+    it("nadie programa en un cuerpo archivado ni en uno que no existe", async () => {
+      const e = crearEscenario();
+      for (const actor of [superadmin, encargadoDeArchivado, demo]) {
+        await expect(
+          casoDeUso(e).ejecutar(actor, "En el archivado", "SALA_ABIERTA", undefined, {
+            cuerpoId: CUERPO_ARCHIVADO,
+          }),
+        ).rejects.toMatchObject({ codigo: "CUERPO_AJENO" });
+      }
+      await expect(
+        casoDeUso(e).ejecutar(superadmin, "En ninguno", "SALA_ABIERTA", undefined, {
+          cuerpoId: "nada",
+        }),
+      ).rejects.toMatchObject({ codigo: "CUERPO_AJENO" });
+    });
+
+    it("la cuenta de prueba programa en cualquier cuerpo y la sesión queda marcada", async () => {
+      const e = crearEscenario();
+      const sesion = await casoDeUso(e).ejecutar(
+        demo,
+        "Prueba en Medicina",
+        "SALA_ABIERTA",
+        undefined,
+        {
+          cuerpoId: CUERPO_MEDICINA,
+        },
+      );
+      expect(sesion.creadaPorDemo).toBe(true);
+    });
+
+    it("rechaza horas mal escritas y fin antes del inicio", async () => {
+      const e = crearEscenario();
+      await expect(
+        casoDeUso(e).ejecutar(superadmin, "Mal escrita", "SALA_ABIERTA", undefined, {
+          inicioLocal: "3/11/2026 14:00",
+        }),
+      ).rejects.toMatchObject({ codigo: "FECHA_INVALIDA" });
+      await expect(
+        casoDeUso(e).ejecutar(superadmin, "Al revés", "SALA_ABIERTA", undefined, {
+          finLocal: "2026-11-03T13:00",
+        }),
+      ).rejects.toMatchObject({ codigo: "HORARIO_INVALIDO" });
     });
   });
 });

@@ -32,6 +32,14 @@ const ESTADO_POR_CODIGO: Readonly<Record<string, number>> = {
   LIMITE_DE_PREGUNTAS_DE_DEMO: 409,
   PARTICIPANTE_AJENO: 403,
   NO_ES_TUYA: 403,
+  SOLO_ADMINISTRADOR: 403,
+  // Un cuerpo en el que no puede programar se ve igual que uno que no existe.
+  CUERPO_AJENO: 404,
+  CUERPO_NO_EXISTE: 404,
+  NO_EXISTE: 404,
+  CUERPO_REPETIDO: 409,
+  CORREO_REPETIDO: 409,
+  GENERAL_NO_SE_ARCHIVA: 409,
 };
 
 /** Textos que la interfaz muestra tal cual. */
@@ -44,6 +52,20 @@ const MENSAJE_POR_CODIGO: Readonly<Record<string, string>> = {
   LIMITE_DE_DEMO: `La cuenta de prueba puede tener hasta ${LIMITE_DE_SESIONES_ACTIVAS_DE_DEMO} sesiones activas. Termina una para crear otra.`,
   LIMITE_DE_SESIONES_DE_DEMO: `La cuenta de prueba puede crear hasta ${MAXIMO_DE_SESIONES_DE_DEMO} sesiones al día. Mañana se borran y podrás crear más.`,
   LIMITE_DE_PREGUNTAS_DE_DEMO: `La cuenta de prueba puede tener hasta ${MAXIMO_DE_PREGUNTAS_POR_SESION_DE_DEMO} preguntas por sesión.`,
+  SOLO_ADMINISTRADOR: "Solo el administrador de la instalación puede hacer esto.",
+  CUERPO_AJENO: "No puedes programar sesiones en ese cuerpo.",
+  CUERPO_REPETIDO: "Ya hay un cuerpo con ese nombre.",
+  GENERAL_NO_SE_ARCHIVA: "La asamblea general no se puede archivar.",
+  HORARIO_INVALIDO:
+    "La hora de fin tiene que ser después del inicio, y la sesión puede durar hasta 24 horas.",
+  FECHA_INVALIDA: "Revisa la fecha y la hora.",
+  LUGAR_INVALIDO: "El lugar puede tener hasta 200 caracteres.",
+  NOMBRE_DE_CUERPO_INVALIDO: "El nombre debe tener entre 3 y 120 caracteres, con letras o números.",
+  NOMBRE_DE_INSTITUCION_INVALIDO:
+    "El nombre de la institución debe tener entre 2 y 120 caracteres.",
+  TIPO_DE_CUERPO_INVALIDO: "El nombre del tipo de cuerpo debe tener entre 3 y 40 caracteres.",
+  ZONA_HORARIA_INVALIDA: "Esa zona horaria no existe.",
+  RANGO_INVALIDO: "El rango de fechas no es válido: puede abarcar hasta 400 días.",
   LIMITE_DE_CODIGOS_DE_DEMO: `La cuenta de prueba puede generar hasta ${CODIGOS_MAXIMOS_POR_SOLICITUD_DE_DEMO} códigos por vez y ${CODIGOS_MAXIMOS_POR_SESION_DE_DEMO} por sesión.`,
 };
 
@@ -55,8 +77,8 @@ const CODIGO_PUBLICO: Readonly<Record<string, string>> = {
   SESION_AJENA: "SESION_NO_ENCONTRADA",
 };
 
-/** CIERRE_OCUPADO lleva su propio mensaje, con el consejo para la mesa. */
-const CODIGOS_CON_MENSAJE_DE_DOMINIO: readonly string[] = ["CIERRE_OCUPADO"];
+/** CIERRE_OCUPADO y CORREO_REPETIDO llevan su propio mensaje, con el detalle del caso. */
+const CODIGOS_CON_MENSAJE_DE_DOMINIO: readonly string[] = ["CIERRE_OCUPADO", "CORREO_REPETIDO"];
 
 export interface OpcionesDeError {
   /** Cabecera de caché para el 404 (solo el estado público, que es cacheable). */

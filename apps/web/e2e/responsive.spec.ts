@@ -24,14 +24,29 @@ test("ninguna pantalla desborda en 360, 768, 1280 y 1920", async ({ browser }) =
     const alto = ancho >= 1280 ? 800 : 780;
     // Mesa: la sesión guardada abre el panel y las rutas de códigos.
     await mesa.page.setViewportSize({ width: ancho, height: alto });
-    for (const destino of ["/mesa", ruta, `${ruta}/codigos`, `${ruta}/entregar`]) {
+    for (const destino of [
+      "/mesa",
+      ruta,
+      `${ruta}/codigos`,
+      `${ruta}/entregar`,
+      "/mesa/institucion",
+      "/mesa/personal",
+      "/mesa/cuenta",
+    ]) {
       await sinDesbordeHorizontal(mesa.page, destino);
     }
 
     // Públicas, sin sesión de mesa.
     const publico = await browser.newContext({ viewport: { width: ancho, height: alto } });
     const page = await publico.newPage();
-    for (const destino of ["/", "/mesa/ingresar", `/s/${sala}`, `/proyeccion/${sala}`]) {
+    for (const destino of [
+      "/",
+      "/mesa/ingresar",
+      `/s/${sala}`,
+      `/proyeccion/${sala}`,
+      "/calendario",
+      "/calendario?vista=lista",
+    ]) {
       await sinDesbordeHorizontal(page, destino);
     }
     await publico.close();

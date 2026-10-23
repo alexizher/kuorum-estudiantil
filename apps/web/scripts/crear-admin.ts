@@ -96,7 +96,9 @@ async function principal(): Promise<number> {
     leerStdin,
     stdout: (texto) => process.stdout.write(texto),
     stderr: (texto) => process.stderr.write(texto),
-    crearCuenta: (datos) => crearCuentaDeMesa(contenedor().autenticacion(), datos),
+    crearCuenta: async (datos) => {
+      await crearCuentaDeMesa(contenedor().autenticacion(), datos);
+    },
     actualizarCuenta: (datos) => actualizarCuentaDeMesa(contenedor().autenticacion(), datos),
   });
 }

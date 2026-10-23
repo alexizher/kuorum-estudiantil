@@ -4,9 +4,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   comoErrorDeMesa,
   type ClienteDeMesa,
+  type Modalidad,
   type ModoDeSala,
   type SesionDeLista,
 } from "./cliente-de-mesa";
+import { finLocal } from "./horario";
 
 export const SEGUNDOS_POR_DEFECTO = 180;
 const SEGUNDOS_MIN = 30;
@@ -16,6 +18,13 @@ export interface DatosDelFormulario {
   titulo: string;
   modo: ModoDeSala;
   segundos: number;
+  cuerpoId: string;
+  /** `2026-11-03`; las horas en `14:00`. Si `hasta` no pasa de `desde`, termina al día siguiente. */
+  fecha: string;
+  desde: string;
+  hasta: string;
+  modalidad: Modalidad;
+  lugar: string;
 }
 
 export interface Sesiones {
@@ -41,7 +50,7 @@ export function useSesiones(cliente: ClienteDeMesa, incluirCuentaDePrueba = fals
     setError(undefined);
     try {
       const lista = await cliente.listarSesiones({ incluirCuentaDePrueba });
-      setSesiones([...lista].sort((a, b) => Date.parse(b.creadaEn) - Date.parse(a.creadaEn)));
+      setSesiones([...lista].sort((a, b) => Date.parse(b.inicio) - Date.parse(a.inicio)));
     } catch (causa) {
       setError(comoErrorDeMesa(causa).message);
     } finally {
@@ -54,11 +63,21 @@ export function useSesiones(cliente: ClienteDeMesa, incluirCuentaDePrueba = fals
   }, [recargar]);
 
   const crear = useCallback(
-    async ({ titulo, modo, segundos }: DatosDelFormulario): Promise<boolean> => {
+    async (datos: DatosDelFormulario): Promise<boolean> => {
       if (enCurso.current) return false;
-      const limpio = titulo.trim();
+      const { segundos } = datos;
+      const limpio = datos.titulo.trim();
+      const lugar = datos.lugar.trim();
       if (limpio === "") {
         setErrorDeCrear("Escribe el título de la sesión.");
+        return false;
+      }
+      if (datos.cuerpoId === "") {
+        setErrorDeCrear("Elige el cuerpo de la sesión.");
+        return false;
+      }
+      if (datos.fecha === "" || datos.desde === "" || datos.hasta === "") {
+        setErrorDeCrear("Escribe la fecha y las horas de la sesión.");
         return false;
       }
       if (!Number.isInteger(segundos) || segundos < SEGUNDOS_MIN || segundos > SEGUNDOS_MAX) {
@@ -69,7 +88,16 @@ export function useSesiones(cliente: ClienteDeMesa, incluirCuentaDePrueba = fals
       setCreando(true);
       setErrorDeCrear(undefined);
       try {
-        await cliente.crearSesion({ titulo: limpio, modo, segundosPorIntervencion: segundos });
+        await cliente.crearSesion({
+          titulo: limpio,
+          modo: datos.modo,
+          segundosPorIntervencion: segundos,
+          cuerpoId: datos.cuerpoId,
+          inicio: `${datos.fecha}T${datos.desde}`,
+          fin: finLocal(datos.fecha, datos.desde, datos.hasta),
+          modalidad: datos.modalidad,
+          ...(lugar === "" ? {} : { lugar }),
+        });
         await recargar();
         return true;
       } catch (causa) {

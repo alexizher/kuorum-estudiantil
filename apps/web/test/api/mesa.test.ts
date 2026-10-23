@@ -16,6 +16,8 @@ import {
   POST as crearPregunta,
 } from "../../src/app/api/mesa/v1/sesiones/[id]/preguntas/route";
 import { POST as terminar } from "../../src/app/api/mesa/v1/sesiones/[id]/terminar/route";
+import { POST as reprogramar } from "../../src/app/api/mesa/v1/sesiones/[id]/reprogramar/route";
+import { POST as cancelar } from "../../src/app/api/mesa/v1/sesiones/[id]/cancelar/route";
 import { contenedor } from "../../src/composicion";
 
 vi.mock("../../src/composicion", () => ({ contenedor: vi.fn() }));
@@ -28,6 +30,20 @@ const sesion = {
   estado: "PROGRAMADA",
   modo: "CON_CODIGOS",
   creadaEn: creada,
+  creadaPorId: "u1",
+  creadaPorDemo: false,
+  cuerpoId: "c-general",
+  inicio: new Date("2026-11-04T04:30:00.000Z"),
+  fin: new Date("2026-11-04T06:30:00.000Z"),
+  modalidad: "MIXTA",
+  lugar: "Auditorio",
+};
+const cuerpoGeneral = {
+  id: "c-general",
+  nombre: "Asamblea general",
+  slug: "asamblea-general",
+  tipo: "GENERAL",
+  archivado: false,
 };
 
 const ejecutar = () => ({ ejecutar: vi.fn(async () => undefined) });
@@ -47,14 +63,22 @@ const casos = {
   sumarMinuto: ejecutar(),
   rechazarMocion: ejecutar(),
   listarSesionesDeLaMesa: { ejecutar: vi.fn() },
+  reprogramarSesion: ejecutar(),
+  cancelarSesion: ejecutar(),
 };
 let hayMesa = true;
 let rolActual = "MESA";
-const ACTOR = { id: "u1", correo: "m@x.test", nombre: "Mesa", rol: "MESA" };
+let membresiasActuales: { cuerpoId: string; rol: string }[] = [];
+const ACTOR = { id: "u1", correo: "m@x.test", nombre: "Mesa", rol: "MESA", membresias: [] };
 
 function conMesa(): void {
   vi.mocked(contenedor).mockReturnValue({
     ...casos,
+    membresias: {
+      deUsuario: vi.fn(async () => membresiasActuales.map((m) => ({ usuarioId: "u1", ...m }))),
+    },
+    cuerpos: { listar: vi.fn(async () => [cuerpoGeneral]) },
+    institucion: { obtener: vi.fn(async () => ({ zonaHoraria: "America/Bogota" })) },
     autenticacion: () => ({
       api: {
         getSession: vi.fn(async () =>
@@ -77,6 +101,7 @@ const idp = (id = "s1") => ({ params: Promise.resolve({ id }) });
 beforeEach(() => {
   hayMesa = true;
   rolActual = "MESA";
+  membresiasActuales = [];
   for (const c of Object.values(casos)) for (const f of Object.values(c)) f.mockClear();
   casos.crearSesion.ejecutar.mockResolvedValue(sesion);
   casos.listarSesionesDeLaMesa.ejecutar.mockResolvedValue([sesion]);
@@ -102,6 +127,8 @@ describe("API de la mesa", () => {
     const respuestas = await Promise.all([
       listar(pedir("GET")),
       crear(pedir("POST", { titulo: "Asamblea", modo: "SALA_ABIERTA" })),
+      reprogramar(pedir("POST", { titulo: "Otra" }), idp()),
+      cancelar(pedir("POST"), idp()),
       iniciar(pedir("POST"), idp()),
       terminar(pedir("POST"), idp()),
       codigos(pedir("POST", { cantidad: 2 }), idp()),
@@ -124,7 +151,8 @@ describe("API de la mesa", () => {
     expect(casos.iniciarSesion.ejecutar).not.toHaveBeenCalled();
   });
 
-  it("GET sesiones lista id, título, código de sala, estado, modo y creadaEn", async () => {
+  it("GET sesiones lista cada una con su cuerpo, horario en hora local y si el actor la gestiona", async () => {
+    membresiasActuales = [{ cuerpoId: "c-general", rol: "MESA" }];
     const r = await listar(pedir("GET"));
     expect(r.status).toBe(200);
     expect(r.headers.get("Cache-Control")).toBe("no-store");
@@ -137,19 +165,88 @@ describe("API de la mesa", () => {
           estado: "PROGRAMADA",
           modo: "CON_CODIGOS",
           creadaEn: creada.toISOString(),
+          cuerpo: { id: "c-general", nombre: "Asamblea general" },
+          inicio: "2026-11-04T04:30:00.000Z",
+          fin: "2026-11-04T06:30:00.000Z",
+          inicioLocal: "2026-11-03T23:30",
+          finLocal: "2026-11-04T01:30",
+          modalidad: "MIXTA",
+          lugar: "Auditorio",
+          puedeGestionar: false,
         },
       ],
     });
   });
 
-  it("POST sesiones crea (201) y valida el cuerpo (400)", async () => {
-    const r = await crear(
-      pedir("POST", { titulo: "Asamblea", modo: "CON_CODIGOS", segundosPorIntervencion: 120 }),
+  it("el actor llega con sus membresías", async () => {
+    membresiasActuales = [{ cuerpoId: "c-general", rol: "ENCARGADO" }];
+    const r = await listar(pedir("GET"));
+    expect((await r.json()).sesiones[0].puedeGestionar).toBe(true);
+    expect(casos.listarSesionesDeLaMesa.ejecutar).toHaveBeenLastCalledWith(
+      { ...ACTOR, membresias: [{ cuerpoId: "c-general", rol: "ENCARGADO" }] },
+      { incluirCuentaDePrueba: false },
     );
+  });
+
+  it("POST sesiones crea (201) con cuerpo y horario, y valida el cuerpo (400)", async () => {
+    const datos = {
+      titulo: "Asamblea",
+      modo: "CON_CODIGOS",
+      segundosPorIntervencion: 120,
+      cuerpoId: "c-general",
+      inicio: "2026-11-03T23:30",
+      fin: "2026-11-04T01:30",
+      modalidad: "MIXTA",
+      lugar: "Auditorio",
+    };
+    const r = await crear(pedir("POST", datos));
     expect(r.status).toBe(201);
     expect((await r.json()).codigoDeSala).toBe("ABCD");
-    expect(casos.crearSesion.ejecutar).toHaveBeenCalledWith(ACTOR, "Asamblea", "CON_CODIGOS", 120);
+    expect(casos.crearSesion.ejecutar).toHaveBeenCalledWith(ACTOR, {
+      titulo: "Asamblea",
+      modo: "CON_CODIGOS",
+      segundosPorIntervencion: 120,
+      cuerpoId: "c-general",
+      inicioLocal: "2026-11-03T23:30",
+      finLocal: "2026-11-04T01:30",
+      modalidad: "MIXTA",
+      lugar: "Auditorio",
+    });
     expect((await crear(pedir("POST", { titulo: "x", modo: "RARO" }))).status).toBe(400);
+    expect((await crear(pedir("POST", { ...datos, cuerpoId: undefined }))).status).toBe(400);
+  });
+
+  it("reprogramar pasa las horas locales y cancelar da 204", async () => {
+    const r = await reprogramar(
+      pedir("POST", { inicio: "2026-11-05T09:00", fin: "2026-11-05T11:00", lugar: null }),
+      idp("s9"),
+    );
+    expect(r.status).toBe(204);
+    expect(casos.reprogramarSesion.ejecutar).toHaveBeenCalledWith(ACTOR, "s9", {
+      inicioLocal: "2026-11-05T09:00",
+      finLocal: "2026-11-05T11:00",
+      lugar: null,
+    });
+    expect((await reprogramar(pedir("POST", {}), idp("s9"))).status).toBe(400);
+    expect((await cancelar(pedir("POST"), idp("s9"))).status).toBe(204);
+    expect(casos.cancelarSesion.ejecutar).toHaveBeenCalledWith(ACTOR, "s9");
+  });
+
+  it("errores nuevos: CUERPO_AJENO 404, HORARIO_INVALIDO 422 con mensaje", async () => {
+    casos.crearSesion.ejecutar.mockRejectedValueOnce(new ErrorDeDominio("CUERPO_AJENO"));
+    const datos = {
+      titulo: "Asamblea",
+      modo: "CON_CODIGOS",
+      cuerpoId: "c-x",
+      inicio: "2026-11-03T14:00",
+      fin: "2026-11-03T16:00",
+      modalidad: "PRESENCIAL",
+    };
+    expect((await crear(pedir("POST", datos))).status).toBe(404);
+    casos.crearSesion.ejecutar.mockRejectedValueOnce(new ErrorDeDominio("HORARIO_INVALIDO"));
+    const r = await crear(pedir("POST", datos));
+    expect(r.status).toBe(422);
+    expect((await r.json()).mensaje).toMatch(/después del inicio/);
   });
 
   it("iniciar y terminar dan 204 y pasan el id", async () => {
@@ -348,8 +445,21 @@ describe("API de la mesa", () => {
     await terminarIntervencion(pedir("POST"), idp("s1"));
     await minuto(pedir("POST"), idp("s1"));
     await rechazar(pedir("POST"), { params: Promise.resolve({ id: "s1", solicitudId: "x" }) });
-    await crear(pedir("POST", { titulo: "Asamblea", modo: "SALA_ABIERTA" }));
+    await crear(
+      pedir("POST", {
+        titulo: "Asamblea",
+        modo: "SALA_ABIERTA",
+        cuerpoId: "c-general",
+        inicio: "2026-11-03T14:00",
+        fin: "2026-11-03T16:00",
+        modalidad: "PRESENCIAL",
+      }),
+    );
+    await reprogramar(pedir("POST", { titulo: "Otra" }), idp("s1"));
+    await cancelar(pedir("POST"), idp("s1"));
     for (const caso of [
+      casos.reprogramarSesion,
+      casos.cancelarSesion,
       casos.iniciarSesion,
       casos.terminarSesion,
       casos.generarCodigosDeAcceso,

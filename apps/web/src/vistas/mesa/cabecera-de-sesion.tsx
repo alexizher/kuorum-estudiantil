@@ -3,10 +3,11 @@
 import { Boton, clasesDeBoton } from "@kuorum/ui";
 import Link from "next/link";
 import { useState } from "react";
-import type { ModoDeSala } from "./cliente-de-mesa";
+import type { ModoDeSala, ProgramacionDeSesion } from "./cliente-de-mesa";
+import { fechaYHora, separar } from "./horario";
 import { InsigniaDeCuentaDePrueba } from "./insignia-de-cuenta-de-prueba";
 import estilos from "./mesa.module.css";
-import { ETIQUETA_DE_MODO, etiquetaDeEstadoDeSesion } from "./textos";
+import { ETIQUETA_DE_MODALIDAD, ETIQUETA_DE_MODO, etiquetaDeEstadoDeSesion } from "./textos";
 
 interface Propiedades {
   titulo: string;
@@ -19,6 +20,9 @@ interface Propiedades {
   alPedirTerminar: () => void;
   alCopiarEnlace: () => Promise<boolean>;
   esDemo?: boolean;
+  programacion?: ProgramacionDeSesion | undefined;
+  alReprogramar?: () => void;
+  alPedirCancelar?: () => void;
 }
 
 export function CabeceraDeSesion({
@@ -32,9 +36,13 @@ export function CabeceraDeSesion({
   alPedirTerminar,
   alCopiarEnlace,
   esDemo = false,
+  programacion,
+  alReprogramar,
+  alPedirCancelar,
 }: Propiedades) {
   const [copiado, setCopiado] = useState<boolean | undefined>(undefined);
   const puedeIniciar = estado === "PROGRAMADA" || estado === "ABIERTA";
+  const puedeGestionar = programacion?.puedeGestionar === true;
   const puedeTerminar = estado === "EN_CURSO";
 
   async function copiar(): Promise<void> {
@@ -57,12 +65,30 @@ export function CabeceraDeSesion({
           </span>
           <span className="suave">{ETIQUETA_DE_MODO[modo]}</span>
         </p>
+        {programacion ? (
+          <p className={estilos.programacion}>
+            {programacion.cuerpo} ·{" "}
+            <span className="num">
+              {fechaYHora(programacion.inicioLocal)} a {separar(programacion.finLocal).hora}
+            </span>{" "}
+            · {ETIQUETA_DE_MODALIDAD[programacion.modalidad]}
+            {programacion.lugar ? ` · ${programacion.lugar}` : ""}
+          </p>
+        ) : null}
       </div>
       <div className={estilos.accionesDeCabecera}>
         {esDemo ? <InsigniaDeCuentaDePrueba /> : null}
         {puedeIniciar ? (
           <Boton variante="tinta" onClick={alIniciar} disabled={ocupado}>
             Iniciar sesión
+          </Boton>
+        ) : null}
+        {puedeGestionar && estado === "PROGRAMADA" && alReprogramar ? (
+          <Boton onClick={alReprogramar}>Reprogramar</Boton>
+        ) : null}
+        {puedeGestionar && puedeIniciar && alPedirCancelar ? (
+          <Boton variante="plano" onClick={alPedirCancelar}>
+            Cancelar sesión
           </Boton>
         ) : null}
         {puedeTerminar ? (

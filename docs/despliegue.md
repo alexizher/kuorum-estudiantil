@@ -127,6 +127,10 @@ Después actualiza `KUORUM_DEMO_CONTRASENA` en Vercel y publica de nuevo. `--act
 
 Como la contraseña es pública, cualquiera puede iniciar sesión con ella y crear salas visibles con su código. Si apagas la cuenta de prueba quitando `KUORUM_MODO_DEMO`, la cuenta sigue existiendo y la contraseña ya fue pública: cualquiera que la haya visto puede seguir entrando. Rota la contraseña con `--actualizar` (y no la publiques) o borra el usuario antes de apagarla.
 
+## Después del primer despliegue
+
+Entra a `/mesa` con la cuenta de administración y abre **Institución**: pon el nombre de la institución, cómo se llaman sus cuerpos y la zona horaria (viene en `America/Bogota`), y agrega las facultades. Luego, en **Personal**, crea las cuentas de quienes llevan cada asamblea. Los detalles están en la [guía del administrador](uso/administrador.md).
+
 ## Migraciones de base de datos
 
 El build de Vercel aplica las migraciones de Prisma solo cuando `VERCEL_ENV` es `production`. Las vistas previas (ramas y pull requests) nunca migran, así que un PR con una migración no toca la base de producción antes de fusionarse; su vista previa corre contra el esquema que ya tiene la base que le toque. El script es `scripts/migrar-si-produccion.mjs`.
@@ -152,6 +156,8 @@ La pantalla pública consulta el estado de la sesión cada 3 s mientras hay una 
 - Sin dominio propio: unas 830 persona-hora al mes si todos consultan cada 3 s, o unas 2.000 con el intervalo adaptativo. Una persona conectada una hora son 1.200 peticiones a 3 s y 300 a 12 s.
 - Con dominio propio y Cloudflare gratuito delante: las consultas las responde Cloudflare y Vercel recibe unas 0,5 peticiones por segundo por sesión abierta. Una general de 3.000 personas durante 3 horas cabe.
 - Si superas la cuota, Vercel pausa el despliegue hasta el mes siguiente.
+
+El calendario público (`/api/public/v1/calendario` y su `.ics`) se cachea 60 s en el borde. Los clientes de calendario suscritos lo piden cada pocas horas, así que su costo en peticiones es pequeño frente al de una sala abierta.
 
 Pon Cloudflare delante en cuanto planees asambleas generales de más de unas 300 personas, o varias sesiones grandes en el mismo mes.
 

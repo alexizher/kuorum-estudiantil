@@ -1,4 +1,5 @@
 export type ModoDeSala = "SALA_ABIERTA" | "CON_CODIGOS";
+export type Modalidad = "PRESENCIAL" | "VIRTUAL" | "MIXTA";
 
 export interface SesionDeLista {
   id: string;
@@ -7,6 +8,61 @@ export interface SesionDeLista {
   estado: string;
   modo: ModoDeSala;
   creadaEn: string;
+  cuerpo: { id: string; nombre: string };
+  inicio: string;
+  fin: string;
+  /** Hora local de la institución, `2026-11-03T14:00`. */
+  inicioLocal: string;
+  finLocal: string;
+  modalidad: Modalidad;
+  lugar: string | null;
+  /** Puede reprogramarla o cancelarla. */
+  puedeGestionar: boolean;
+}
+
+/** Cuándo y dónde es la sesión, como lo prepara el servidor para la mesa. */
+export interface ProgramacionDeSesion {
+  cuerpo: string;
+  inicioLocal: string;
+  finLocal: string;
+  modalidad: Modalidad;
+  lugar: string | null;
+  puedeGestionar: boolean;
+}
+
+export interface CuerpoDeMesa {
+  id: string;
+  nombre: string;
+  slug: string;
+  tipo: "GENERAL" | "FACULTAD";
+  archivado: boolean;
+  puedeProgramar: boolean;
+}
+
+export interface InstitucionDeMesa {
+  institucion: {
+    nombre: string;
+    tipoDeCuerpoSingular: string;
+    tipoDeCuerpoPlural: string;
+    zonaHoraria: string;
+  };
+  cuerpos: CuerpoDeMesa[];
+}
+
+export interface CruceDeSesion {
+  id: string;
+  titulo: string;
+  cuerpo: string;
+  inicioLocal: string;
+  finLocal: string;
+}
+
+export interface CambiosDeSesion {
+  titulo?: string;
+  inicio?: string;
+  fin?: string;
+  modalidad?: Modalidad;
+  lugar?: string | null;
 }
 
 export interface ResultadoDeVotacion {
@@ -30,12 +86,21 @@ export interface DatosDeSesion {
   titulo: string;
   modo: ModoDeSala;
   segundosPorIntervencion?: number;
+  cuerpoId: string;
+  inicio: string;
+  fin: string;
+  modalidad: Modalidad;
+  lugar?: string | null;
 }
 
 /** Acciones de la mesa. Todas lanzan ErrorDeMesa si algo falla. */
 export interface ClienteDeMesa {
   listarSesiones(opciones?: { incluirCuentaDePrueba?: boolean }): Promise<SesionDeLista[]>;
   crearSesion(datos: DatosDeSesion): Promise<SesionDeLista>;
+  leerInstitucion(): Promise<InstitucionDeMesa>;
+  buscarCruces(tramo: { inicio: string; fin: string; excluir?: string }): Promise<CruceDeSesion[]>;
+  reprogramar(sesionId: string, cambios: CambiosDeSesion): Promise<void>;
+  cancelar(sesionId: string): Promise<void>;
   iniciar(sesionId: string): Promise<void>;
   terminar(sesionId: string): Promise<void>;
   /** El texto plano de los códigos solo existe en esta respuesta. */
@@ -73,6 +138,8 @@ const MENSAJE_POR_CODIGO: Readonly<Record<string, string>> = {
   OPCIONES_INVALIDAS: "Las opciones van de 2 a 10.",
   OPCIONES_DUPLICADAS: "Las opciones no pueden repetirse.",
   TEXTO_OPCION_INVALIDO: "Cada opción debe tener entre 1 y 80 caracteres.",
+  HORARIO_INVALIDO:
+    "La hora de fin tiene que ser después del inicio, y la sesión puede durar hasta 24 horas.",
 };
 const MENSAJE_GENERAL = "No se pudo completar. Inténtalo de nuevo.";
 
@@ -92,6 +159,42 @@ export function comoErrorDeMesa(error: unknown): ErrorDeMesa {
 }
 
 const MESA = "/api/mesa/v1";
+
+export type MetodoHttp = "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
+
+/**
+ * Pide a la API de la mesa. Devuelve el JSON (o null si no hay cuerpo) y traduce los fallos a
+ * ErrorDeMesa, con el mensaje de la API si lo trae.
+ */
+export async function pedirJson(
+  fetch: typeof globalThis.fetch,
+  metodo: MetodoHttp,
+  url: string,
+  cuerpo?: unknown,
+): Promise<unknown> {
+  let respuesta: Response;
+  try {
+    const conCuerpo = metodo !== "GET" && metodo !== "DELETE";
+    // Llamada suelta: window.fetch lanza "Illegal invocation" si `this` es otra instancia.
+    respuesta = await fetch(url, {
+      method: metodo,
+      credentials: "same-origin",
+      ...(conCuerpo
+        ? { headers: { "Content-Type": "application/json" }, body: JSON.stringify(cuerpo ?? {}) }
+        : {}),
+    });
+  } catch {
+    throw new ErrorDeMesa(0, "SIN_CONEXION");
+  }
+  const json: unknown = await respuesta.json().catch(() => null);
+  if (respuesta.ok) return json;
+  const { error, mensaje } = (json ?? {}) as { error?: unknown; mensaje?: unknown };
+  throw new ErrorDeMesa(
+    respuesta.status,
+    typeof error === "string" ? error : "ERROR_DE_RED",
+    typeof mensaje === "string" ? mensaje : undefined,
+  );
+}
 
 function leer<T>(cuerpo: unknown, campo: string): T {
   const valor = (cuerpo as Record<string, unknown> | null)?.[campo];
@@ -113,6 +216,30 @@ export class ClienteDeMesaPorFetch implements ClienteDeMesa {
 
   async crearSesion(datos: DatosDeSesion): Promise<SesionDeLista> {
     return (await this.pedir("POST", `${MESA}/sesiones`, datos)) as SesionDeLista;
+  }
+
+  async leerInstitucion(): Promise<InstitucionDeMesa> {
+    const cuerpo = await this.pedir("GET", `${MESA}/institucion`);
+    leer<unknown>(cuerpo, "cuerpos");
+    return cuerpo as InstitucionDeMesa;
+  }
+
+  async buscarCruces(tramo: {
+    inicio: string;
+    fin: string;
+    excluir?: string;
+  }): Promise<CruceDeSesion[]> {
+    const consulta = new URLSearchParams({ inicio: tramo.inicio, fin: tramo.fin });
+    if (tramo.excluir !== undefined) consulta.set("excluir", tramo.excluir);
+    return leer<CruceDeSesion[]>(await this.pedir("GET", `${MESA}/cruces?${consulta}`), "cruces");
+  }
+
+  async reprogramar(sesionId: string, cambios: CambiosDeSesion): Promise<void> {
+    await this.pedir("POST", this.sesion(sesionId, "reprogramar"), cambios);
+  }
+
+  async cancelar(sesionId: string): Promise<void> {
+    await this.pedir("POST", this.sesion(sesionId, "cancelar"));
   }
 
   async iniciar(sesionId: string): Promise<void> {
@@ -195,29 +322,7 @@ export class ClienteDeMesaPorFetch implements ClienteDeMesa {
     return `${MESA}/preguntas/${encodeURIComponent(id)}/${ruta}`;
   }
 
-  /** Devuelve el cuerpo JSON (o null si no hay) y traduce los fallos a ErrorDeMesa. */
-  private async pedir(metodo: "GET" | "POST", url: string, cuerpo?: unknown): Promise<unknown> {
-    let respuesta: Response;
-    try {
-      // Llamada suelta: window.fetch lanza "Illegal invocation" si `this` es la instancia.
-      const llamar = this.fetch;
-      respuesta = await llamar(url, {
-        method: metodo,
-        credentials: "same-origin",
-        ...(metodo === "POST"
-          ? { headers: { "Content-Type": "application/json" }, body: JSON.stringify(cuerpo ?? {}) }
-          : {}),
-      });
-    } catch {
-      throw new ErrorDeMesa(0, "SIN_CONEXION");
-    }
-    const json: unknown = await respuesta.json().catch(() => null);
-    if (respuesta.ok) return json;
-    const { error, mensaje } = (json ?? {}) as { error?: unknown; mensaje?: unknown };
-    throw new ErrorDeMesa(
-      respuesta.status,
-      typeof error === "string" ? error : "ERROR_DE_RED",
-      typeof mensaje === "string" ? mensaje : undefined,
-    );
+  private pedir(metodo: "GET" | "POST", url: string, cuerpo?: unknown): Promise<unknown> {
+    return pedirJson(this.fetch, metodo, url, cuerpo);
   }
 }

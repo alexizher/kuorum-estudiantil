@@ -33,6 +33,10 @@ describe("ClienteDeMesaPorFetch", () => {
       titulo: "Asamblea",
       modo: "SALA_ABIERTA",
       segundosPorIntervencion: 120,
+      cuerpoId: "c1",
+      inicio: "2026-11-03T14:00",
+      fin: "2026-11-03T16:00",
+      modalidad: "PRESENCIAL",
     });
     const [url, opciones] = fetchFalso.mock.calls[0] as [string, RequestInit];
     expect(url).toBe("/api/mesa/v1/sesiones");
@@ -41,7 +45,59 @@ describe("ClienteDeMesaPorFetch", () => {
       titulo: "Asamblea",
       modo: "SALA_ABIERTA",
       segundosPorIntervencion: 120,
+      cuerpoId: "c1",
+      inicio: "2026-11-03T14:00",
+      fin: "2026-11-03T16:00",
+      modalidad: "PRESENCIAL",
     });
+  });
+
+  it("lee la institución con los cuerpos", async () => {
+    const datos = {
+      institucion: {
+        nombre: "U",
+        tipoDeCuerpoSingular: "Facultad",
+        tipoDeCuerpoPlural: "Facultades",
+        zonaHoraria: "America/Bogota",
+      },
+      cuerpos: [
+        {
+          id: "c1",
+          nombre: "Artes",
+          slug: "artes",
+          tipo: "FACULTAD",
+          archivado: false,
+          puedeProgramar: true,
+        },
+      ],
+    };
+    const { cliente, fetchFalso } = conRespuesta(Response.json(datos));
+    expect(await cliente.leerInstitucion()).toEqual(datos);
+    expect(fetchFalso.mock.calls[0]?.[0]).toBe("/api/mesa/v1/institucion");
+  });
+
+  it("busca cruces con el tramo y la sesión a excluir en la URL", async () => {
+    const { cliente, fetchFalso } = conRespuesta(Response.json({ cruces: [] }));
+    expect(
+      await cliente.buscarCruces({
+        inicio: "2026-11-03T14:00",
+        fin: "2026-11-03T16:00",
+        excluir: "s 1",
+      }),
+    ).toEqual([]);
+    expect(fetchFalso.mock.calls[0]?.[0]).toBe(
+      "/api/mesa/v1/cruces?inicio=2026-11-03T14%3A00&fin=2026-11-03T16%3A00&excluir=s+1",
+    );
+  });
+
+  it("reprograma con los cambios y cancela", async () => {
+    const { cliente, fetchFalso } = conRespuesta(new Response(null, { status: 204 }));
+    await cliente.reprogramar("s1", { inicio: "2026-11-05T09:00", lugar: null });
+    await cliente.cancelar("s1");
+    const [url, opciones] = fetchFalso.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe("/api/mesa/v1/sesiones/s1/reprogramar");
+    expect(JSON.parse(String(opciones.body))).toEqual({ inicio: "2026-11-05T09:00", lugar: null });
+    expect(fetchFalso.mock.calls[1]?.[0]).toBe("/api/mesa/v1/sesiones/s1/cancelar");
   });
 
   it("genera códigos y devuelve el texto plano", async () => {

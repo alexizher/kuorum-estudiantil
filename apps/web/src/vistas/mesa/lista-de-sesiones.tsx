@@ -4,16 +4,25 @@ import { Boton } from "@kuorum/ui";
 import Link from "next/link";
 import type { SesionDeLista } from "./cliente-de-mesa";
 import estilos from "./mesa.module.css";
-import { ETIQUETA_DE_MODO, etiquetaDeEstadoDeSesion, fechaCorta } from "./textos";
+import { fechaYHora } from "./horario";
+import { ETIQUETA_DE_MODO, etiquetaDeEstadoDeSesion } from "./textos";
 
 interface Propiedades {
   sesiones: readonly SesionDeLista[];
   cargando: boolean;
   error: string | undefined;
   alReintentar: () => void;
+  /** Cuenta del personal sin membresías: no verá sesiones hasta que la agreguen a un cuerpo. */
+  sinCuerpos?: boolean;
 }
 
-export function ListaDeSesiones({ sesiones, cargando, error, alReintentar }: Propiedades) {
+export function ListaDeSesiones({
+  sesiones,
+  cargando,
+  error,
+  alReintentar,
+  sinCuerpos = false,
+}: Propiedades) {
   if (error !== undefined) {
     return (
       <div role="alert" className={estilos.alerta}>
@@ -29,6 +38,14 @@ export function ListaDeSesiones({ sesiones, cargando, error, alReintentar }: Pro
       </p>
     );
   }
+  if (sinCuerpos) {
+    return (
+      <p className={estilos.vacia}>
+        Todavía no tienes cuerpos asignados. Pídele al administrador de la instalación que te
+        agregue.
+      </p>
+    );
+  }
   if (sesiones.length === 0) {
     return <p className={estilos.vacia}>Todavía no hay sesiones. Crea la primera aquí al lado.</p>;
   }
@@ -41,12 +58,14 @@ export function ListaDeSesiones({ sesiones, cargando, error, alReintentar }: Pro
             <span className={estilos.sesionSala}>
               Sala <strong>{sesion.codigoDeSala}</strong>
             </span>
+            <span className={estilos.sesionCuando}>
+              {sesion.cuerpo.nombre} · <span className="num">{fechaYHora(sesion.inicioLocal)}</span>
+            </span>
             <span className={estilos.sesionDatos}>
               <span className={estilos.chip} data-estado={sesion.estado}>
                 {etiquetaDeEstadoDeSesion(sesion.estado)}
               </span>
               <span className="suave">{ETIQUETA_DE_MODO[sesion.modo]}</span>
-              <span className="suave num">{fechaCorta(sesion.creadaEn)}</span>
             </span>
           </Link>
         </li>

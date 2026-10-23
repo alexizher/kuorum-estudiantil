@@ -7,7 +7,20 @@ import {
   TerminarSesion,
 } from "../../src/index.js";
 import { crearEscenario, sembrarSesion } from "../dobles/escenario.js";
-import { demo, mesa, otraDemo, superadmin } from "../dobles/actores.js";
+import {
+  CUERPO_ARCHIVADO,
+  CUERPO_INGENIERIA,
+  CUERPO_MEDICINA,
+  demo,
+  encargadoDeArchivado,
+  encargadoDeIngenieria,
+  encargadoDeMedicina,
+  mesa,
+  mesaDeIngenieria,
+  otraDemo,
+  sinMembresias,
+  superadmin,
+} from "../dobles/actores.js";
 
 async function montar() {
   const e = crearEscenario();
@@ -84,8 +97,6 @@ describe("familia sala: la cuenta de prueba solo toca sus sesiones", () => {
 describe("ListarSesionesDeLaMesa", () => {
   async function montarLista() {
     const { e, propia, deSuper } = await montar();
-    e.sesiones.cuentasDeDemo.add(demo.id);
-    e.sesiones.cuentasDeDemo.add(otraDemo.id);
     const deOtraDemo = await sembrarSesion(e, { creadaPorId: otraDemo.id });
     const deMesa = await sembrarSesion(e, { creadaPorId: mesa.id });
     const sinDueno = await sembrarSesion(e);
@@ -126,5 +137,49 @@ describe("ListarSesionesDeLaMesa", () => {
       deMesa.id,
       sinDueno.id,
     ]);
+  });
+});
+
+describe("el personal por cuerpo", () => {
+  async function montarCuerpos() {
+    const e = crearEscenario();
+    const deIngenieria = await sembrarSesion(e, { cuerpoId: CUERPO_INGENIERIA });
+    const deMedicina = await sembrarSesion(e, { cuerpoId: CUERPO_MEDICINA });
+    const deArchivado = await sembrarSesion(e, { cuerpoId: CUERPO_ARCHIVADO });
+    return { e, deIngenieria, deMedicina, deArchivado };
+  }
+
+  it("el encargado de Medicina no inicia ni obtiene una de Ingeniería", async () => {
+    const { e, deIngenieria } = await montarCuerpos();
+    await expect(
+      new IniciarSesion(e.sesiones, e.unidad).ejecutar(encargadoDeMedicina, deIngenieria.id),
+    ).rejects.toMatchObject({ codigo: "SESION_AJENA" });
+    await expect(
+      new ObtenerSesionDeLaMesa(e.sesiones).ejecutar(encargadoDeMedicina, deIngenieria.id),
+    ).rejects.toMatchObject({ codigo: "SESION_AJENA" });
+    expect(deIngenieria.estado).toBe("PROGRAMADA");
+  });
+
+  it("la mesa de Ingeniería inicia una de Ingeniería", async () => {
+    const { e, deIngenieria } = await montarCuerpos();
+    await new IniciarSesion(e.sesiones, e.unidad).ejecutar(mesaDeIngenieria, deIngenieria.id);
+    expect(deIngenieria.estado).toBe("EN_CURSO");
+  });
+
+  it("la lista del personal trae solo sus cuerpos, archivados incluidos, la más próxima arriba", async () => {
+    const { e, deIngenieria } = await montarCuerpos();
+    const despues = await sembrarSesion(e, {
+      cuerpoId: CUERPO_INGENIERIA,
+      inicio: new Date("2026-12-01T15:00:00Z"),
+    });
+    const caso = new ListarSesionesDeLaMesa(e.sesiones);
+    expect((await caso.ejecutar(encargadoDeIngenieria)).map((s) => s.id)).toEqual([
+      despues.id,
+      deIngenieria.id,
+    ]);
+    expect((await caso.ejecutar(encargadoDeArchivado)).map((s) => s.cuerpoId)).toEqual([
+      CUERPO_ARCHIVADO,
+    ]);
+    expect(await caso.ejecutar(sinMembresias)).toEqual([]);
   });
 });

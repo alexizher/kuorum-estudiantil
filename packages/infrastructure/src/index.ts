@@ -15,3 +15,7 @@ export { HasheadorSha256 } from "./crypto/hasheador-sha256.js";
 export { GeneradorDeIdsUuid } from "./crypto/generador-de-ids-uuid.js";
 export { GeneradorDeCodigosAleatorio } from "./codigos/generador-aleatorio.js";
 export { PrismaLimpiezaDeDemo } from "./demo/prisma-limpieza-de-demo.js";
+export { PrismaRepositorioDeInstitucion } from "./institucion/prisma-repositorio-de-institucion.js";
+export { PrismaRepositorioDeCuerpos } from "./institucion/prisma-repositorio-de-cuerpos.js";
+export { PrismaRepositorioDeMembresias } from "./institucion/prisma-repositorio-de-membresias.js";
+export { PrismaDirectorioDePersonal } from "./institucion/prisma-directorio-de-personal.js";

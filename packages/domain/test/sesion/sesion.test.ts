@@ -15,11 +15,22 @@ const generador: GeneradorDeCodigos = {
   codigoDeAcceso: () => CodigoDeAcceso.crear("K7F2-9QH3"),
 };
 
+const inicio = new Date("2026-11-03T19:00:00Z");
+const fin = new Date("2026-11-03T21:00:00Z");
+
+const horario = {
+  cuerpoId: "c-general",
+  inicio,
+  fin,
+  modalidad: "PRESENCIAL" as const,
+};
+
 const datosBase = {
   id: "s-1",
   titulo: "Asamblea de presupuesto",
   modo: "SALA_ABIERTA" as const,
   creadaEn,
+  ...horario,
 };
 
 function codigoDeError(operacion: () => unknown): string {
@@ -61,6 +72,7 @@ describe("Sesion.nueva", () => {
         segundosPorIntervencion: base.segundosPorIntervencion,
         version: 0,
         creadaEn,
+        ...horario,
       });
     expect(
       (["PROGRAMADA", "ABIERTA", "EN_CURSO"] as const).map((e) => conEstado(e).activa),
@@ -223,5 +235,131 @@ function datosDeSesion() {
     segundosPorIntervencion: 180,
     version: 0,
     creadaEn,
+    ...horario,
   };
 }
+
+describe("horario de la sesión", () => {
+  it("guarda cuerpo, inicio, fin, modalidad y lugar", () => {
+    const sesion = Sesion.nueva({ ...datosBase, lugar: "  Auditorio 10  " }, generador);
+    expect(sesion.cuerpoId).toBe("c-general");
+    expect(sesion.inicio).toEqual(inicio);
+    expect(sesion.fin).toEqual(fin);
+    expect(sesion.modalidad).toBe("PRESENCIAL");
+    expect(sesion.lugar).toBe("Auditorio 10");
+  });
+
+  it("sin lugar, o con lugar en blanco, queda null", () => {
+    expect(Sesion.nueva(datosBase, generador).lugar).toBeNull();
+    expect(Sesion.nueva({ ...datosBase, lugar: "   " }, generador).lugar).toBeNull();
+  });
+
+  it("rechaza un lugar de más de 200 caracteres", () => {
+    expect(
+      codigoDeError(() => Sesion.nueva({ ...datosBase, lugar: "x".repeat(201) }, generador)),
+    ).toBe("LUGAR_INVALIDO");
+  });
+
+  it("rechaza fin igual al inicio", () => {
+    expect(codigoDeError(() => Sesion.nueva({ ...datosBase, fin: inicio }, generador))).toBe(
+      "HORARIO_INVALIDO",
+    );
+  });
+
+  it("rechaza fin antes del inicio", () => {
+    const antes = new Date(inicio.getTime() - 60_000);
+    expect(codigoDeError(() => Sesion.nueva({ ...datosBase, fin: antes }, generador))).toBe(
+      "HORARIO_INVALIDO",
+    );
+  });
+
+  it("acepta 24 horas y rechaza 25", () => {
+    const hora = 3_600_000;
+    const de24 = new Date(inicio.getTime() + 24 * hora);
+    expect(Sesion.nueva({ ...datosBase, fin: de24 }, generador).fin).toEqual(de24);
+    const de25 = new Date(inicio.getTime() + 25 * hora);
+    expect(codigoDeError(() => Sesion.nueva({ ...datosBase, fin: de25 }, generador))).toBe(
+      "HORARIO_INVALIDO",
+    );
+  });
+
+  it("rechaza fechas inválidas", () => {
+    expect(
+      codigoDeError(() => Sesion.nueva({ ...datosBase, inicio: new Date(Number.NaN) }, generador)),
+    ).toBe("HORARIO_INVALIDO");
+  });
+
+  it("no es de la cuenta de prueba salvo que se diga al reconstruir", () => {
+    expect(Sesion.nueva(datosBase, generador).creadaPorDemo).toBe(false);
+    expect(Sesion.nueva({ ...datosBase, creadaPorDemo: true }, generador).creadaPorDemo).toBe(true);
+    expect(Sesion.reconstruir({ ...datosDeSesion(), creadaPorDemo: true }).creadaPorDemo).toBe(
+      true,
+    );
+  });
+});
+
+describe("Sesion.reprogramar", () => {
+  it("cambia título, horario, modalidad y lugar de una sesión programada", () => {
+    const sesion = Sesion.nueva(datosBase, generador);
+    const nuevoInicio = new Date("2026-11-05T14:00:00Z");
+    const nuevoFin = new Date("2026-11-05T16:00:00Z");
+    sesion.reprogramar({
+      titulo: " Asamblea extraordinaria ",
+      inicio: nuevoInicio,
+      fin: nuevoFin,
+      modalidad: "VIRTUAL",
+      lugar: "https://meet.example/abc",
+    });
+    expect(sesion.titulo).toBe("Asamblea extraordinaria");
+    expect(sesion.inicio).toEqual(nuevoInicio);
+    expect(sesion.fin).toEqual(nuevoFin);
+    expect(sesion.modalidad).toBe("VIRTUAL");
+    expect(sesion.lugar).toBe("https://meet.example/abc");
+  });
+
+  it("lugar null lo borra y lo que no se indica queda igual", () => {
+    const sesion = Sesion.nueva({ ...datosBase, lugar: "Auditorio" }, generador);
+    sesion.reprogramar({ lugar: null });
+    expect(sesion.lugar).toBeNull();
+    expect(sesion.titulo).toBe("Asamblea de presupuesto");
+    expect(sesion.inicio).toEqual(inicio);
+  });
+
+  it("revalida el horario con lo que no cambió y no deja nada a medias", () => {
+    const sesion = Sesion.nueva(datosBase, generador);
+    expect(
+      codigoDeError(() =>
+        sesion.reprogramar({ titulo: "Otro título", inicio: new Date("2026-11-03T22:00:00Z") }),
+      ),
+    ).toBe("HORARIO_INVALIDO");
+    expect(sesion.inicio).toEqual(inicio);
+    expect(sesion.titulo).toBe("Asamblea de presupuesto");
+  });
+
+  it.each(["ABIERTA", "EN_CURSO", "CERRADA", "CANCELADA"] as const)(
+    "desde %s lanza TRANSICION_INVALIDA",
+    (estado) => {
+      const sesion = Sesion.reconstruir({ ...datosDeSesion(), estado });
+      expect(codigoDeError(() => sesion.reprogramar({ titulo: "Otro título" }))).toBe(
+        "TRANSICION_INVALIDA",
+      );
+    },
+  );
+});
+
+describe("Sesion.cancelar", () => {
+  it.each(["PROGRAMADA", "ABIERTA"] as const)("desde %s queda CANCELADA", (estado) => {
+    const sesion = Sesion.reconstruir({ ...datosDeSesion(), estado });
+    sesion.cancelar();
+    expect(sesion.estado).toBe("CANCELADA");
+    expect(sesion.activa).toBe(false);
+  });
+
+  it.each(["EN_CURSO", "CERRADA", "ACTA_FINAL", "CANCELADA"] as const)(
+    "desde %s lanza TRANSICION_INVALIDA",
+    (estado) => {
+      const sesion = Sesion.reconstruir({ ...datosDeSesion(), estado });
+      expect(codigoDeError(() => sesion.cancelar())).toBe("TRANSICION_INVALIDA");
+    },
+  );
+});

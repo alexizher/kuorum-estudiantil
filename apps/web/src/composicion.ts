@@ -1,6 +1,22 @@
 import {
   AbrirPregunta,
   AnularPregunta,
+  ArchivarCuerpo,
+  AsignarMembresia,
+  BuscarCruces,
+  CancelarSesion,
+  ConfigurarInstitucion,
+  CrearCuentaDePersonal,
+  CrearCuerpo,
+  ListarCalendario,
+  ListarPersonal,
+  QuitarMembresia,
+  RenombrarCuerpo,
+  ReprogramarSesion,
+  RestablecerContrasena,
+  type RepositorioDeCuerpos,
+  type RepositorioDeInstitucion,
+  type RepositorioDeMembresias,
   CerrarPregunta,
   ConsultarEstadoDeSala,
   CrearPregunta,
@@ -37,11 +53,16 @@ import {
   PrismaRepositorioDeSesiones,
   PrismaRepositorioDeSolicitudes,
   PrismaUnidadDeTrabajo,
+  PrismaDirectorioDePersonal,
+  PrismaRepositorioDeCuerpos,
+  PrismaRepositorioDeInstitucion,
+  PrismaRepositorioDeMembresias,
   crearAdaptadorDeAutenticacion,
   createPrismaClient,
   verificarConexion,
 } from "@kuorum/infrastructure";
 import { crearAuth, urlBaseDesdeEntorno, type Autenticacion } from "./auth/crear-auth";
+import { CuentasDePersonalConBetterAuth, generadorDeContrasenas } from "./auth/cuentas-de-personal";
 
 export interface Contenedor {
   // Sala (mesa)
@@ -51,6 +72,21 @@ export interface Contenedor {
   generarCodigosDeAcceso: GenerarCodigosDeAcceso;
   listarSesionesDeLaMesa: ListarSesionesDeLaMesa;
   obtenerSesionDeLaMesa: ObtenerSesionDeLaMesa;
+  reprogramarSesion: ReprogramarSesion;
+  cancelarSesion: CancelarSesion;
+  // Calendario
+  buscarCruces: BuscarCruces;
+  listarCalendario: ListarCalendario;
+  // Administración
+  configurarInstitucion: ConfigurarInstitucion;
+  crearCuerpo: CrearCuerpo;
+  renombrarCuerpo: RenombrarCuerpo;
+  archivarCuerpo: ArchivarCuerpo;
+  asignarMembresia: AsignarMembresia;
+  quitarMembresia: QuitarMembresia;
+  listarPersonal: ListarPersonal;
+  crearCuentaDePersonal: CrearCuentaDePersonal;
+  restablecerContrasena: RestablecerContrasena;
   // Votación
   crearPregunta: CrearPregunta;
   listarPreguntasDeSesion: ListarPreguntasDeSesion;
@@ -74,6 +110,10 @@ export interface Contenedor {
   consultarEstadoDeSala: ConsultarEstadoDeSala;
   /** Solo lectura: resolución de código de sala a sesión para las rutas públicas. */
   sesiones: RepositorioDeSesiones;
+  /** Solo lectura: nombres de cuerpos, zona horaria y membresías del actor. */
+  cuerpos: RepositorioDeCuerpos;
+  institucion: RepositorioDeInstitucion;
+  membresias: RepositorioDeMembresias;
   verificarBaseDeDatos: () => Promise<boolean>;
   /** Se construye en el primer uso: exige BETTER_AUTH_SECRET solo a quien la pide. */
   autenticacion: () => Autenticacion;
@@ -98,13 +138,34 @@ export function contenedor(): Contenedor {
     const participantes = new PrismaRepositorioDeParticipantes(contexto);
     const preguntas = new PrismaRepositorioDePreguntas(contexto);
     const solicitudes = new PrismaRepositorioDeSolicitudes(contexto);
+    const cuerpos = new PrismaRepositorioDeCuerpos(contexto);
+    const institucion = new PrismaRepositorioDeInstitucion(contexto);
+    const membresias = new PrismaRepositorioDeMembresias(contexto);
+    const directorio = new PrismaDirectorioDePersonal(contexto);
     const votos = new PrismaRegistroDeVotos(contexto);
     const ids = new GeneradorDeIdsUuid();
     const codigos = new GeneradorDeCodigosAleatorio();
     const hasheador = new HasheadorSha256();
     let auth: Autenticacion | undefined;
+    const cuentas = new CuentasDePersonalConBetterAuth(() => {
+      if (instancia === undefined) throw new Error("Contenedor sin construir");
+      return instancia.autenticacion();
+    });
     instancia = {
-      crearSesion: new CrearSesion(sesiones, unidad, ids, reloj, codigos),
+      crearSesion: new CrearSesion(sesiones, cuerpos, institucion, unidad, ids, reloj, codigos),
+      reprogramarSesion: new ReprogramarSesion(sesiones, institucion, unidad),
+      cancelarSesion: new CancelarSesion(sesiones, unidad),
+      buscarCruces: new BuscarCruces(sesiones, cuerpos, institucion),
+      listarCalendario: new ListarCalendario(sesiones, cuerpos, institucion),
+      configurarInstitucion: new ConfigurarInstitucion(institucion),
+      crearCuerpo: new CrearCuerpo(cuerpos, ids),
+      renombrarCuerpo: new RenombrarCuerpo(cuerpos),
+      archivarCuerpo: new ArchivarCuerpo(cuerpos),
+      asignarMembresia: new AsignarMembresia(membresias, directorio, cuerpos),
+      quitarMembresia: new QuitarMembresia(membresias),
+      listarPersonal: new ListarPersonal(directorio),
+      crearCuentaDePersonal: new CrearCuentaDePersonal(cuentas, generadorDeContrasenas),
+      restablecerContrasena: new RestablecerContrasena(cuentas, directorio, generadorDeContrasenas),
       iniciarSesion: new IniciarSesion(sesiones, unidad),
       terminarSesion: new TerminarSesion(sesiones, preguntas, unidad),
       generarCodigosDeAcceso: new GenerarCodigosDeAcceso(
@@ -148,6 +209,9 @@ export function contenedor(): Contenedor {
         reloj,
       ),
       sesiones,
+      cuerpos,
+      institucion,
+      membresias,
       verificarBaseDeDatos: async () => {
         await verificarConexion(prisma);
         return true;

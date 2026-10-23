@@ -1,6 +1,7 @@
 "use client";
 
 import { Boton } from "@kuorum/ui";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { clienteDeAuth } from "../../auth/cliente-de-auth";
@@ -10,6 +11,7 @@ import { InsigniaDeCuentaDePrueba } from "./insignia-de-cuenta-de-prueba";
 import { PieDeMesa } from "./pie-de-mesa";
 import { ListaDeSesiones } from "./lista-de-sesiones";
 import estilos from "./mesa.module.css";
+import { useCuerpos } from "./use-cuerpos";
 import { useSesiones } from "./use-sesiones";
 
 interface Propiedades {
@@ -17,6 +19,10 @@ interface Propiedades {
   esDemo?: boolean;
   /** Solo SUPERADMIN: interruptor para ver también las sesiones de la cuenta de prueba. */
   puedeVerCuentaDePrueba?: boolean;
+  /** Cuenta del personal sin membresías. */
+  sinCuerpos?: boolean;
+  /** SUPERADMIN: enlaces a institución y personal. */
+  esAdministrador?: boolean;
   /** Para pruebas. */
   dependencias?: { fetch?: typeof globalThis.fetch; salir?: () => Promise<void> };
 }
@@ -28,6 +34,8 @@ async function salirConBetterAuth(): Promise<void> {
 export function MesaEnVivo({
   esDemo = false,
   puedeVerCuentaDePrueba = false,
+  sinCuerpos = false,
+  esAdministrador = false,
   dependencias,
 }: Propiedades) {
   const [verCuentaDePrueba, setVerCuentaDePrueba] = useState(false);
@@ -43,6 +51,7 @@ export function MesaEnVivo({
     cliente,
     puedeVerCuentaDePrueba && verCuentaDePrueba,
   );
+  const { cuerpos, cargando: cargandoCuerpos } = useCuerpos(cliente);
 
   async function salir(): Promise<void> {
     await (dependencias?.salir ?? salirConBetterAuth)().catch(() => undefined);
@@ -53,6 +62,12 @@ export function MesaEnVivo({
     <div className={estilos.pagina}>
       <header role="banner" className={estilos.cabecera}>
         <h1 className={`titular ${estilos.tituloDeSesion}`}>Mesa</h1>
+        <nav aria-label="Secciones de la mesa" className={estilos.navegacion}>
+          <Link href="/calendario">Calendario</Link>
+          {esAdministrador ? <Link href="/mesa/institucion">Institución</Link> : null}
+          {esAdministrador ? <Link href="/mesa/personal">Personal</Link> : null}
+          {esDemo ? null : <Link href="/mesa/cuenta">Mi cuenta</Link>}
+        </nav>
         <div className={estilos.accionesDeCabecera}>
           {esDemo ? <InsigniaDeCuentaDePrueba /> : null}
           <Boton onClick={() => void salir()}>Salir</Boton>
@@ -78,13 +93,26 @@ export function MesaEnVivo({
             cargando={cargando}
             error={error}
             alReintentar={() => void recargar()}
+            sinCuerpos={sinCuerpos}
           />
         </section>
         <section className={estilos.columna} aria-labelledby="titulo-crear">
           <h2 className={`titular ${estilos.tituloDeColumna}`} id="titulo-crear">
             Crear sesión
           </h2>
-          <FormularioDeSesion crear={crear} creando={creando} error={errorDeCrear} />
+          {cargandoCuerpos ? (
+            <p role="status" className={estilos.vacia}>
+              Cargando...
+            </p>
+          ) : (
+            <FormularioDeSesion
+              crear={crear}
+              creando={creando}
+              error={errorDeCrear}
+              cuerpos={cuerpos}
+              cliente={cliente}
+            />
+          )}
         </section>
       </main>
       <PieDeMesa />

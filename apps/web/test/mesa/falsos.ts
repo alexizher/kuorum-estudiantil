@@ -3,21 +3,77 @@ import { vi } from "vitest";
 import type { FuenteRefrescable } from "../../src/tiempo-real/fuente-de-estado";
 import type {
   ClienteDeMesa,
+  InstitucionDeMesa,
   PreguntaDeMesa,
   ResultadoDeVotacion,
+  SesionDeLista,
 } from "../../src/vistas/mesa/cliente-de-mesa";
+
+export const INSTITUCION: InstitucionDeMesa = {
+  institucion: {
+    nombre: "Universidad de Ejemplo",
+    tipoDeCuerpoSingular: "Facultad",
+    tipoDeCuerpoPlural: "Facultades",
+    zonaHoraria: "America/Bogota",
+  },
+  cuerpos: [
+    {
+      id: "c-g",
+      nombre: "Asamblea general",
+      slug: "asamblea-general",
+      tipo: "GENERAL",
+      archivado: false,
+      puedeProgramar: true,
+    },
+    {
+      id: "c-a",
+      nombre: "Artes",
+      slug: "artes",
+      tipo: "FACULTAD",
+      archivado: false,
+      puedeProgramar: true,
+    },
+    {
+      id: "c-m",
+      nombre: "Medicina",
+      slug: "medicina",
+      tipo: "FACULTAD",
+      archivado: false,
+      puedeProgramar: false,
+    },
+  ],
+};
+
+export function sesionDeLista(cambios: Partial<SesionDeLista> = {}): SesionDeLista {
+  return {
+    id: "s1",
+    titulo: "Asamblea",
+    codigoDeSala: "K7F2",
+    estado: "EN_CURSO",
+    modo: "CON_CODIGOS",
+    creadaEn: "2026-10-20T10:00:00.000Z",
+    cuerpo: { id: "c-g", nombre: "Asamblea general" },
+    inicio: "2026-11-03T19:00:00.000Z",
+    fin: "2026-11-03T21:00:00.000Z",
+    inicioLocal: "2026-11-03T14:00",
+    finLocal: "2026-11-03T16:00",
+    modalidad: "PRESENCIAL",
+    lugar: null,
+    puedeGestionar: true,
+    ...cambios,
+  };
+}
 
 export function clienteDeMesaFalso(preguntas: PreguntaDeMesa[] = []) {
   return {
     listarSesiones: vi.fn<ClienteDeMesa["listarSesiones"]>(async () => []),
-    crearSesion: vi.fn<ClienteDeMesa["crearSesion"]>(async (datos) => ({
-      id: "nueva",
-      titulo: datos.titulo,
-      codigoDeSala: "NUEV",
-      estado: "PROGRAMADA",
-      modo: datos.modo,
-      creadaEn: "2026-10-20T10:00:00.000Z",
-    })),
+    crearSesion: vi.fn<ClienteDeMesa["crearSesion"]>(async (datos) =>
+      sesionDeLista({ id: "nueva", titulo: datos.titulo, modo: datos.modo }),
+    ),
+    leerInstitucion: vi.fn<ClienteDeMesa["leerInstitucion"]>(async () => INSTITUCION),
+    buscarCruces: vi.fn<ClienteDeMesa["buscarCruces"]>(async () => []),
+    reprogramar: vi.fn<ClienteDeMesa["reprogramar"]>(async () => undefined),
+    cancelar: vi.fn<ClienteDeMesa["cancelar"]>(async () => undefined),
     iniciar: vi.fn<ClienteDeMesa["iniciar"]>(async () => undefined),
     terminar: vi.fn<ClienteDeMesa["terminar"]>(async () => undefined),
     generarCodigos: vi.fn<ClienteDeMesa["generarCodigos"]>(async (_id, cantidad) =>

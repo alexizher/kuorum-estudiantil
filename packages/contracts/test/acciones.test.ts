@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  esquemaCambioDeCuerpo,
+  esquemaCuerpo,
+  esquemaInstitucion,
+  esquemaMembresia,
+  esquemaPersona,
+  esquemaReprogramar,
   esquemaCrearPregunta,
   esquemaCrearSesion,
   esquemaDarLaPalabra,
@@ -38,7 +44,14 @@ describe("esquemas de acciones", () => {
   });
 
   it("segundos por intervención entre 30 y 900", () => {
-    const base = { titulo: "Asamblea", modo: "SALA_ABIERTA" as const };
+    const base = {
+      titulo: "Asamblea",
+      modo: "SALA_ABIERTA" as const,
+      cuerpoId: "c1",
+      inicio: "2026-11-03T14:00",
+      fin: "2026-11-03T16:00",
+      modalidad: "PRESENCIAL" as const,
+    };
     expect(esquemaCrearSesion.safeParse({ ...base, segundosPorIntervencion: 29 }).success).toBe(
       false,
     );
@@ -54,5 +67,68 @@ describe("esquemas de acciones", () => {
     expect(esquemaCrearPregunta.safeParse({ texto: "¿Aprobamos?" }).success).toBe(true);
     expect(esquemaCrearPregunta.safeParse({ texto: "x", opciones: [1] }).success).toBe(false);
     expect(esquemaDarLaPalabra.safeParse({}).success).toBe(true);
+  });
+
+  describe("programación de sesiones", () => {
+    const base = {
+      titulo: "Asamblea",
+      modo: "SALA_ABIERTA",
+      cuerpoId: "c1",
+      inicio: "2026-11-03T14:00",
+      fin: "2026-11-03T16:00",
+      modalidad: "MIXTA",
+    };
+
+    it("crear exige cuerpo, inicio, fin y modalidad; lugar es opcional", () => {
+      expect(esquemaCrearSesion.safeParse(base).success).toBe(true);
+      expect(esquemaCrearSesion.safeParse({ ...base, lugar: "Auditorio" }).success).toBe(true);
+      expect(esquemaCrearSesion.safeParse({ ...base, lugar: null }).success).toBe(true);
+      for (const falta of ["cuerpoId", "inicio", "fin", "modalidad"]) {
+        const sin = Object.fromEntries(Object.entries(base).filter(([clave]) => clave !== falta));
+        expect(esquemaCrearSesion.safeParse(sin).success).toBe(false);
+      }
+    });
+
+    it("las horas van como hora local sin desfase", () => {
+      for (const inicio of ["2026-11-03T14:00:00", "2026-11-03T14:00Z", "3/11/2026 14:00", ""]) {
+        expect(esquemaCrearSesion.safeParse({ ...base, inicio }).success).toBe(false);
+      }
+      expect(esquemaCrearSesion.safeParse({ ...base, modalidad: "HIBRIDA" }).success).toBe(false);
+      expect(esquemaCrearSesion.safeParse({ ...base, lugar: "x".repeat(201) }).success).toBe(false);
+    });
+
+    it("reprogramar acepta cualquier subconjunto, pero no vacío", () => {
+      expect(esquemaReprogramar.safeParse({ titulo: "Otra" }).success).toBe(true);
+      expect(esquemaReprogramar.safeParse({ inicio: "2026-11-03T14:00" }).success).toBe(true);
+      expect(esquemaReprogramar.safeParse({ lugar: null }).success).toBe(true);
+      expect(esquemaReprogramar.safeParse({}).success).toBe(false);
+      expect(esquemaReprogramar.safeParse({ inicio: "mañana" }).success).toBe(false);
+    });
+  });
+
+  describe("administración", () => {
+    it("institución con campos opcionales, al menos uno", () => {
+      expect(esquemaInstitucion.safeParse({ nombre: "U" }).success).toBe(true);
+      expect(esquemaInstitucion.safeParse({ zonaHoraria: "America/Lima" }).success).toBe(true);
+      expect(esquemaInstitucion.safeParse({}).success).toBe(false);
+      expect(esquemaInstitucion.safeParse({ nombre: 3 }).success).toBe(false);
+    });
+
+    it("cuerpo nuevo con nombre; cambio de cuerpo es renombrar o archivar", () => {
+      expect(esquemaCuerpo.safeParse({ nombre: "Artes" }).success).toBe(true);
+      expect(esquemaCuerpo.safeParse({}).success).toBe(false);
+      expect(esquemaCambioDeCuerpo.safeParse({ nombre: "Artes" }).success).toBe(true);
+      expect(esquemaCambioDeCuerpo.safeParse({ archivado: true }).success).toBe(true);
+      expect(esquemaCambioDeCuerpo.safeParse({ archivado: false }).success).toBe(false);
+      expect(esquemaCambioDeCuerpo.safeParse({}).success).toBe(false);
+    });
+
+    it("persona con correo válido; membresía con rol del dominio", () => {
+      expect(esquemaPersona.safeParse({ correo: "a@b.co", nombre: "Ana" }).success).toBe(true);
+      expect(esquemaPersona.safeParse({ correo: "ana", nombre: "Ana" }).success).toBe(false);
+      expect(esquemaMembresia.safeParse({ cuerpoId: "c1", rol: "ENCARGADO" }).success).toBe(true);
+      expect(esquemaMembresia.safeParse({ cuerpoId: "c1", rol: "MESA" }).success).toBe(true);
+      expect(esquemaMembresia.safeParse({ cuerpoId: "c1", rol: "SUPERADMIN" }).success).toBe(false);
+    });
   });
 });

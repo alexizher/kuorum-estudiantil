@@ -1,9 +1,18 @@
 import { CodigoDeSala, ErrorDeDominio, Sesion } from "@kuorum/domain";
-import type { RepositorioDeSesiones } from "@kuorum/application";
+import type { FiltroDeRango, FiltroDeSesiones, RepositorioDeSesiones } from "@kuorum/application";
 import type { Prisma, Sesion as FilaDeSesion } from "../generated/prisma/client.js";
 import type { ContextoTransaccional } from "../prisma/contexto-transaccional.js";
 
-function aDominio(fila: FilaDeSesion): Sesion {
+// Con el rol del creador se sabe si es de la cuenta de prueba sin otra consulta.
+const CON_CREADOR = { creadaPor: { select: { rol: true } } } as const;
+
+type FilaConCreador = FilaDeSesion & { creadaPor: { rol: string } | null };
+
+const SIN_CUENTA_DE_PRUEBA: Prisma.SesionWhereInput = {
+  OR: [{ creadaPorId: null }, { creadaPor: { rol: { not: "DEMO" as const } } }],
+};
+
+function aDominio(fila: FilaConCreador): Sesion {
   return Sesion.reconstruir({
     id: fila.id,
     titulo: fila.titulo,
@@ -14,6 +23,12 @@ function aDominio(fila: FilaDeSesion): Sesion {
     version: fila.version,
     creadaEn: fila.creadaEn,
     creadaPorId: fila.creadaPorId,
+    creadaPorDemo: fila.creadaPor?.rol === "DEMO",
+    cuerpoId: fila.cuerpoId,
+    inicio: fila.inicio,
+    fin: fila.fin,
+    modalidad: fila.modalidad,
+    lugar: fila.lugar,
   });
 }
 
@@ -26,28 +41,47 @@ export class PrismaRepositorioDeSesiones implements RepositorioDeSesiones {
   constructor(private readonly contexto: ContextoTransaccional) {}
 
   async porId(id: string): Promise<Sesion | null> {
-    const fila = await this.contexto.cliente().sesion.findUnique({ where: { id } });
+    const fila = await this.contexto
+      .cliente()
+      .sesion.findUnique({ where: { id }, include: CON_CREADOR });
     return fila === null ? null : this.recordar(aDominio(fila));
   }
 
   async porCodigoDeSala(codigo: CodigoDeSala): Promise<Sesion | null> {
     const fila = await this.contexto
       .cliente()
-      .sesion.findUnique({ where: { codigoDeSala: codigo.valor } });
+      .sesion.findUnique({ where: { codigoDeSala: codigo.valor }, include: CON_CREADOR });
     return fila === null ? null : this.recordar(aDominio(fila));
   }
 
-  async listar(
-    filtro: { creadaPorId?: string; sinCuentaDePrueba?: boolean } = {},
-  ): Promise<Sesion[]> {
+  async listar(filtro: FiltroDeSesiones = {}): Promise<Sesion[]> {
     const filas = await this.contexto.cliente().sesion.findMany({
       where: {
         ...(filtro.creadaPorId === undefined ? {} : { creadaPorId: filtro.creadaPorId }),
-        ...(filtro.sinCuentaDePrueba === true
-          ? { OR: [{ creadaPorId: null }, { creadaPor: { rol: { not: "DEMO" as const } } }] }
-          : {}),
+        ...(filtro.cuerpoIds === undefined ? {} : { cuerpoId: { in: [...filtro.cuerpoIds] } }),
+        ...(filtro.sinCuentaDePrueba === true ? SIN_CUENTA_DE_PRUEBA : {}),
       },
+      include: CON_CREADOR,
       orderBy: { creadaEn: "asc" },
+    });
+    return filas.map((fila) => this.recordar(aDominio(fila)));
+  }
+
+  async enRango(desde: Date, hasta: Date, filtro: FiltroDeRango = {}): Promise<Sesion[]> {
+    const filas = await this.contexto.cliente().sesion.findMany({
+      where: {
+        inicio: { lt: hasta },
+        fin: { gt: desde },
+        ...(filtro.cuerpoId === undefined ? {} : { cuerpoId: filtro.cuerpoId }),
+        ...(filtro.sinCanceladas === true ? { estado: { not: "CANCELADA" as const } } : {}),
+        AND: [
+          filtro.incluirDe === undefined
+            ? SIN_CUENTA_DE_PRUEBA
+            : { OR: [SIN_CUENTA_DE_PRUEBA, { creadaPorId: filtro.incluirDe }] },
+        ],
+      },
+      include: CON_CREADOR,
+      orderBy: [{ inicio: "asc" }, { id: "asc" }],
     });
     return filas.map((fila) => this.recordar(aDominio(fila)));
   }
@@ -70,6 +104,10 @@ export class PrismaRepositorioDeSesiones implements RepositorioDeSesiones {
       modo: sesion.modo,
       estado: sesion.estado,
       segundosPorIntervencion: sesion.segundosPorIntervencion,
+      inicio: sesion.inicio,
+      fin: sesion.fin,
+      modalidad: sesion.modalidad,
+      lugar: sesion.lugar,
     };
     if (leida === undefined) {
       await this.crear(sesion, datos);
@@ -97,6 +135,7 @@ export class PrismaRepositorioDeSesiones implements RepositorioDeSesiones {
         version: sesion.version,
         creadaEn: sesion.creadaEn,
         creadaPorId: sesion.creadaPorId,
+        cuerpoId: sesion.cuerpoId,
         ...datos,
       } as Prisma.SesionUncheckedCreateInput,
     });

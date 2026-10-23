@@ -7,6 +7,8 @@ import { exigirMesa } from "../src/http/exigir-mesa";
 
 vi.mock("../src/composicion", () => ({ contenedor: vi.fn() }));
 
+const sinMembresias = { deUsuario: async () => [] };
+
 const URL_BASE = "http://localhost:3000";
 const URL_DE_PRUEBAS =
   process.env["DATABASE_URL"] ?? "postgresql://kuorum:kuorum@localhost:54329/kuorum";
@@ -42,9 +44,10 @@ describe("ingreso de la mesa (Postgres local)", () => {
       secreto: "secreto-de-prueba-de-al-menos-32-caracteres",
       urlBase: URL_BASE,
     });
-    vi.mocked(contenedor).mockReturnValue({ autenticacion: () => auth } as unknown as ReturnType<
-      typeof contenedor
-    >);
+    vi.mocked(contenedor).mockReturnValue({
+      autenticacion: () => auth,
+      membresias: sinMembresias,
+    } as unknown as ReturnType<typeof contenedor>);
   });
 
   beforeEach(async () => {
@@ -150,6 +153,7 @@ describe("ingreso de la mesa (Postgres local)", () => {
       correo: CORREO,
       nombre: "Mesa",
       rol: "MESA",
+      membresias: [],
     });
 
     const sinSesion = await exigirMesa(new Request(`${URL_BASE}/api/mesa/x`));
@@ -205,9 +209,10 @@ describe("roles de la mesa (Postgres local)", () => {
       secreto: "secreto-de-prueba-de-al-menos-32-caracteres",
       urlBase: URL_BASE,
     });
-    vi.mocked(contenedor).mockReturnValue({ autenticacion: () => auth } as unknown as ReturnType<
-      typeof contenedor
-    >);
+    vi.mocked(contenedor).mockReturnValue({
+      autenticacion: () => auth,
+      membresias: sinMembresias,
+    } as unknown as ReturnType<typeof contenedor>);
   });
 
   beforeEach(async () => {

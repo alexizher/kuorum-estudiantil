@@ -37,6 +37,14 @@ export default function Inicio() {
             </Link>
           </li>
           <li>
+            <Link href="/calendario">
+              <span className={`titular ${estilos.nombre}`}>Calendario</span>
+              <span className={estilos.descripcion}>
+                Las sesiones programadas de la asamblea general y de cada facultad.
+              </span>
+            </Link>
+          </li>
+          <li>
             <a href={REPOSITORIO}>
               <span className={`titular ${estilos.nombre}`}>Repositorio</span>
               <span className={estilos.descripcion}>El código es abierto y está en GitHub.</span>

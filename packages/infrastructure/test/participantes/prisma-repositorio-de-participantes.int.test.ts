@@ -88,7 +88,7 @@ describe("PrismaRepositorioDeParticipantes", () => {
       hasheador,
     );
     const [codigo = ""] = await generar.ejecutar(
-      { id: "u-super", rol: "SUPERADMIN" },
+      { id: "u-super", rol: "SUPERADMIN", membresias: [] },
       sesion.id,
       1,
     );

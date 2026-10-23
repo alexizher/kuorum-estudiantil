@@ -29,15 +29,27 @@ describe("exigirAccesoASesion", () => {
     }
   });
 
-  it("SUPERADMIN y MESA entran a todo", async () => {
+  it("SUPERADMIN entra a todo", async () => {
     const e = crearEscenario();
     const sesiones = [
       await sembrarSesion(e, { creadaPorId: demo.id }),
       await sembrarSesion(e, { creadaPorId: superadmin.id }),
       await sembrarSesion(e),
     ];
-    for (const actor of [superadmin, mesa]) {
-      for (const sesion of sesiones) expect(() => exigirAccesoASesion(actor, sesion)).not.toThrow();
+    for (const sesion of sesiones)
+      expect(() => exigirAccesoASesion(superadmin, sesion)).not.toThrow();
+  });
+
+  it("el personal entra a las de su cuerpo, pero no a las de la cuenta de prueba", async () => {
+    const e = crearEscenario();
+    const deSuper = await sembrarSesion(e, { creadaPorId: superadmin.id });
+    const sinDueno = await sembrarSesion(e);
+    const deDemo = await sembrarSesion(e, { creadaPorId: demo.id });
+    for (const sesion of [deSuper, sinDueno]) {
+      expect(() => exigirAccesoASesion(mesa, sesion)).not.toThrow();
     }
+    expect(() => exigirAccesoASesion(mesa, deDemo)).toThrowError(
+      expect.objectContaining({ codigo: "SESION_AJENA" }),
+    );
   });
 });
