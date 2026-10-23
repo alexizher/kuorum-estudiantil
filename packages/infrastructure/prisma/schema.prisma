@@ -46,11 +46,29 @@ enum TipoDeSolicitud {
   MOCION
 }
 
-// Quién es cada cuenta de la mesa. SUPERADMIN y MESA ven todo; DEMO solo lo que creó.
+// Tipo de cuenta. SUPERADMIN administra la instalación; MESA es el personal y sus permisos
+// salen de sus membresías; DEMO es la cuenta de prueba y solo ve lo que creó.
 enum RolDeMesa {
   SUPERADMIN
   MESA
   DEMO
+}
+
+enum TipoDeCuerpo {
+  GENERAL
+  FACULTAD
+}
+
+// ENCARGADO programa y conduce las sesiones de su cuerpo; MESA solo las conduce.
+enum RolEnCuerpo {
+  ENCARGADO
+  MESA
+}
+
+enum Modalidad {
+  PRESENCIAL
+  VIRTUAL
+  MIXTA
 }
 
 enum TipoDeMocion {
@@ -58,6 +76,46 @@ enum TipoDeMocion {
   PROCEDIMIENTO
   ACLARACION
   SUFICIENTE_ILUSTRACION
+}
+
+// Una sola fila: la crea la migración.
+model Institucion {
+  id                   String   @id @default("institucion")
+  nombre               String
+  tipoDeCuerpoSingular String
+  tipoDeCuerpoPlural   String
+  zonaHoraria          String
+  actualizadaEn        DateTime @updatedAt
+
+  @@map("institucion")
+}
+
+// Una sola GENERAL: índice único parcial en la migración (Prisma no sabe expresarlo).
+model Cuerpo {
+  id        String       @id
+  nombre    String
+  tipo      TipoDeCuerpo
+  slug      String       @unique
+  archivado Boolean      @default(false)
+  creadoEn  DateTime     @default(now())
+
+  sesiones   Sesion[]
+  membresias Membresia[]
+
+  @@map("cuerpos")
+}
+
+model Membresia {
+  usuarioId String
+  cuerpoId  String
+  rol       RolEnCuerpo
+
+  usuario User   @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  cuerpo  Cuerpo @relation(fields: [cuerpoId], references: [id], onDelete: Cascade)
+
+  @@id([usuarioId, cuerpoId])
+  @@index([cuerpoId])
+  @@map("membresias")
 }
 
 model Sesion {
@@ -70,16 +128,24 @@ model Sesion {
   version                 Int                 @default(0)
   actualizadaEn           DateTime            @updatedAt
   creadaEn                DateTime            @default(now())
-  // Quién la creó. Sin dueño (null) solo la ven SUPERADMIN y MESA.
+  // Quién la creó. Sin dueño (null) la ve el personal de su cuerpo.
   creadaPorId             String?
+  cuerpoId                String
+  inicio                  DateTime
+  fin                     DateTime
+  modalidad               Modalidad           @default(PRESENCIAL)
+  lugar                   String?
 
   creadaPor     User?                @relation(fields: [creadaPorId], references: [id], onDelete: SetNull)
+  cuerpo        Cuerpo               @relation(fields: [cuerpoId], references: [id], onDelete: Restrict)
   participantes Participante[]
   codigos       CodigoDeAcceso[]
   preguntas     Pregunta[]
   solicitudes   SolicitudDePalabra[]
 
   @@index([creadaPorId])
+  @@index([inicio])
+  @@index([cuerpoId, inicio])
   @@map("sesiones")
 }
 
@@ -200,9 +266,10 @@ model User {
   // Campo propio: Better Auth no deja que el cliente lo escriba (input: false).
   rol           RolDeMesa @default(MESA)
 
-  sessions Session[]
-  accounts Account[]
-  sesiones Sesion[]
+  sessions   Session[]
+  accounts   Account[]
+  sesiones   Sesion[]
+  membresias Membresia[]
 
   @@map("auth_users")
 }
