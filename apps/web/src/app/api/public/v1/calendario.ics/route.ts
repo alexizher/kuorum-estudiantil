@@ -8,12 +8,15 @@ import {
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-/** Para suscribirse desde Google Calendar u Outlook. `?cuerpo=` es el slug. */
+/**
+ * Para suscribirse desde Google Calendar u Outlook. `?cuerpo=` es el slug. Un mes atrás y un año
+ * adelante: cabe en DIAS_MAXIMOS_DEL_CALENDARIO.
+ */
 export function GET(request: Request): Promise<Response> {
   const url = new URL(request.url);
   const cuerpo = url.searchParams.get("cuerpo");
   return consultarCalendario(
-    { ...rangoAlrededorDeHoy(90, 365), ...(cuerpo === null ? {} : { cuerpoSlug: cuerpo }) },
+    { ...rangoAlrededorDeHoy(30, 365), ...(cuerpo === null ? {} : { cuerpoSlug: cuerpo }) },
     ({ institucion, cuerpos, sesiones }) => {
       const filtrado = cuerpos.find((c) => c.slug === cuerpo)?.nombre;
       const texto = generarIcs({

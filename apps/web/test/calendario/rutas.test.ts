@@ -2,6 +2,7 @@ import { ErrorDeDominio } from "@kuorum/domain";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { GET as calendario } from "../../src/app/api/public/v1/calendario/route";
 import { GET as ics } from "../../src/app/api/public/v1/calendario.ics/route";
+import { DIAS_MAXIMOS_DEL_CALENDARIO } from "@kuorum/application";
 import { contenedor } from "../../src/composicion";
 
 vi.mock("../../src/composicion", () => ({ contenedor: vi.fn() }));
@@ -101,7 +102,7 @@ describe("GET /api/public/v1/calendario", () => {
 });
 
 describe("GET /api/public/v1/calendario.ics", () => {
-  it("responde text/calendar con un evento por sesión, de 90 días atrás a 365 adelante", async () => {
+  it("responde text/calendar con un evento por sesión, de 30 días atrás a 365 adelante", async () => {
     const r = await ics(
       new Request("http://kuorum.example/api/public/v1/calendario.ics?cuerpo=artes"),
     );
@@ -121,8 +122,12 @@ describe("GET /api/public/v1/calendario.ics", () => {
       cuerpoSlug: string;
     };
     expect(cuerpoSlug).toBe("artes");
-    expect(Math.round((Date.now() - desde.getTime()) / DIA)).toBe(90);
+    expect(Math.round((Date.now() - desde.getTime()) / DIA)).toBe(30);
     expect(Math.round((hasta.getTime() - Date.now()) / DIA)).toBe(365);
+    // El caso de uso rechaza rangos más largos: el .ics tiene que caber.
+    expect((hasta.getTime() - desde.getTime()) / DIA).toBeLessThanOrEqual(
+      DIAS_MAXIMOS_DEL_CALENDARIO,
+    );
   });
 
   it("cuerpo inexistente da 404", async () => {

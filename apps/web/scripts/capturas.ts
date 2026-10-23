@@ -64,10 +64,55 @@ const mesa = async <T = unknown>(ruta: string, cuerpo: object = {}): Promise<T> 
   return (texto ? JSON.parse(texto) : null) as T;
 };
 
+const leer = async <T>(ruta: string): Promise<T> => {
+  const r = await api.get(`${BASE}/api/mesa/v1/${ruta}`);
+  if (!r.ok()) throw new Error(`${ruta}: ${r.status()} ${await r.text()}`);
+  return (await r.json()) as T;
+};
+const { cuerpos } = await leer<{ cuerpos: { id: string; tipo: string; nombre: string }[] }>(
+  "institucion",
+);
+const general = cuerpos.find((c) => c.tipo === "GENERAL")?.id ?? "";
+// Facultades de ejemplo para el calendario y el panel. Si ya existen, se usan.
+const crearCuerpo = async (nombre: string): Promise<void> => {
+  const r = await api.post(`${BASE}/api/mesa/v1/cuerpos`, { data: { nombre } });
+  if (!r.ok() && r.status() !== 409) throw new Error(`cuerpos: ${r.status()} ${await r.text()}`);
+};
+for (const nombre of ["Facultad de Ingeniería", "Facultad de Artes", "Facultad de Medicina"]) {
+  await crearCuerpo(nombre);
+}
+const conFacultades = (await leer<{ cuerpos: { id: string; nombre: string }[] }>("institucion"))
+  .cuerpos;
+const idDe = (nombre: string) => conFacultades.find((c) => c.nombre === nombre)?.id ?? general;
+
+const hoy = new Date();
+const dia = (desplazamiento: number): string => {
+  const fecha = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() + desplazamiento);
+  const dos = (n: number) => String(n).padStart(2, "0");
+  return `${fecha.getFullYear()}-${dos(fecha.getMonth() + 1)}-${dos(fecha.getDate())}`;
+};
+const programar = (titulo: string, cuerpoId: string, fecha: string, desde: string, hasta: string) =>
+  mesa<{ id: string; codigoDeSala: string }>("sesiones", {
+    titulo,
+    modo: "CON_CODIGOS",
+    cuerpoId,
+    inicio: `${fecha}T${desde}`,
+    fin: `${fecha}T${hasta}`,
+    modalidad: "PRESENCIAL",
+  });
+await programar("Asamblea de Ingeniería", idDe("Facultad de Ingeniería"), dia(2), "10:00", "12:00");
+await programar("Asamblea de Artes", idDe("Facultad de Artes"), dia(2), "11:00", "13:00");
+await programar("Consejo de Medicina", idDe("Facultad de Medicina"), dia(5), "14:00", "16:00");
+
 const sesion = await mesa<{ id: string; codigoDeSala: string }>("sesiones", {
   titulo: "Asamblea General de Estudiantes",
   modo: "CON_CODIGOS",
   segundosPorIntervencion: 180,
+  cuerpoId: general,
+  inicio: `${dia(0)}T08:00`,
+  fin: `${dia(0)}T12:00`,
+  modalidad: "MIXTA",
+  lugar: "Teatro universitario",
 });
 const sala = sesion.codigoDeSala;
 await mesa(`sesiones/${sesion.id}/iniciar`);
@@ -306,6 +351,36 @@ await fotoProyeccion("proyeccion-palabra");
 for (const page of celulares.slice(0, 1))
   await page.getByText("Tienes la palabra").waitFor({ timeout: 25_000 });
 await foto(celulares[0]!, "celular-con-la-palabra", vistasCelular[0]!);
+
+// 6. Administración y calendario
+{
+  const vista = v(1280, 900, "claro");
+  const ctx = await contexto(vista, sesionDeMesa);
+  const page = await ctx.newPage();
+  await page.goto("/mesa/institucion");
+  await page.getByLabel("Nombre de la institución").waitFor();
+  await foto(page, "admin-institucion", vista, true);
+  await page.goto("/mesa/personal");
+  await page.getByRole("heading", { name: "Cuentas del personal" }).waitFor();
+  await foto(page, "admin-personal", vista, true);
+  await page.goto("/mesa");
+  await page.getByLabel("Título").fill("Asamblea extraordinaria");
+  await page.getByLabel("Fecha").fill(dia(2));
+  await page.getByLabel("Desde").fill("10:30");
+  await page.getByLabel("Hasta").fill("12:30");
+  await page.getByText("Se cruza con:").waitFor();
+  await foto(page, "mesa-programar-con-cruces", vista, true);
+  await ctx.close();
+}
+for (const vista of [v(1280, 900, "claro"), v(1280, 900, "oscuro"), v(360, 780, "claro")]) {
+  const ctx = await contexto(vista);
+  const page = await ctx.newPage();
+  await page.goto("/calendario");
+  await foto(page, "calendario-mes", vista, true);
+  await page.goto("/calendario?vista=lista");
+  await foto(page, "calendario-lista", vista, true);
+  await ctx.close();
+}
 
 await navegador.close();
 console.log(`Capturas en ${SALIDA}`);

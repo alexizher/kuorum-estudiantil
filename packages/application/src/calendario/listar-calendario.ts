@@ -4,7 +4,9 @@ import type { RepositorioDeInstitucion } from "../puertos/repositorio-de-institu
 import type { RepositorioDeSesiones } from "../puertos/repositorio-de-sesiones.js";
 import { resumir, type ResumenDeSesion } from "./resumen-de-sesion.js";
 
-const RANGO_MAXIMO_MS = 400 * 86_400_000;
+/** Lo más largo que se puede pedir de una vez, también desde la API pública y el `.ics`. */
+export const DIAS_MAXIMOS_DEL_CALENDARIO = 400;
+const RANGO_MAXIMO_MS = DIAS_MAXIMOS_DEL_CALENDARIO * 86_400_000;
 
 export interface Calendario {
   institucion: Institucion;

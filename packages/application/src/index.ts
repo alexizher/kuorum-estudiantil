@@ -10,7 +10,7 @@ export type { RepositorioDeCuerpos } from "./puertos/repositorio-de-cuerpos.js";
 export type { RepositorioDeInstitucion } from "./puertos/repositorio-de-institucion.js";
 export { BuscarCruces } from "./calendario/buscar-cruces.js";
 export type { TramoLocal } from "./calendario/buscar-cruces.js";
-export { ListarCalendario } from "./calendario/listar-calendario.js";
+export { DIAS_MAXIMOS_DEL_CALENDARIO, ListarCalendario } from "./calendario/listar-calendario.js";
 export type { Calendario } from "./calendario/listar-calendario.js";
 export type { ResumenDeSesion } from "./calendario/resumen-de-sesion.js";
 export { ReprogramarSesion } from "./sala/reprogramar-sesion.js";

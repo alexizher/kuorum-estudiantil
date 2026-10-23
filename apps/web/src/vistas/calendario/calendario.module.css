@@ -128,7 +128,8 @@
   font-size: var(--t-0);
   color: var(--tinta-suave);
 }
-[data-estado="CANCELADA"] {
+.sesion[data-estado="CANCELADA"],
+.enCelda[data-estado="CANCELADA"] {
   color: var(--tinta-suave);
 }
 .suscripcion {
