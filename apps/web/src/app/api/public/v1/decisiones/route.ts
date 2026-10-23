@@ -1,6 +1,7 @@
 import { contenedor } from "../../../../../composicion";
 import { solicitudInvalida } from "../../../../../http/respuestas";
 import { consultaDeLaPeticion, responderJson } from "../../../../../publico/consulta";
+import type { Decision } from "@kuorum/domain";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -25,7 +26,7 @@ export function GET(request: Request): Promise<Response> {
       }
     }
     return {
-      decisiones: decisiones.map((d) => ({
+      decisiones: decisiones.map((d: Decision) => ({
         id: d.id,
         cuerpo: cuerpos.get(d.cuerpoId) ?? null,
         sesion: sesiones.get(d.sesionId) ?? null,

@@ -45,6 +45,14 @@ export default function Inicio() {
             </Link>
           </li>
           <li>
+            <Link href="/institucion/decisiones">
+              <span className={`titular ${estilos.nombre}`}>Decisiones</span>
+              <span className={estilos.descripcion}>
+                Ver todas las decisiones de la asamblea general y las facultades.
+              </span>
+            </Link>
+          </li>
+          <li>
             <a href={REPOSITORIO}>
               <span className={`titular ${estilos.nombre}`}>Repositorio</span>
               <span className={estilos.descripcion}>El código es abierto y está en GitHub.</span>

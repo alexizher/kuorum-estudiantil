@@ -176,6 +176,9 @@ export function Calendario({
           {institucion.nombre}
           {filtrado ? ` · ${filtrado.nombre}` : ""} · horas de {zona}
         </p>
+        <Link href="/institucion/decisiones" className={estilos.verDecisiones}>
+          Ver decisiones de la institución
+        </Link>
       </header>
 
       <nav aria-label="Vista" className={estilos.vistas}>

@@ -1,5 +1,5 @@
-import { Decision, ErrorDeDominio, type FotoDeResultado } from "@kuorum/domain";
-import type { FiltroPublico, RepositorioDeDecisiones } from "@kuorum/application";
+import { Decision, ErrorDeDominio, type FotoDeResultado, type TipoDeCuerpo } from "@kuorum/domain";
+import type { DecisionesPorCuerpo, FiltroPublico, RepositorioDeDecisiones } from "@kuorum/application";
 import type { Prisma, Decision as FilaDeDecision } from "../generated/prisma/client.js";
 import {
   esViolacionDeUnico,
@@ -96,5 +96,57 @@ export class PrismaRepositorioDeDecisiones implements RepositorioDeDecisiones {
       orderBy: [{ cerradaEn: "asc" }, { id: "asc" }],
     });
     return filas.map(aDominio);
+  }
+
+  async publicasPorCuerpo(filtro: FiltroPublico): Promise<DecisionesPorCuerpo[]> {
+    const cliente = this.contexto.cliente();
+    const filas = await cliente.decision.findMany({
+      where: {
+        cerradaEn: { gte: filtro.desde, lt: filtro.hasta },
+        ...(filtro.cuerpoId === undefined ? {} : { cuerpoId: filtro.cuerpoId }),
+        sesion: {
+          estado: "ACTA_FINAL",
+          OR: [{ creadaPorId: null }, { creadaPor: { rol: { not: "DEMO" } } }],
+        },
+      },
+      orderBy: [{ cerradaEn: "asc" }, { id: "asc" }],
+      include: {
+        sesion: {
+          select: {
+            cuerpo: {
+              select: {
+                id: true,
+                nombre: true,
+                slug: true,
+                tipo: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const porCuerpo = new Map<string, DecisionesPorCuerpo>();
+    for (const fila of filas) {
+      const cuerpo = fila.sesion.cuerpo;
+      const key = cuerpo.id;
+      let grupo = porCuerpo.get(key);
+      if (grupo === undefined) {
+        grupo = {
+          cuerpoId: cuerpo.id,
+          cuerpoNombre: cuerpo.nombre,
+          cuerpoSlug: cuerpo.slug,
+          cuerpoTipo: cuerpo.tipo as TipoDeCuerpo,
+          decisiones: [],
+        };
+        porCuerpo.set(key, grupo);
+      }
+      grupo.decisiones.push(aDominio(fila));
+    }
+    return Array.from(porCuerpo.values()).sort((a, b) => {
+      if (a.cuerpoTipo === "GENERAL" && b.cuerpoTipo !== "GENERAL") return -1;
+      if (b.cuerpoTipo === "GENERAL" && a.cuerpoTipo !== "GENERAL") return 1;
+      return a.cuerpoNombre.localeCompare(b.cuerpoNombre);
+    });
   }
 }

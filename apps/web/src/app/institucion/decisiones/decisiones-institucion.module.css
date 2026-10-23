@@ -1,0 +1,263 @@
+.pagina {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.cabecera {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 2rem 1rem;
+  max-width: 800px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.volver {
+  align-self: flex-start;
+  font-size: 0.875rem;
+  color: var(--color-texto-suave);
+  text-decoration: none;
+}
+
+.volver:hover {
+  text-decoration: underline;
+}
+
+.periodo {
+  font-size: 0.875rem;
+  color: var(--color-texto-suave);
+}
+
+.cuerpo {
+  padding: 1.5rem 1rem;
+  max-width: 800px;
+  margin: 0 auto;
+  width: 100%;
+  border-top: 1px solid var(--color-borde);
+}
+
+.cuerpo:first-child {
+  border-top: none;
+}
+
+.cabeceraCuerpo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.tipo {
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.tipo.general {
+  background: var(--color-primario-suave);
+  color: var(--color-primario);
+}
+
+.tipo.facultad {
+  background: var(--color-secundario-suave);
+  color: var(--color-secundario);
+}
+
+.verCalendario {
+  align-self: flex-start;
+  font-size: 0.875rem;
+  color: var(--color-primario);
+  text-decoration: none;
+}
+
+.verCalendario:hover {
+  text-decoration: underline;
+}
+
+.sinDecisiones {
+  color: var(--color-texto-suave);
+  font-style: italic;
+}
+
+.listaDecisiones {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.decision {
+  width: 100%;
+}
+
+.tarjeta {
+  background: var(--color-fondo-elevado);
+  border: 1px solid var(--color-borde);
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.tarjeta.aprobada {
+  border-left: 4px solid var(--color-exito);
+}
+
+.tarjeta.rechazada {
+  border-left: 4px solid var(--color-error);
+}
+
+.tarjeta.indicativa {
+  border-left: 4px solid var(--color-advertencia);
+}
+
+.tarjeta.sin-resultado {
+  border-left: 4px solid var(--color-texto-suave);
+}
+
+.encabezadoDecision {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.etiqueta {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.etiqueta.aprobada {
+  background: var(--color-exito-suave);
+  color: var(--color-exito);
+}
+
+.etiqueta.rechazada {
+  background: var(--color-error-suave);
+  color: var(--color-error);
+}
+
+.etiqueta.indicativa {
+  background: var(--color-advertencia-suave);
+  color: var(--color-advertencia);
+}
+
+.etiqueta.sin-resultado {
+  background: var(--color-texto-suave-suave);
+  color: var(--color-texto-suave);
+}
+
+.fecha {
+  font-size: 0.875rem;
+  color: var(--color-texto-suave);
+  white-space: nowrap;
+}
+
+.pregunta {
+  font-size: 1rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.enunciado {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--color-texto);
+  margin: 0;
+  padding: 0.75rem;
+  background: var(--color-fondo);
+  border-radius: 0.5rem;
+  border: 1px solid var(--color-borde);
+}
+
+.resultado {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.resumen {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  font-size: 0.875rem;
+  color: var(--color-texto-suave);
+}
+
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.tabla th {
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 2px solid var(--color-borde);
+  font-weight: 600;
+  color: var(--color-texto-suave);
+}
+
+.tabla td {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.tabla tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.pieDecision {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--color-borde);
+}
+
+.verActa {
+  font-size: 0.875rem;
+  color: var(--color-primario);
+  text-decoration: none;
+}
+
+.verActa:hover {
+  text-decoration: underline;
+}
+
+.sinResultados {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--color-texto-suave);
+  font-size: 1rem;
+}
+
+.pie {
+  padding: 1.5rem 1rem;
+  text-align: center;
+}
+
+@media (min-width: 768px) {
+  .cabeceraCuerpo {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .encabezadoDecision {
+    flex-wrap: nowrap;
+  }
+}
