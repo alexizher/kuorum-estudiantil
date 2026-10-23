@@ -9,4 +9,10 @@ export {
   esquemaGenerarCodigos,
   esquemaCrearPregunta,
   esquemaDarLaPalabra,
+  esquemaReprogramar,
+  esquemaInstitucion,
+  esquemaCuerpo,
+  esquemaCambioDeCuerpo,
+  esquemaPersona,
+  esquemaMembresia,
 } from "./acciones.js";

@@ -26,11 +26,13 @@ export async function exigirMesa(solicitud: Request): Promise<Actor | Response> 
       .autenticacion()
       .api.getSession({ headers: solicitud.headers });
     if (sesion === null || sesion === undefined) return noAutenticado();
+    const membresias = await contenedor().membresias.deUsuario(sesion.user.id);
     return {
       id: sesion.user.id,
       correo: sesion.user.email,
       nombre: sesion.user.name,
       rol: rolDe((sesion.user as { rol?: unknown }).rol),
+      membresias: membresias.map(({ cuerpoId, rol }) => ({ cuerpoId, rol })),
     };
   } catch (error) {
     console.error(error);

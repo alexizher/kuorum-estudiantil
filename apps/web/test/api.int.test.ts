@@ -47,8 +47,15 @@ describe("API de la sala con la composición real (Postgres local)", () => {
         rol: "SUPERADMIN",
       },
     });
-    const actor = { id: ID_DE_USUARIO, rol: "SUPERADMIN" } as const;
-    const sesion = await c.crearSesion.ejecutar(actor, TITULO, "SALA_ABIERTA");
+    const actor = { id: ID_DE_USUARIO, rol: "SUPERADMIN", membresias: [] } as const;
+    const sesion = await c.crearSesion.ejecutar(actor, {
+      titulo: TITULO,
+      modo: "SALA_ABIERTA",
+      cuerpoId: "cuerpo-general",
+      inicioLocal: "2026-11-03T14:00",
+      finLocal: "2026-11-03T16:00",
+      modalidad: "PRESENCIAL",
+    });
     sesionId = sesion.id;
     codigoDeSala = sesion.codigoDeSala.valor;
     await c.iniciarSesion.ejecutar(actor, sesionId);

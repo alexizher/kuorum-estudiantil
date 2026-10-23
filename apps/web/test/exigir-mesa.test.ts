@@ -4,9 +4,12 @@ import { exigirMesa } from "../src/http/exigir-mesa";
 
 vi.mock("../src/composicion", () => ({ contenedor: vi.fn() }));
 
+let membresias: { usuarioId: string; cuerpoId: string; rol: string }[] = [];
+
 function conSesion(sesion: unknown) {
   vi.mocked(contenedor).mockReturnValue({
     autenticacion: () => ({ api: { getSession: vi.fn(async () => sesion) } }),
+    membresias: { deUsuario: vi.fn(async () => membresias) },
   } as unknown as ReturnType<typeof contenedor>);
 }
 
@@ -19,7 +22,8 @@ describe("exigirMesa", () => {
     expect(await respuesta.json()).toEqual({ error: "NO_AUTENTICADO" });
   });
 
-  it("con sesión devuelve solo id, correo, nombre y rol", async () => {
+  it("con sesión devuelve solo id, correo, nombre, rol y membresías", async () => {
+    membresias = [];
     conSesion({
       user: {
         id: "u1",
@@ -36,7 +40,17 @@ describe("exigirMesa", () => {
       correo: "a@b.test",
       nombre: "Ana",
       rol: "SUPERADMIN",
+      membresias: [],
     });
+  });
+
+  it("trae las membresías del usuario, solo cuerpo y rol", async () => {
+    membresias = [{ usuarioId: "u1", cuerpoId: "c1", rol: "ENCARGADO" }];
+    conSesion({ user: { id: "u1", email: "a@b.test", name: "Ana", rol: "MESA" } });
+    expect(await exigirMesa(new Request("http://x.test/api/mesa"))).toMatchObject({
+      membresias: [{ cuerpoId: "c1", rol: "ENCARGADO" }],
+    });
+    membresias = [];
   });
 
   it.each(["SUPERADMIN", "MESA", "DEMO"])("conserva el rol %s", async (rol) => {
