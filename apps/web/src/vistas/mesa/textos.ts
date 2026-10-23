@@ -37,15 +37,6 @@ export function etiquetaDeEstadoDeSesion(estado: EstadoDeSala["sala"]["estado"] 
   return ETIQUETA_DE_ESTADO_DE_SESION[estado] ?? estado;
 }
 
-export function fechaCorta(iso: string): string {
-  return new Date(iso).toLocaleDateString("es-CO", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    timeZone: "America/Bogota",
-  });
-}
-
 export function personas(n: number): string {
   return `${n.toLocaleString("es-CO")} ${n === 1 ? "persona" : "personas"}`;
 }

@@ -53,6 +53,16 @@
   gap: 4px 10px;
   font-size: var(--t-0);
 }
+.navegacion {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 16px;
+}
+.navegacion a {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
 .programacion {
   margin: 4px 0 0;
   font-size: var(--t-0);

@@ -1,6 +1,7 @@
 "use client";
 
 import { Boton } from "@kuorum/ui";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { clienteDeAuth } from "../../auth/cliente-de-auth";
@@ -20,6 +21,8 @@ interface Propiedades {
   puedeVerCuentaDePrueba?: boolean;
   /** Cuenta del personal sin membresías. */
   sinCuerpos?: boolean;
+  /** SUPERADMIN: enlaces a institución y personal. */
+  esAdministrador?: boolean;
   /** Para pruebas. */
   dependencias?: { fetch?: typeof globalThis.fetch; salir?: () => Promise<void> };
 }
@@ -32,6 +35,7 @@ export function MesaEnVivo({
   esDemo = false,
   puedeVerCuentaDePrueba = false,
   sinCuerpos = false,
+  esAdministrador = false,
   dependencias,
 }: Propiedades) {
   const [verCuentaDePrueba, setVerCuentaDePrueba] = useState(false);
@@ -58,6 +62,12 @@ export function MesaEnVivo({
     <div className={estilos.pagina}>
       <header role="banner" className={estilos.cabecera}>
         <h1 className={`titular ${estilos.tituloDeSesion}`}>Mesa</h1>
+        <nav aria-label="Secciones de la mesa" className={estilos.navegacion}>
+          <Link href="/calendario">Calendario</Link>
+          {esAdministrador ? <Link href="/mesa/institucion">Institución</Link> : null}
+          {esAdministrador ? <Link href="/mesa/personal">Personal</Link> : null}
+          {esDemo ? null : <Link href="/mesa/cuenta">Mi cuenta</Link>}
+        </nav>
         <div className={estilos.accionesDeCabecera}>
           {esDemo ? <InsigniaDeCuentaDePrueba /> : null}
           <Boton onClick={() => void salir()}>Salir</Boton>

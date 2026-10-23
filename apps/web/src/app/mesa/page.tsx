@@ -11,6 +11,7 @@ export default async function PaginaDeMesa() {
     <MesaEnVivo
       esDemo={actor.rol === "DEMO"}
       puedeVerCuentaDePrueba={actor.rol === "SUPERADMIN"}
+      esAdministrador={actor.rol === "SUPERADMIN"}
       sinCuerpos={actor.rol === "MESA" && actor.membresias.length === 0}
     />
   );

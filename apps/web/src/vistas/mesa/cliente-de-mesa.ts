@@ -160,6 +160,42 @@ export function comoErrorDeMesa(error: unknown): ErrorDeMesa {
 
 const MESA = "/api/mesa/v1";
 
+export type MetodoHttp = "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
+
+/**
+ * Pide a la API de la mesa. Devuelve el JSON (o null si no hay cuerpo) y traduce los fallos a
+ * ErrorDeMesa, con el mensaje de la API si lo trae.
+ */
+export async function pedirJson(
+  fetch: typeof globalThis.fetch,
+  metodo: MetodoHttp,
+  url: string,
+  cuerpo?: unknown,
+): Promise<unknown> {
+  let respuesta: Response;
+  try {
+    const conCuerpo = metodo !== "GET" && metodo !== "DELETE";
+    // Llamada suelta: window.fetch lanza "Illegal invocation" si `this` es otra instancia.
+    respuesta = await fetch(url, {
+      method: metodo,
+      credentials: "same-origin",
+      ...(conCuerpo
+        ? { headers: { "Content-Type": "application/json" }, body: JSON.stringify(cuerpo ?? {}) }
+        : {}),
+    });
+  } catch {
+    throw new ErrorDeMesa(0, "SIN_CONEXION");
+  }
+  const json: unknown = await respuesta.json().catch(() => null);
+  if (respuesta.ok) return json;
+  const { error, mensaje } = (json ?? {}) as { error?: unknown; mensaje?: unknown };
+  throw new ErrorDeMesa(
+    respuesta.status,
+    typeof error === "string" ? error : "ERROR_DE_RED",
+    typeof mensaje === "string" ? mensaje : undefined,
+  );
+}
+
 function leer<T>(cuerpo: unknown, campo: string): T {
   const valor = (cuerpo as Record<string, unknown> | null)?.[campo];
   if (valor === undefined || valor === null) throw new ErrorDeMesa(0, "RESPUESTA_INVALIDA");
@@ -286,29 +322,7 @@ export class ClienteDeMesaPorFetch implements ClienteDeMesa {
     return `${MESA}/preguntas/${encodeURIComponent(id)}/${ruta}`;
   }
 
-  /** Devuelve el cuerpo JSON (o null si no hay) y traduce los fallos a ErrorDeMesa. */
-  private async pedir(metodo: "GET" | "POST", url: string, cuerpo?: unknown): Promise<unknown> {
-    let respuesta: Response;
-    try {
-      // Llamada suelta: window.fetch lanza "Illegal invocation" si `this` es la instancia.
-      const llamar = this.fetch;
-      respuesta = await llamar(url, {
-        method: metodo,
-        credentials: "same-origin",
-        ...(metodo === "POST"
-          ? { headers: { "Content-Type": "application/json" }, body: JSON.stringify(cuerpo ?? {}) }
-          : {}),
-      });
-    } catch {
-      throw new ErrorDeMesa(0, "SIN_CONEXION");
-    }
-    const json: unknown = await respuesta.json().catch(() => null);
-    if (respuesta.ok) return json;
-    const { error, mensaje } = (json ?? {}) as { error?: unknown; mensaje?: unknown };
-    throw new ErrorDeMesa(
-      respuesta.status,
-      typeof error === "string" ? error : "ERROR_DE_RED",
-      typeof mensaje === "string" ? mensaje : undefined,
-    );
+  private pedir(metodo: "GET" | "POST", url: string, cuerpo?: unknown): Promise<unknown> {
+    return pedirJson(this.fetch, metodo, url, cuerpo);
   }
 }

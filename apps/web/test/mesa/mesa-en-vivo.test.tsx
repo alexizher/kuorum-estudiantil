@@ -73,6 +73,24 @@ describe("MesaEnVivo", () => {
     expect(await screen.findByText(/Todavía no tienes cuerpos asignados/)).toBeTruthy();
   });
 
+  it("la cabecera enlaza al calendario; institución y personal solo para la administración", async () => {
+    const { rerender } = render(<MesaEnVivo dependencias={{ fetch: fetchDeLaLista() }} />);
+    await screen.findByRole("link", { name: /Asamblea/ });
+    const navegacion = () => screen.getByRole("navigation", { name: "Secciones de la mesa" });
+    expect(navegacion().textContent).toContain("Calendario");
+    expect(navegacion().textContent).toContain("Mi cuenta");
+    expect(navegacion().textContent).not.toContain("Institución");
+    rerender(<MesaEnVivo esAdministrador dependencias={{ fetch: fetchDeLaLista() }} />);
+    expect(screen.getByRole("link", { name: "Institución" }).getAttribute("href")).toBe(
+      "/mesa/institucion",
+    );
+    expect(screen.getByRole("link", { name: "Personal" }).getAttribute("href")).toBe(
+      "/mesa/personal",
+    );
+    rerender(<MesaEnVivo esDemo dependencias={{ fetch: fetchDeLaLista() }} />);
+    expect(navegacion().textContent).not.toContain("Mi cuenta");
+  });
+
   it("sin sesiones lo dice", async () => {
     render(<MesaEnVivo dependencias={{ fetch: fetchDeLaLista([]) }} />);
     expect(await screen.findByText(/Todavía no hay sesiones/)).toBeTruthy();
