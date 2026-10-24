@@ -97,6 +97,12 @@ En el cliente, la fuente de estado (`FuenteDeEstadoPorConsulta`) recibe una pol�
 
 Nada por participante se consulta de forma periódica. "Ya voté" y "mi lugar en la fila" los calcula el celular con lo que devolvió su última acción y con el estado público. Así el endpoint puede ser público y cacheado sin filtrar datos de nadie.
 
+## Cookie del participante
+
+`ingresar` deja una cookie firmada por sala (`HttpOnly`, `SameSite=Lax`, `Secure` en producción) que dura 12 horas. Cada vez que el celular abre la sala vuelve a llamar a `ingresar`; si la cookie sigue siendo válida, la respuesta la manda de nuevo con las 12 horas completas, así que una sesión larga no la pierde a mitad de camino.
+
+Las rutas que cambian estado con esa cookie (`ingresar`, `votos`, `palabra`, `mociones` y `DELETE solicitudes/{id}`) responden `403 ORIGEN_NO_PERMITIDO` si la petición trae `Sec-Fetch-Site: cross-site` o un `Origin` de otro host. `SameSite=Lax` ya impide que otro sitio mande la cookie, pero un subdominio hermano (`foro.universidad.edu` frente a `votos.universidad.edu`) cuenta como el mismo sitio y la mandaría. Un cliente que no envía ninguna de las dos cabeceras (curl, pruebas) pasa: un navegador siempre envía `Origin` en un POST o un DELETE.
+
 ## Pruebas
 
 - `pnpm test`: unitarias de cada capa y de los componentes, sin base de datos.

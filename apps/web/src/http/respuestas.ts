@@ -19,6 +19,11 @@ export function sinIngreso(): Response {
   return Response.json({ error: "SIN_INGRESO" }, { status: 401, headers: SIN_CACHE });
 }
 
+/** La petición vino de otro sitio (ver `vieneDeOtroSitio`). */
+export function origenNoPermitido(): Response {
+  return Response.json({ error: "ORIGEN_NO_PERMITIDO" }, { status: 403, headers: SIN_CACHE });
+}
+
 export function demasiadasSolicitudes(): Response {
   return Response.json({ error: "DEMASIADAS_SOLICITUDES" }, { status: 429, headers: SIN_CACHE });
 }
