@@ -14,6 +14,8 @@ import { aplicarTema, guardarTema, leerTema, type Tema, type TemaEfectivo } from
 interface ValorDeTema {
   tema: Tema;
   temaEfectivo: TemaEfectivo;
+  /** Lo que pide prefers-color-scheme, sin importar la preferencia guardada. */
+  temaDelSistema: TemaEfectivo;
   cambiar: (tema: Tema) => void;
 }
 
@@ -47,14 +49,15 @@ export function TemaProvider({ children }: { children: ReactNode }) {
     guardarTema(nuevo);
   }, []);
 
-  const valor = useMemo<ValorDeTema>(
-    () => ({
+  const valor = useMemo<ValorDeTema>(() => {
+    const temaDelSistema: TemaEfectivo = sistemaOscuro ? "oscuro" : "claro";
+    return {
       tema,
-      temaEfectivo: tema === "sistema" ? (sistemaOscuro ? "oscuro" : "claro") : tema,
+      temaEfectivo: tema === "sistema" ? temaDelSistema : tema,
+      temaDelSistema,
       cambiar,
-    }),
-    [tema, sistemaOscuro, cambiar],
-  );
+    };
+  }, [tema, sistemaOscuro, cambiar]);
 
   return <ContextoDeTema.Provider value={valor}>{children}</ContextoDeTema.Provider>;
 }

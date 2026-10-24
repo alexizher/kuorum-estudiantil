@@ -1,55 +1,75 @@
+/* Portada. Celular: una columna, la entrada a la sala justo después del título.
+   Tablet: las otras entradas en dos columnas. Escritorio: título y entrada lado a lado. */
+
 .pagina {
-  max-width: 1040px;
+  max-width: 1200px;
   margin-inline: auto;
-  padding: clamp(24px, 6vw, 72px) 16px 32px;
+  padding: clamp(28px, 6vw, 72px) 16px 40px;
   display: grid;
-  gap: 40px;
+  gap: clamp(32px, 5vw, 56px);
+}
+
+.cabecera {
+  display: grid;
+  gap: 20px;
+  align-content: start;
+}
+
+.logo {
+  border-radius: 8px;
 }
 
 .marca {
-  font-size: clamp(3rem, 12vw, 7rem);
-  line-height: 0.85;
+  font-size: clamp(3rem, 11vw, 6.5rem);
+  line-height: 0.88;
+  overflow-wrap: anywhere;
 }
 .marca span {
   display: block;
-  margin-top: 0.12em;
+  margin-top: 0.1em;
   color: var(--tinta-suave);
   font-size: 0.42em;
   font-stretch: 75%;
 }
 
-.cabecera {
-  display: flex;
-  align-items: flex-start;
-  gap: 16px;
-}
-
-.logo {
-  flex-shrink: 0;
-  border-radius: 8px;
-}
-
 .intro {
-  margin-top: 24px;
-  max-width: 44ch;
+  max-width: 46ch;
   font-size: var(--t-2);
   line-height: 1.45;
 }
 
+/* La acción principal: tarjeta con borde de tinta y sombra plana de serigrafía */
 .entrada {
-  border-top: 2px solid var(--tinta);
-  padding-top: 20px;
-  max-width: 420px;
+  align-self: start;
+  background: var(--superficie);
+  border: 2px solid var(--tinta);
+  box-shadow: 6px 6px 0 var(--ambar);
+  padding: 20px;
+  margin-right: 6px;
+  display: grid;
+  gap: 16px;
 }
-.entrada h2 {
-  font-size: var(--t-3);
-  margin-bottom: 16px;
+.tituloEntrada {
+  font-size: var(--t-4);
 }
-.entrada form > :last-child {
-  margin-top: 16px;
+.entrada form {
+  display: grid;
+  gap: 16px;
 }
 
+.otras {
+  display: grid;
+  gap: 12px;
+}
+.rotulo {
+  font-size: var(--t-0);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--tinta-suave);
+}
 .enlaces {
+  display: grid;
   border-top: 2px solid var(--tinta);
 }
 .enlaces li {
@@ -57,61 +77,79 @@
 }
 .enlaces a {
   display: grid;
-  gap: 2px;
-  padding: 18px 0;
+  gap: 4px;
   min-height: 44px;
+  padding: 16px 4px;
   text-decoration: none;
+  transition: background-color var(--dur) var(--curva);
+}
+.enlaces a:hover {
+  background: color-mix(in srgb, var(--tinta) 6%, transparent);
 }
 .enlaces a:hover .nombre {
   text-decoration: underline;
   text-decoration-thickness: 2px;
   text-underline-offset: 0.15em;
 }
+.enlaces a:focus-visible {
+  outline-offset: -3px;
+}
 .nombre {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
   font-size: var(--t-3);
+}
+.flecha {
+  font-stretch: 100%;
+  font-weight: 400;
+  color: var(--tinta-suave);
+  transition: transform var(--dur) var(--curva);
+}
+.enlaces a:hover .flecha {
+  transform: translateX(3px);
 }
 .descripcion {
   color: var(--tinta-suave);
-  max-width: 52ch;
+  max-width: 48ch;
 }
 
 .pie {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 12px;
+  border-top: 1px solid var(--linea);
+  padding-top: 16px;
   font-size: var(--t-0);
   color: var(--tinta-suave);
 }
-.pieTexto {
-  margin: 0;
+.pie p {
   max-width: 60ch;
-  text-align: right;
 }
 
-@media (min-width: 900px) {
-  .pagina {
-    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
-    column-gap: 72px;
-    row-gap: 48px;
-    padding-top: clamp(48px, 9vh, 96px);
-  }
-  .cabecera {
-    grid-column: 1;
-    grid-row: 1 / span 2;
+@media (min-width: 600px) {
+  .enlaces {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 32px;
   }
   .entrada {
-    grid-column: 2;
-    grid-row: 1;
-    align-self: start;
+    max-width: 480px;
+    padding: 24px;
   }
-  .enlaces {
-    grid-column: 2;
-    grid-row: 2;
-    align-self: start;
+}
+
+@media (min-width: 960px) {
+  .pagina {
+    grid-template-columns: minmax(0, 1.25fr) minmax(340px, 1fr);
+    column-gap: 64px;
+    row-gap: 64px;
   }
+  .entrada {
+    max-width: none;
+  }
+  .otras,
   .pie {
     grid-column: 1 / -1;
+  }
+  .enlaces {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }

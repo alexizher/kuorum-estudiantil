@@ -7,6 +7,7 @@ import {
   SCRIPT_DE_TEMA,
   SelectorDeTema,
   TemaProvider,
+  siguienteTema,
   useTema,
 } from "../src/index.js";
 
@@ -112,12 +113,35 @@ describe("tema", () => {
     vi.restoreAllMocks();
   });
 
-  it("el selector marca la opción activa y cambia con el clic", async () => {
+  it("siguienteTema alterna y vuelve a sistema cuando coincide con él", () => {
+    expect(siguienteTema("claro", "claro")).toBe("oscuro");
+    expect(siguienteTema("oscuro", "claro")).toBe("sistema");
+    expect(siguienteTema("oscuro", "oscuro")).toBe("claro");
+    expect(siguienteTema("claro", "oscuro")).toBe("sistema");
+  });
+
+  it("el interruptor sigue al sistema, fija oscuro y al volver deja de guardar preferencia", async () => {
     simularSistema(false);
     render(<SelectorDeTema />, { wrapper: envoltorio });
-    expect(screen.getByRole("button", { name: "Sistema" })).toHaveProperty("ariaPressed", "true");
-    await userEvent.click(screen.getByRole("button", { name: "Oscuro" }));
-    expect(screen.getByRole("button", { name: "Oscuro" })).toHaveProperty("ariaPressed", "true");
+    const interruptor = screen.getByRole("switch", { name: "Tema oscuro" });
+    expect(interruptor).toHaveProperty("ariaChecked", "false");
+    await userEvent.click(interruptor);
+    expect(interruptor).toHaveProperty("ariaChecked", "true");
     expect(document.documentElement.getAttribute("data-tema")).toBe("oscuro");
+    expect(localStorage.getItem(CLAVE_DE_TEMA)).toBe("oscuro");
+    await userEvent.click(interruptor);
+    expect(interruptor).toHaveProperty("ariaChecked", "false");
+    expect(document.documentElement.hasAttribute("data-tema")).toBe(false);
+    expect(localStorage.getItem(CLAVE_DE_TEMA)).toBe("sistema");
+  });
+
+  it("con el sistema en oscuro el interruptor arranca encendido y fija claro", async () => {
+    simularSistema(true);
+    render(<SelectorDeTema />, { wrapper: envoltorio });
+    const interruptor = screen.getByRole("switch", { name: "Tema oscuro" });
+    expect(interruptor).toHaveProperty("ariaChecked", "true");
+    await userEvent.click(interruptor);
+    expect(interruptor).toHaveProperty("ariaChecked", "false");
+    expect(document.documentElement.getAttribute("data-tema")).toBe("claro");
   });
 });

@@ -89,9 +89,9 @@ describe("contraste AA de los tokens", () => {
 });
 
 describe("áreas táctiles", () => {
-  it("los botones del selector de tema miden 44 px sin depender de pseudoelementos recortados", () => {
+  it("el interruptor de tema mide 44 px sin depender de pseudoelementos recortados", () => {
     const componentes = readFileSync(new URL("../src/componentes.css", import.meta.url), "utf8");
-    const regla = /\.tema button \{([^}]*)\}/.exec(componentes)?.[1] ?? "";
+    const regla = /\n\.tema \{([^}]*)\}/.exec(componentes)?.[1] ?? "";
     expect(regla).toMatch(/min-height:\s*44px/);
     expect(regla).toMatch(/min-width:\s*44px/);
   });

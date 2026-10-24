@@ -1,10 +1,10 @@
 "use client";
 
 import { Boton } from "@kuorum/ui";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { clienteDeAuth } from "@/auth/cliente-de-auth";
+import { CabeceraDeMesa } from "./cabecera-de-mesa";
 import { ClienteDeMesaPorFetch } from "./cliente-de-mesa";
 import { FormularioDeSesion } from "./formulario-de-sesion";
 import { InsigniaDeCuentaDePrueba } from "./insignia-de-cuenta-de-prueba";
@@ -60,19 +60,18 @@ export function MesaEnVivo({
 
   return (
     <div className={estilos.pagina}>
-      <header role="banner" className={estilos.cabecera}>
-        <h1 className={`titular ${estilos.tituloDeSesion}`}>Mesa</h1>
-        <nav aria-label="Secciones de la mesa" className={estilos.navegacion}>
-          <Link href="/calendario">Calendario</Link>
-          {esAdministrador ? <Link href="/mesa/institucion">Institución</Link> : null}
-          {esAdministrador ? <Link href="/mesa/personal">Personal</Link> : null}
-          {esDemo ? null : <Link href="/mesa/cuenta">Mi cuenta</Link>}
-        </nav>
-        <div className={estilos.accionesDeCabecera}>
-          {esDemo ? <InsigniaDeCuentaDePrueba /> : null}
-          <Boton onClick={() => void salir()}>Salir</Boton>
-        </div>
-      </header>
+      <CabeceraDeMesa
+        titulo="Mesa"
+        actual="sesiones"
+        esAdministrador={esAdministrador}
+        esDemo={esDemo}
+        acciones={
+          <>
+            {esDemo ? <InsigniaDeCuentaDePrueba /> : null}
+            <Boton onClick={() => void salir()}>Salir</Boton>
+          </>
+        }
+      />
       <main className={estilos.tablero}>
         <section className={estilos.columna} aria-labelledby="titulo-sesiones">
           <h2 className={`titular ${estilos.tituloDeColumna}`} id="titulo-sesiones">

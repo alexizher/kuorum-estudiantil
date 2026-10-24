@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { exigirSesionDeMesa } from "@/auth/exigir-sesion-de-mesa";
+import { CabeceraDeMesa } from "@/vistas/mesa/cabecera-de-mesa";
 import { CambiarContrasena } from "@/vistas/mesa/cambiar-contrasena";
+import { PieDeMesa } from "@/vistas/mesa/pie-de-mesa";
 import estilos from "@/vistas/administracion/administracion.module.css";
 
 export const dynamic = "force-dynamic";
@@ -14,12 +15,11 @@ export default async function PaginaDeCuenta() {
   if (actor.rol === "DEMO") notFound();
   return (
     <div className={estilos.pagina}>
-      <header role="banner" className={estilos.cabecera}>
-        <Link href="/mesa" className={estilos.volver}>
-          Sesiones
-        </Link>
-        <h1 className="titular">Mi cuenta</h1>
-      </header>
+      <CabeceraDeMesa
+        titulo="Mi cuenta"
+        actual="cuenta"
+        esAdministrador={actor.rol === "SUPERADMIN"}
+      />
       <main className={estilos.tablero}>
         <section aria-labelledby="titulo-contrasena" className={estilos.seccion}>
           <p>
@@ -31,6 +31,7 @@ export default async function PaginaDeCuenta() {
           <CambiarContrasena />
         </section>
       </main>
+      <PieDeMesa />
     </div>
   );
 }
