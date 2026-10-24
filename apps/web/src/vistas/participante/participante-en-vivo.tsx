@@ -36,9 +36,7 @@ export function ParticipanteEnVivo({ codigo, codigoInicial, dependencias }: Prop
       fuente: new FuenteDeEstadoPorConsulta(
         llamar,
         new PoliticaConArranque(new PoliticaAdaptativa()),
-        undefined,
-        undefined,
-        () => contexto.current,
+        { contexto: () => contexto.current },
       ),
     };
   }, [dependencias]);
