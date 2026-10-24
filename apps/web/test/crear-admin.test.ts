@@ -116,6 +116,59 @@ describe("crear-admin", () => {
     expect([...salida, ...errores].join("\n")).not.toContain("contrasena-de-demo-1234");
   });
 
+  describe("en una terminal", () => {
+    function conTerminal(respuestas: string[]) {
+      const base = dependencias("no-debe-leerse-de-stdin-123\n");
+      const leerStdin = vi.fn(base.deps.leerStdin);
+      const preguntas: string[] = [];
+      const pedirSinEco = vi.fn(async (pregunta: string) => {
+        preguntas.push(pregunta);
+        return respuestas.shift() ?? "";
+      });
+      return {
+        ...base,
+        leerStdin,
+        preguntas,
+        pedirSinEco,
+        deps: { ...base.deps, leerStdin, terminal: { pedirSinEco } },
+      };
+    }
+
+    it("pide la contraseña dos veces sin eco y crea la cuenta si coinciden", async () => {
+      const t = conTerminal(["contrasena-de-terminal-1", "contrasena-de-terminal-1"]);
+      expect(await ejecutarCrearAdmin(["--correo", "a@b.test", "--nombre", "Ana"], t.deps)).toBe(0);
+      expect(t.pedirSinEco).toHaveBeenCalledTimes(2);
+      expect(t.leerStdin).not.toHaveBeenCalled();
+      expect(t.crear).toHaveBeenCalledWith(
+        expect.objectContaining({ contrasena: "contrasena-de-terminal-1" }),
+      );
+      expect([...t.salida, ...t.errores].join("\n")).not.toContain("contrasena-de-terminal-1");
+    });
+
+    it("si las dos no coinciden, falla sin crear nada ni imprimirlas", async () => {
+      const t = conTerminal(["contrasena-de-terminal-1", "contrasena-de-terminal-2"]);
+      expect(await ejecutarCrearAdmin(["--correo", "a@b.test", "--nombre", "Ana"], t.deps)).toBe(1);
+      expect(t.crear).not.toHaveBeenCalled();
+      const todo = [...t.salida, ...t.errores].join("\n");
+      expect(todo).toContain("no coinciden");
+      expect(todo).not.toContain("contrasena-de-terminal");
+    });
+
+    it("con --generar no pregunta nada", async () => {
+      const t = conTerminal([]);
+      expect(
+        await ejecutarCrearAdmin(["--correo", "a@b.test", "--nombre", "Ana", "--generar"], t.deps),
+      ).toBe(0);
+      expect(t.pedirSinEco).not.toHaveBeenCalled();
+    });
+
+    it("también aplica el largo mínimo a lo que se escribe en la terminal", async () => {
+      const t = conTerminal(["corta", "corta"]);
+      expect(await ejecutarCrearAdmin(["--correo", "a@b.test", "--nombre", "Ana"], t.deps)).toBe(1);
+      expect(t.crear).not.toHaveBeenCalled();
+    });
+  });
+
   describe("--actualizar", () => {
     it("cambia la contraseña y el rol de una cuenta que ya existe, sin crear otra", async () => {
       const { deps, crear, actualizar, salida, errores } = dependencias("nueva-contrasena-1234\n");

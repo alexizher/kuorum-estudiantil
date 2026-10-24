@@ -13,6 +13,8 @@ export interface OpcionesDeAutenticacion {
   secreto: string;
   /** Sin valor, Better Auth toma el origen de cada solicitud. */
   urlBase?: string | undefined;
+  /** Orígenes que se aceptan además de la URL base (la URL de la rama en una vista previa). */
+  origenesConfiables?: readonly string[] | undefined;
   /** Configuración OAuth opcional para verificación institucional. */
   oauth?: ConfigOAuth | null;
 }
@@ -56,13 +58,22 @@ function crearProveedoresOAuth(oauth: ConfigOAuth | null | undefined) {
   return {};
 }
 
-export function crearAuth({ adaptador, secreto, urlBase, oauth }: OpcionesDeAutenticacion) {
+export function crearAuth({
+  adaptador,
+  secreto,
+  urlBase,
+  origenesConfiables,
+  oauth,
+}: OpcionesDeAutenticacion) {
   const proveedoresSociales = crearProveedoresOAuth(oauth);
 
   return betterAuth({
     database: adaptador,
     secret: secreto,
     ...(urlBase !== undefined ? { baseURL: urlBase } : {}),
+    ...(origenesConfiables !== undefined && origenesConfiables.length > 0
+      ? { trustedOrigins: [...origenesConfiables] }
+      : {}),
     user: {
       additionalFields: {
         // Solo lo escribe el servidor (crear-admin); input: false impide que un cliente lo mande
@@ -86,7 +97,10 @@ export function crearAuth({ adaptador, secreto, urlBase, oauth }: OpcionesDeAute
     advanced: {
       useSecureCookies: process.env.NODE_ENV === "production",
       defaultCookieAttributes: { httpOnly: true, sameSite: "lax" },
-      // Vercel pone la IP del cliente como primer salto de x-forwarded-for.
+      // Better Auth (sin trustedProxies) acepta una cabecera solo si trae una única IP válida;
+      // si x-forwarded-for trae una cadena "cliente, proxy", la descarta y prueba x-real-ip.
+      // En Vercel x-forwarded-for llega con una sola IP. Si ninguna resuelve, todos los
+      // intentos comparten un único cupo (ver docs/despliegue.md).
       ipAddress: { ipAddressHeaders: ["x-forwarded-for", "x-real-ip"] },
     },
     // La IP de la mesa se usa solo para limitar intentos; las votantes nunca pasan por aquí.
@@ -106,9 +120,35 @@ export function crearAuth({ adaptador, secreto, urlBase, oauth }: OpcionesDeAute
 
 export type Autenticacion = ReturnType<typeof crearAuth>;
 
-export function urlBaseDesdeEntorno(entorno: NodeJS.ProcessEnv): string | undefined {
+/** Vercel entrega los dominios sin esquema (`rama.vercel.app`). */
+function conEsquema(dominio: string | undefined): string | undefined {
+  if (dominio === undefined || dominio === "") return undefined;
+  return /^https?:\/\//.test(dominio) ? dominio : `https://${dominio}`;
+}
+
+/**
+ * URL base de Better Auth: fija el dominio de las cookies y el origen que se acepta.
+ * Una vista previa usa su propio dominio (`VERCEL_URL`); si usara el de producción, sus
+ * cookies y la verificación de origen apuntarían a otro sitio y el ingreso fallaría.
+ */
+export function urlBaseDesdeEntorno(
+  entorno: Readonly<Record<string, string | undefined>>,
+): string | undefined {
   const explicita = entorno["BETTER_AUTH_URL"];
   if (explicita !== undefined && explicita !== "") return explicita;
-  const produccion = entorno["VERCEL_PROJECT_PRODUCTION_URL"];
-  return produccion !== undefined && produccion !== "" ? `https://${produccion}` : undefined;
+  if (entorno["VERCEL_ENV"] === "preview") return conEsquema(entorno["VERCEL_URL"]);
+  return conEsquema(entorno["VERCEL_PROJECT_PRODUCTION_URL"]);
+}
+
+/**
+ * Orígenes aceptados además de la URL base. Una vista previa se abre por la URL del despliegue
+ * (`VERCEL_URL`, la base) o por la de su rama (`VERCEL_BRANCH_URL`); sin esta última, el
+ * ingreso desde el enlace de la rama fallaría la verificación de origen.
+ */
+export function origenesConfiablesDesdeEntorno(
+  entorno: Readonly<Record<string, string | undefined>>,
+): string[] {
+  if (entorno["VERCEL_ENV"] !== "preview") return [];
+  const rama = conEsquema(entorno["VERCEL_BRANCH_URL"]);
+  return rama === undefined ? [] : [rama];
 }
