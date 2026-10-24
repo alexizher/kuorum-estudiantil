@@ -19,6 +19,12 @@ export interface OpcionesDeConsulta {
   contexto?: () => ContextoDeIntervalo;
 }
 
+function escucharVisibilidad(accion: () => void): () => void {
+  if (typeof document === "undefined") return () => undefined;
+  document.addEventListener("visibilitychange", accion);
+  return () => document.removeEventListener("visibilitychange", accion);
+}
+
 export class FuenteDeEstadoPorConsulta implements FuenteDeEstado {
   private readonly reprogramadores = new Set<() => void>();
   private readonly refrescadores = new Set<() => void>();
@@ -125,10 +131,19 @@ export class FuenteDeEstadoPorConsulta implements FuenteDeEstado {
     };
     this.refrescadores.add(refrescar);
 
+    // Al volver a la pestaña se consulta ya: la espera pendiente puede ser de 12 s.
+    const alVolver = () => {
+      if (!activa || consultando || document.visibilityState !== "visible") return;
+      cancelarEspera?.();
+      void consultar();
+    };
+    const dejarDeEscuchar = escucharVisibilidad(alVolver);
+
     void consultar();
     return () => {
       activa = false;
       cancelarEspera?.();
+      dejarDeEscuchar();
       this.reprogramadores.delete(reprogramar);
       this.refrescadores.delete(refrescar);
     };
