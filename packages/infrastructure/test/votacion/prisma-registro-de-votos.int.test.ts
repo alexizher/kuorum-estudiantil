@@ -186,13 +186,40 @@ describe("PrismaRegistroDeVotos", () => {
       SELECT xmin::text AS "xmin" FROM "votos_emitidos"
       WHERE "preguntaId" = ${pregunta.id} AND "participanteId" = 'p4'`;
     expect(xminsDeConteo).toEqual(ultimo);
+  });
 
-    // La consulta de unión por xmin no atribuye a nadie una opción de total 1 (2 y 2 votos).
+  it("con 1 Sí y 3 No, la unión por xmin da al último votante en todas las opciones", async () => {
+    const { pregunta, si, no } = await preguntaAbierta();
+    const todas = pregunta.opciones.map((o) => o.id).sort((a, b) => a.localeCompare(b));
+    for (const [participante, opcion] of [
+      ["p1", si],
+      ["p2", no],
+      ["p3", no],
+      ["p4", no],
+    ] as const) {
+      await banco.votos.emitir(pregunta.id, participante, opcion);
+    }
+
+    // p4 votó No, pero aparece junto a cada opción: la unión no dice qué eligió nadie.
+    // Con una actualización solo de la opción elegida, el Sí de total 1 delataría a p1.
     const union = await banco.prisma.$queryRaw<{ participanteId: string; opcionId: string }[]>`
       SELECT ve."participanteId", c."opcionId" FROM "votos_emitidos" ve
       JOIN "conteos" c ON c.xmin = ve.xmin AND c."preguntaId" = ve."preguntaId"
-      WHERE c."total" = 1`;
-    expect(union).toEqual([]);
+      WHERE ve."preguntaId" = ${pregunta.id}`;
+    const ordenada = [...union].sort((a, b) => a.opcionId.localeCompare(b.opcionId));
+    expect(ordenada).toEqual(todas.map((opcionId) => ({ participanteId: "p4", opcionId })));
+  });
+
+  it("si falta una fila de conteo, emitir falla con CONTEO_FALTANTE y no registra el voto", async () => {
+    const { pregunta, si, no } = await preguntaAbierta();
+    await banco.prisma.$executeRaw`
+      DELETE FROM "conteos" WHERE "preguntaId" = ${pregunta.id} AND "opcionId" = ${no}`;
+
+    await expect(banco.votos.emitir(pregunta.id, "p1", si)).rejects.toMatchObject({
+      codigo: "CONTEO_FALTANTE",
+    });
+    expect(await banco.votos.votosEmitidos(pregunta.id)).toBe(0);
+    expect((await banco.votos.conteos(pregunta.id)).get(si)).toBe(0);
   });
 
   it("borde: con un solo voto en total, el conteo de uno lo delata (igual que cualquier conteo de uno)", async () => {
