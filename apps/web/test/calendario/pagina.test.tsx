@@ -7,7 +7,7 @@ import {
   Calendario,
   type PropiedadesDeCalendario,
   type SesionVisible,
-} from "../../src/vistas/calendario/calendario";
+} from "@/vistas/calendario/calendario";
 import { violacionesDeAxe } from "../proyeccion/axe";
 
 const render = (ui: ReactElement) => renderizar(ui, { wrapper: TemaProvider });

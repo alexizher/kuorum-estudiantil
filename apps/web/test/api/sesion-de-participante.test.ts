@@ -1,10 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  cookieDeParticipante,
-  firmar,
-  leer,
-  nombreDeCookie,
-} from "../../src/http/sesion-de-participante";
+import { cookieDeParticipante, firmar, leer, nombreDeCookie } from "@/http/sesion-de-participante";
 
 function conCookie(valor: string, codigo = "ABCD"): Request {
   return new Request("http://x.test/", {

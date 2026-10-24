@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { coloresDeOpciones } from "../../src/vistas/proyeccion/colores-de-opciones";
+import { coloresDeOpciones } from "@/vistas/proyeccion/colores-de-opciones";
 
 describe("coloresDeOpciones", () => {
   it("Sí, No y Me abstengo llevan verde, rojo y ámbar", () => {

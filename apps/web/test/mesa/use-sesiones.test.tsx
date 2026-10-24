@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
-import { ErrorDeMesa } from "../../src/vistas/mesa/cliente-de-mesa";
-import { useSesiones, type DatosDelFormulario } from "../../src/vistas/mesa/use-sesiones";
+import { ErrorDeMesa } from "@/vistas/mesa/cliente-de-mesa";
+import { useSesiones, type DatosDelFormulario } from "@/vistas/mesa/use-sesiones";
 import { clienteDeMesaFalso, sesionDeLista } from "./falsos";
 
 afterEach(cleanup);

@@ -1,8 +1,8 @@
 import type { EstadoDeSala } from "@kuorum/contracts";
 import { vi } from "vitest";
-import type { Almacen } from "../../src/vistas/participante/almacen";
-import type { ClienteDeSala } from "../../src/vistas/participante/cliente-de-sala";
-import type { FuenteDeEstado } from "../../src/tiempo-real/fuente-de-estado";
+import type { Almacen } from "@/vistas/participante/almacen";
+import type { ClienteDeSala } from "@/vistas/participante/cliente-de-sala";
+import type { FuenteDeEstado } from "@/tiempo-real/fuente-de-estado";
 
 export class AlmacenEnMemoria implements Almacen {
   readonly datos = new Map<string, string>();

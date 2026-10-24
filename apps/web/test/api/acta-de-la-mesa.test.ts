@@ -1,17 +1,14 @@
 import { ErrorDeDominio } from "@kuorum/domain";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { PATCH as editarEnunciado } from "../../src/app/api/mesa/v1/decisiones/[id]/route";
-import {
-  GET as leerActa,
-  PUT as editarActa,
-} from "../../src/app/api/mesa/v1/sesiones/[id]/acta/route";
-import { POST as finalizar } from "../../src/app/api/mesa/v1/sesiones/[id]/acta/finalizar/route";
-import { GET as listarDecisiones } from "../../src/app/api/mesa/v1/sesiones/[id]/decisiones/route";
-import { POST as crear } from "../../src/app/api/mesa/v1/sesiones/route";
-import { POST as reprogramar } from "../../src/app/api/mesa/v1/sesiones/[id]/reprogramar/route";
-import { contenedor } from "../../src/composicion";
+import { PATCH as editarEnunciado } from "@/app/api/mesa/v1/decisiones/[id]/route";
+import { GET as leerActa, PUT as editarActa } from "@/app/api/mesa/v1/sesiones/[id]/acta/route";
+import { POST as finalizar } from "@/app/api/mesa/v1/sesiones/[id]/acta/finalizar/route";
+import { GET as listarDecisiones } from "@/app/api/mesa/v1/sesiones/[id]/decisiones/route";
+import { POST as crear } from "@/app/api/mesa/v1/sesiones/route";
+import { POST as reprogramar } from "@/app/api/mesa/v1/sesiones/[id]/reprogramar/route";
+import { contenedor } from "@/composicion";
 
-vi.mock("../../src/composicion", () => ({ contenedor: vi.fn() }));
+vi.mock("@/composicion", () => ({ contenedor: vi.fn() }));
 
 const casos = {
   obtenerActaDeLaMesa: { ejecutar: vi.fn() },

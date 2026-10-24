@@ -1,13 +1,13 @@
 import type { EstadoDeSala } from "@kuorum/contracts";
 import { vi } from "vitest";
-import type { FuenteRefrescable } from "../../src/tiempo-real/fuente-de-estado";
+import type { FuenteRefrescable } from "@/tiempo-real/fuente-de-estado";
 import type {
   ClienteDeMesa,
   InstitucionDeMesa,
   PreguntaDeMesa,
   ResultadoDeVotacion,
   SesionDeLista,
-} from "../../src/vistas/mesa/cliente-de-mesa";
+} from "@/vistas/mesa/cliente-de-mesa";
 
 export const INSTITUCION: InstitucionDeMesa = {
   institucion: {

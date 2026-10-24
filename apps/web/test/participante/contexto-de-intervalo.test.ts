@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { PoliticaAdaptativa } from "../../src/tiempo-real/intervalo-adaptativo";
-import { contextoDeIntervalo } from "../../src/vistas/participante/contexto-de-intervalo";
+import { PoliticaAdaptativa } from "@/tiempo-real/intervalo-adaptativo";
+import { contextoDeIntervalo } from "@/vistas/participante/contexto-de-intervalo";
 
 describe("contextoDeIntervalo", () => {
   const abierta = { id: "p1" } as const;

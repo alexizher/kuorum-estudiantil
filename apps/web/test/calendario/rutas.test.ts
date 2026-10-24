@@ -1,11 +1,11 @@
 import { ErrorDeDominio } from "@kuorum/domain";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { GET as calendario } from "../../src/app/api/public/v1/calendario/route";
-import { GET as ics } from "../../src/app/api/public/v1/calendario.ics/route";
+import { GET as calendario } from "@/app/api/public/v1/calendario/route";
+import { GET as ics } from "@/app/api/public/v1/calendario.ics/route";
 import { DIAS_MAXIMOS_DEL_CALENDARIO } from "@kuorum/application";
-import { contenedor } from "../../src/composicion";
+import { contenedor } from "@/composicion";
 
-vi.mock("../../src/composicion", () => ({ contenedor: vi.fn() }));
+vi.mock("@/composicion", () => ({ contenedor: vi.fn() }));
 
 const ejecutar = vi.fn();
 const artes = { id: "c-a", nombre: "Artes", slug: "artes", tipo: "FACULTAD", archivado: false };

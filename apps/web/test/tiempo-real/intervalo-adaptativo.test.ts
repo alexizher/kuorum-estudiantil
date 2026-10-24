@@ -7,7 +7,7 @@ import {
   PoliticaConArranque,
   PoliticaFija,
   type PoliticaDeIntervalo,
-} from "../../src/tiempo-real/intervalo-adaptativo";
+} from "@/tiempo-real/intervalo-adaptativo";
 
 describe("PoliticaAdaptativa", () => {
   const politica = new PoliticaAdaptativa();
