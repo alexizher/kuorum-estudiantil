@@ -1,6 +1,7 @@
 import type { DeployConfig } from "../config/deploy-config.js";
-import type { CommandRunner } from "../io/command-runner.js";
+import type { CommandResult, CommandRunner } from "../io/command-runner.js";
 import type { DeployContext, Step } from "../wizard/step.js";
+import { existingAgentFiles, removeNewAgentFiles } from "./agent-files.js";
 
 const NEON_FREE_PLAN = "free_v3";
 const NEON_PAGE = "https://vercel.com/marketplace/neon";
@@ -28,11 +29,16 @@ function addArgs(name: string): string[] {
   ];
 }
 
-/** Sin TTY la CLI imprime un JSON en stdout cuando falta una acción de la persona. */
+/**
+ * Sin TTY la CLI imprime un JSON en stdout cuando falta una acción de la persona.
+ * Puede venir después de otras líneas: se lee desde la primera línea que abre un objeto.
+ */
 function pendingTerms(stdout: string): PendingTerms | undefined {
+  const start = stdout.search(/^\s*\{/m);
+  if (start < 0) return undefined;
   let parsed: unknown;
   try {
-    parsed = JSON.parse(stdout);
+    parsed = JSON.parse(stdout.slice(start, stdout.lastIndexOf("}") + 1));
   } catch {
     return undefined;
   }
@@ -59,7 +65,7 @@ export class DatabaseStep implements Step {
   readonly description = (config: DeployConfig) =>
     `Creando en tu cuenta el recurso de Neon "${config.shortName}-db" (plan gratuito) y conectándolo al proyecto en production, preview y development`;
 
-  async run({ config, state, runner, prompter, interactive }: DeployContext): Promise<void> {
+  async run({ config, state, runner, prompter, interactive, cwd }: DeployContext): Promise<void> {
     if (state.databaseName) return;
     const name = `${config.shortName}-db`;
 
@@ -69,14 +75,14 @@ export class DatabaseStep implements Step {
       return;
     }
 
-    let added = await runner.run("vercel", addArgs(name));
-    let terms = pendingTerms(added.stdout);
-    if (terms) {
-      const retry = await this.acceptTerms(terms, interactive, prompter);
-      added = await runner.run("vercel", addArgs(name));
-      terms = retry ? pendingTerms(added.stdout) : undefined;
+    const before = await existingAgentFiles(cwd);
+    let added: CommandResult;
+    try {
+      added = await this.addIntegration(name, runner, prompter, interactive);
+    } finally {
+      await removeNewAgentFiles(cwd, before);
     }
-    if (added.exitCode !== 0 || terms) {
+    if (added.exitCode !== 0 || pendingTerms(added.stdout)) {
       const detail = added.stderr.trim() || "sin detalle";
       if (!interactive) {
         throw new Error(
@@ -104,12 +110,26 @@ export class DatabaseStep implements Step {
     }
   }
 
-  /** Devuelve true si la persona dijo que aceptó; en modo no interactivo falla con la URL. */
+  /** Si Neon pide aceptar sus términos, espera a que la persona los acepte y reintenta una vez. */
+  private async addIntegration(
+    name: string,
+    runner: CommandRunner,
+    prompter: DeployContext["prompter"],
+    interactive: boolean,
+  ): Promise<CommandResult> {
+    const added = await runner.run("vercel", addArgs(name));
+    const terms = pendingTerms(added.stdout);
+    if (!terms) return added;
+    await this.acceptTerms(terms, interactive, prompter);
+    return runner.run("vercel", addArgs(name));
+  }
+
+  /** Vuelve cuando la persona dice que aceptó; si no, o sin interacción, falla con la URL. */
   private async acceptTerms(
     terms: PendingTerms,
     interactive: boolean,
     prompter: DeployContext["prompter"],
-  ): Promise<true> {
+  ): Promise<void> {
     const links = terms.policyLinks.map(([name, url]) => `\n  ${name}: ${url}`).join("");
     if (!interactive) {
       throw new Error(
@@ -125,7 +145,6 @@ export class DatabaseStep implements Step {
         "Faltan por aceptar los términos de Neon; acéptalos y vuelve a correr pnpm desplegar.",
       );
     }
-    return true;
   }
 
   private async missingVariables(runner: CommandRunner): Promise<string[]> {
