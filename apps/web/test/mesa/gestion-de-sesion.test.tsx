@@ -4,7 +4,7 @@ import { cleanup, fireEvent, render as renderizar, screen, waitFor } from "@test
 import { userEvent } from "@testing-library/user-event";
 import type { ReactElement } from "react";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
-import { SesionEnVivo } from "../../src/vistas/mesa/sesion-en-vivo";
+import { SesionEnVivo } from "@/vistas/mesa/sesion-en-vivo";
 import { salaVacia } from "../proyeccion/estados";
 
 const refrescar = vi.fn();

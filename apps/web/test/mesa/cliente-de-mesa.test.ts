@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { ClienteDeMesaPorFetch, ErrorDeMesa } from "../../src/vistas/mesa/cliente-de-mesa";
+import { ClienteDeMesaPorFetch, ErrorDeMesa } from "@/vistas/mesa/cliente-de-mesa";
 
 function conRespuesta(respuesta: Response) {
   const fetchFalso = vi.fn<typeof fetch>(async () => respuesta);

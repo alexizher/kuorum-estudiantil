@@ -3,12 +3,12 @@ import { TemaProvider } from "@kuorum/ui";
 import { cleanup, render as renderizar, screen } from "@testing-library/react";
 import type { ReactElement } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import PaginaDeVerificacion from "../../src/app/actas/verificar/page";
-import { contenedor } from "../../src/composicion";
-import { VerificacionDeActa } from "../../src/vistas/actas/verificacion-de-acta";
+import PaginaDeVerificacion from "@/app/actas/verificar/page";
+import { contenedor } from "@/composicion";
+import { VerificacionDeActa } from "@/vistas/actas/verificacion-de-acta";
 import { violacionesDeAxe } from "../proyeccion/axe";
 
-vi.mock("../../src/composicion", () => ({ contenedor: vi.fn() }));
+vi.mock("@/composicion", () => ({ contenedor: vi.fn() }));
 
 const render = (ui: ReactElement) => renderizar(ui, { wrapper: TemaProvider });
 afterEach(() => cleanup());

@@ -4,7 +4,7 @@ import { cleanup, render as renderizar, screen, waitFor } from "@testing-library
 import { userEvent } from "@testing-library/user-event";
 import type { ReactElement } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { EditorDeActa } from "../../src/vistas/mesa/editor-de-acta";
+import { EditorDeActa } from "@/vistas/mesa/editor-de-acta";
 import { violacionesDeAxe } from "../proyeccion/axe";
 
 const render = (ui: ReactElement) => renderizar(ui, { wrapper: TemaProvider });

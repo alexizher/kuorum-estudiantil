@@ -7,9 +7,9 @@ import { userEvent } from "@testing-library/user-event";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
-import { PanelDeSesion, type PropiedadesDePanel } from "../../src/vistas/mesa/panel-de-sesion";
-import type { PanelDeSesion as Panel } from "../../src/vistas/mesa/use-panel-de-sesion";
-import type { FormularioDePregunta } from "../../src/vistas/mesa/use-formulario-de-pregunta";
+import { PanelDeSesion, type PropiedadesDePanel } from "@/vistas/mesa/panel-de-sesion";
+import type { PanelDeSesion as Panel } from "@/vistas/mesa/use-panel-de-sesion";
+import type { FormularioDePregunta } from "@/vistas/mesa/use-formulario-de-pregunta";
 import { violacionesDeAxe } from "../proyeccion/axe";
 import {
   conLaPalabra,

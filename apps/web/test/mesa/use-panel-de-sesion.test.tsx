@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
-import { ErrorDeMesa } from "../../src/vistas/mesa/cliente-de-mesa";
-import { usePanelDeSesion } from "../../src/vistas/mesa/use-panel-de-sesion";
+import { ErrorDeMesa } from "@/vistas/mesa/cliente-de-mesa";
+import { usePanelDeSesion } from "@/vistas/mesa/use-panel-de-sesion";
 import { preguntaAbierta, salaVacia } from "../proyeccion/estados";
 import { borrador, clienteDeMesaFalso, FuenteRefrescableFalsa, RESULTADO } from "./falsos";
 
