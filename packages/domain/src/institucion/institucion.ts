@@ -68,7 +68,8 @@ function proveedorOAuthValido(proveedor: string | null): ProveedorOAuth {
   if (proveedor === null || proveedor === undefined) return null;
   const limpio = proveedor.trim().toLowerCase();
   if (limpio === "") return null;
-  if (limpio !== "microsoft" && limpio !== "google") throw new ErrorDeDominio("PROVEEDOR_OAUTH_INVALIDO");
+  if (limpio !== "microsoft" && limpio !== "google")
+    throw new ErrorDeDominio("PROVEEDOR_OAUTH_INVALIDO");
   return limpio;
 }
 

@@ -30,7 +30,9 @@ describe("despliegue", () => {
     const stdout = salidaJson({ deployment: { productionUrl: undefined } });
     const context = makeContext({ runner: new FakeRunner(() => ({ stdout })) });
     await new DeployStep().run(context);
-    expect(context.state.productionUrl).toBe("https://kuorum-estudiantil-demo-msnipu532.vercel.app");
+    expect(context.state.productionUrl).toBe(
+      "https://kuorum-estudiantil-demo-msnipu532.vercel.app",
+    );
   });
 
   it("falla si la salida JSON trae status distinto de ok", async () => {

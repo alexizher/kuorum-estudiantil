@@ -3,3 +3,4 @@ dist/
 .next/
 .turbo/
 next-env.d.ts
+pnpm-lock.yaml

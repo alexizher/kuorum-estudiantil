@@ -1,8 +1,4 @@
-import {
-  ErrorDeDominio,
-  type Decision,
-  type TipoDeCuerpo,
-} from "@kuorum/domain";
+import { ErrorDeDominio, type Decision, type TipoDeCuerpo } from "@kuorum/domain";
 import type {
   DecisionesPorCuerpo,
   FiltroPublico,

@@ -9,7 +9,9 @@ function bloque(selector: string): Record<string, string> {
   expect(inicio, selector).toBeGreaterThanOrEqual(0);
   const cuerpo = css.slice(css.indexOf("{", inicio) + 1, css.indexOf("}", inicio));
   const tokens: Record<string, string> = {};
-  for (const m of cuerpo.matchAll(/--([\w-]+):\s*(?:var\(--[\w-]+,\s*(#[0-9A-Fa-f]{6})\)|(#[0-9A-Fa-f]{6}))/g)) {
+  for (const m of cuerpo.matchAll(
+    /--([\w-]+):\s*(?:var\(--[\w-]+,\s*(#[0-9A-Fa-f]{6})\)|(#[0-9A-Fa-f]{6}))/g,
+  )) {
     const nombre = m[1];
     const valor = m[2] ?? m[3];
     if (nombre && valor) tokens[nombre] = valor;

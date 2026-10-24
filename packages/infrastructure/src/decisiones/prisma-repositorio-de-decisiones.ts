@@ -1,5 +1,9 @@
 import { Decision, ErrorDeDominio, type FotoDeResultado, type TipoDeCuerpo } from "@kuorum/domain";
-import type { DecisionesPorCuerpo, FiltroPublico, RepositorioDeDecisiones } from "@kuorum/application";
+import type {
+  DecisionesPorCuerpo,
+  FiltroPublico,
+  RepositorioDeDecisiones,
+} from "@kuorum/application";
 import type { Prisma, Decision as FilaDeDecision } from "../generated/prisma/client.js";
 import {
   esViolacionDeUnico,

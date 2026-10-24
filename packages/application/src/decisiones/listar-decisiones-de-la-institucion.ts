@@ -1,4 +1,7 @@
-import type { DecisionesPorCuerpo, RepositorioDeDecisiones } from "../puertos/repositorio-de-decisiones.js";
+import type {
+  DecisionesPorCuerpo,
+  RepositorioDeDecisiones,
+} from "../puertos/repositorio-de-decisiones.js";
 import type { RepositorioDeCuerpos } from "../puertos/repositorio-de-cuerpos.js";
 import { filtroPublico, type ConsultaPublica } from "./filtro-publico.js";
 

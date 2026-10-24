@@ -150,8 +150,9 @@ export function FormularioDeInstitucion({
       <fieldset className={estilos.fieldset}>
         <legend className={estilos.legend}>Verificación institucional (OAuth)</legend>
         <p className={estilos.ayudaOAuth}>
-          Permite a los participantes ingresar con su correo institucional (Microsoft Entra ID o Google Workspace).
-          El correo se usa solo para verificar la identidad; no se almacena ni se muestra.
+          Permite a los participantes ingresar con su correo institucional (Microsoft Entra ID o
+          Google Workspace). El correo se usa solo para verificar la identidad; no se almacena ni se
+          muestra.
         </p>
         <div className="campo">
           <label className="campo__etiqueta" htmlFor="proveedor-oauth">
@@ -195,7 +196,8 @@ export function FormularioDeInstitucion({
               Client Secret
             </label>
             <p className="campo__ayuda" id="client-secret-oauth-ayuda">
-              Secreto de la aplicación. Se almacena en la base de datos; en producción debería ir encriptado.
+              Secreto de la aplicación. Se almacena en la base de datos; en producción debería ir
+              encriptado.
             </p>
             <input
               id="client-secret-oauth"
@@ -211,8 +213,8 @@ export function FormularioDeInstitucion({
           </div>
         </div>
         <p className={estilos.notaOAuth}>
-          <strong>Nota:</strong> Al cambiar el proveedor o credenciales, las sesiones de autenticación existentes
-          se invalidarán y los usuarios deberán iniciar sesión de nuevo.
+          <strong>Nota:</strong> Al cambiar el proveedor o credenciales, las sesiones de
+          autenticación existentes se invalidarán y los usuarios deberán iniciar sesión de nuevo.
         </p>
       </fieldset>
 

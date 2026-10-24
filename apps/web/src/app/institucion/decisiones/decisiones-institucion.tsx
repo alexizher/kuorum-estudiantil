@@ -63,9 +63,7 @@ export function DecisionesInstitucion({
           Inicio
         </Link>
         <h1 className="titular">Decisiones de la institución</h1>
-        <p className="suave">
-          Todas las decisiones de la asamblea general y de cada facultad
-        </p>
+        <p className="suave">Todas las decisiones de la asamblea general y de cada facultad</p>
         <p className={estilos.periodo}>
           Desde {aHoraLocal(desde, zona).fecha} hasta {aHoraLocal(hasta, zona).fecha}
         </p>
@@ -74,7 +72,11 @@ export function DecisionesInstitucion({
       {hayDecisiones ? (
         <>
           {cuerpos.map((cuerpo) => (
-            <section key={cuerpo.id} className={estilos.cuerpo} aria-labelledby={`cuerpo-${cuerpo.id}`}>
+            <section
+              key={cuerpo.id}
+              className={estilos.cuerpo}
+              aria-labelledby={`cuerpo-${cuerpo.id}`}
+            >
               <header className={estilos.cabeceraCuerpo}>
                 <h2 id={`cuerpo-${cuerpo.id}`} className="titular">
                   {cuerpo.nombre}
@@ -82,10 +84,7 @@ export function DecisionesInstitucion({
                     {cuerpo.tipo === "GENERAL" ? "Asamblea General" : "Facultad"}
                   </span>
                 </h2>
-                <Link
-                  href={`/calendario?cuerpo=${cuerpo.slug}`}
-                  className={estilos.verCalendario}
-                >
+                <Link href={`/calendario?cuerpo=${cuerpo.slug}`} className={estilos.verCalendario}>
                   Ver calendario de {cuerpo.nombre}
                 </Link>
               </header>
@@ -93,16 +92,27 @@ export function DecisionesInstitucion({
               {cuerpo.decisiones.length === 0 ? (
                 <p className={estilos.sinDecisiones}>Sin decisiones en el periodo seleccionado.</p>
               ) : (
-                <ul className={estilos.listaDecisiones} aria-label={`Decisiones de ${cuerpo.nombre}`}>
+                <ul
+                  className={estilos.listaDecisiones}
+                  aria-label={`Decisiones de ${cuerpo.nombre}`}
+                >
                   {cuerpo.decisiones.map((decision) => (
                     <li key={decision.id} className={estilos.decision}>
-                      <article className={`${estilos.tarjeta} ${claseAprobada(decision.aprobada, decision.indicativa)}`}>
+                      <article
+                        className={`${estilos.tarjeta} ${claseAprobada(decision.aprobada, decision.indicativa)}`}
+                      >
                         <header className={estilos.encabezadoDecision}>
-                          <span className={`${estilos.etiqueta} ${claseAprobada(decision.aprobada, decision.indicativa)}`}>
+                          <span
+                            className={`${estilos.etiqueta} ${claseAprobada(decision.aprobada, decision.indicativa)}`}
+                          >
                             {etiquetaAprobada(decision.aprobada, decision.indicativa)}
                           </span>
-                          <time className={estilos.fecha} dateTime={decision.cerradaEn.toISOString()}>
-                            {aHoraLocal(decision.cerradaEn, zona).fecha} a {aHoraLocal(decision.cerradaEn, zona).hora}
+                          <time
+                            className={estilos.fecha}
+                            dateTime={decision.cerradaEn.toISOString()}
+                          >
+                            {aHoraLocal(decision.cerradaEn, zona).fecha} a{" "}
+                            {aHoraLocal(decision.cerradaEn, zona).hora}
                           </time>
                         </header>
 
@@ -116,19 +126,29 @@ export function DecisionesInstitucion({
 
                         <div className={estilos.resultado}>
                           <div className={estilos.resumen}>
-                            <span><strong>Total votos:</strong> {decision.resultado.totalVotos}</span>
+                            <span>
+                              <strong>Total votos:</strong> {decision.resultado.totalVotos}
+                            </span>
                             {decision.resultado.asistentes !== null && (
-                              <span><strong>Asistentes:</strong> {decision.resultado.asistentes}</span>
+                              <span>
+                                <strong>Asistentes:</strong> {decision.resultado.asistentes}
+                              </span>
                             )}
-                            <span><strong>Regla:</strong> {decision.regla}</span>
+                            <span>
+                              <strong>Regla:</strong> {decision.regla}
+                            </span>
                           </div>
 
                           <table className={estilos.tabla}>
                             <thead>
                               <tr>
                                 <th scope="col">Opción</th>
-                                <th scope="col" style={{ textAlign: "right" }}>Votos</th>
-                                <th scope="col" style={{ textAlign: "right" }}>%</th>
+                                <th scope="col" style={{ textAlign: "right" }}>
+                                  Votos
+                                </th>
+                                <th scope="col" style={{ textAlign: "right" }}>
+                                  %
+                                </th>
                               </tr>
                             </thead>
                             <tbody>
@@ -136,7 +156,9 @@ export function DecisionesInstitucion({
                                 <tr key={idx}>
                                   <td>{opcion.texto}</td>
                                   <td style={{ textAlign: "right" }}>{opcion.votos}</td>
-                                  <td style={{ textAlign: "right" }}>{porcentual(opcion.porcentaje)}</td>
+                                  <td style={{ textAlign: "right" }}>
+                                    {porcentual(opcion.porcentaje)}
+                                  </td>
                                 </tr>
                               ))}
                             </tbody>

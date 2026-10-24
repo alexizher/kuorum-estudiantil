@@ -20,6 +20,14 @@
     },
     "ignoreDeprecations": "6.0"
   },
-  "include": ["next-env.d.ts", "playwright.config.ts", "e2e", "src", "scripts", "test", ".next/types/**/*.ts"],
+  "include": [
+    "next-env.d.ts",
+    "playwright.config.ts",
+    "e2e",
+    "src",
+    "scripts",
+    "test",
+    ".next/types/**/*.ts"
+  ],
   "exclude": ["node_modules"]
 }

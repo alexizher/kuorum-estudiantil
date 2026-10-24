@@ -37,7 +37,10 @@ describe("Institucion", () => {
     [{ tipoDeCuerpoSingular: "Fa" }, "TIPO_DE_CUERPO_INVALIDO"],
     [{ tipoDeCuerpoPlural: "x".repeat(41) }, "TIPO_DE_CUERPO_INVALIDO"],
     [{ zonaHoraria: "Marte/Olympus" }, "ZONA_HORARIA_INVALIDA"],
-    [{ proveedorOAuth: "github" } as unknown as Partial<PropiedadesDeInstitucion>, "PROVEEDOR_OAUTH_INVALIDO"],
+    [
+      { proveedorOAuth: "github" } as unknown as Partial<PropiedadesDeInstitucion>,
+      "PROVEEDOR_OAUTH_INVALIDO",
+    ],
     [{ clientIdOAuth: "x".repeat(201) }, "CLIENT_ID_OAUTH_INVALIDO"],
     [{ clientSecretOAuth: "x".repeat(501) }, "CLIENT_SECRET_OAUTH_INVALIDO"],
   ])("rechaza %j con %s y no cambia nada", (cambios, codigo) => {
@@ -49,7 +52,11 @@ describe("Institucion", () => {
 
   it("acepta proveedores OAuth válidos", () => {
     const institucion = Institucion.reconstruir(base);
-    institucion.configurar({ proveedorOAuth: "microsoft", clientIdOAuth: "abc", clientSecretOAuth: "secret" });
+    institucion.configurar({
+      proveedorOAuth: "microsoft",
+      clientIdOAuth: "abc",
+      clientSecretOAuth: "secret",
+    });
     expect(institucion.proveedorOAuth).toBe("microsoft");
     expect(institucion.clientIdOAuth).toBe("abc");
     expect(institucion.clientSecretOAuth).toBe("secret");
