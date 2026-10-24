@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { DeployConfig } from "../config/deploy-config.js";
 import type { DeployContext, Step } from "../wizard/step.js";
+import { isGitHubRemote } from "./github-remote.js";
 import type { TokenReader } from "./vercel-token.js";
 
 export class ProjectStep implements Step {
@@ -39,7 +40,7 @@ export class ProjectStep implements Step {
     await this.fixRootDirectory(fetch, link);
 
     const remote = await runner.run("git", ["remote", "get-url", "origin"]);
-    if (remote.exitCode === 0 && remote.stdout.includes("github.com")) {
+    if (remote.exitCode === 0 && isGitHubRemote(remote.stdout)) {
       const connected = await runner.run("vercel", ["git", "connect", "--yes"]);
       if (connected.exitCode !== 0) {
         const detail = errorLine(connected.stderr + connected.stdout);
