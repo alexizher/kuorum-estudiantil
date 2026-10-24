@@ -29,7 +29,7 @@ export class StateStore implements StateRepository {
     }
     const result = DeployStateSchema.safeParse(parseJson(text));
     if (!result.success) throw new CorruptStateError(this.path);
-    return result.data;
+    return migrateSteps(result.data);
   }
 
   async save(state: DeployState): Promise<void> {
@@ -38,6 +38,23 @@ export class StateStore implements StateRepository {
     await writeFile(temp, `${JSON.stringify(state, null, 2)}\n`, "utf8");
     await rename(temp, this.path);
   }
+}
+
+/** Pasos que reemplazaron a "proyecto", que antes creaba, enlazaba, fijaba la raíz y conectaba Git. */
+const STEPS_REPLACING_PROJECT = [
+  "crear-proyecto",
+  "enlazar-proyecto",
+  "directorio-raiz",
+  "conectar-repositorio",
+];
+
+function migrateSteps(state: DeployState): DeployState {
+  return {
+    ...state,
+    completedSteps: state.completedSteps.flatMap((id) =>
+      id === "proyecto" ? STEPS_REPLACING_PROJECT : [id],
+    ),
+  };
 }
 
 function parseJson(text: string): unknown {
