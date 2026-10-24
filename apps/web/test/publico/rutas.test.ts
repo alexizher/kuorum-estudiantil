@@ -1,11 +1,11 @@
 import { Acta, CodigoDeVerificacion, ErrorDeDominio } from "@kuorum/domain";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { GET as actas } from "../../src/app/api/public/v1/actas/route";
-import { GET as pdf } from "../../src/app/api/public/v1/actas/[id]/route";
-import { GET as decisiones } from "../../src/app/api/public/v1/decisiones/route";
-import { contenedor } from "../../src/composicion";
+import { GET as actas } from "@/app/api/public/v1/actas/route";
+import { GET as pdf } from "@/app/api/public/v1/actas/[id]/route";
+import { GET as decisiones } from "@/app/api/public/v1/decisiones/route";
+import { contenedor } from "@/composicion";
 
-vi.mock("../../src/composicion", () => ({ contenedor: vi.fn() }));
+vi.mock("@/composicion", () => ({ contenedor: vi.fn() }));
 
 const DIA = 86_400_000;
 const listarDecisiones = vi.fn();

@@ -23,6 +23,9 @@
       ]
     },
     "lint": {},
+    "//#lint:raiz": {
+      "inputs": ["eslint.config.mjs", "vitest.config.ts", ".dependency-cruiser.cjs"]
+    },
     "typecheck": { "dependsOn": ["^build", "generate"] },
     "test": { "dependsOn": ["^build", "generate"] },
     "test:int": {

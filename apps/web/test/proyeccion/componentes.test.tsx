@@ -2,8 +2,8 @@
 import { TemaProvider } from "@kuorum/ui";
 import { act, cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { Proyeccion } from "../../src/vistas/proyeccion/proyeccion";
-import { ControlesDeProyeccion } from "../../src/vistas/proyeccion/controles-de-proyeccion";
+import { Proyeccion } from "@/vistas/proyeccion/proyeccion";
+import { ControlesDeProyeccion } from "@/vistas/proyeccion/controles-de-proyeccion";
 import { violacionesDeAxe } from "./axe";
 import { conLaPalabra, preguntaAbierta, preguntaConResultado, salaVacia } from "./estados";
 

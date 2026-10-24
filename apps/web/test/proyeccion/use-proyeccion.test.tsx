@@ -2,8 +2,8 @@
 import type { EstadoDeSala } from "@kuorum/contracts";
 import { act, cleanup, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { FuenteDeEstado } from "../../src/tiempo-real/fuente-de-estado";
-import { useProyeccion } from "../../src/vistas/proyeccion/use-proyeccion";
+import type { FuenteDeEstado } from "@/tiempo-real/fuente-de-estado";
+import { useProyeccion } from "@/vistas/proyeccion/use-proyeccion";
 import { HORA, conLaPalabra, preguntaAbierta, preguntaConResultado, salaVacia } from "./estados";
 
 class FuenteFalsa implements FuenteDeEstado {

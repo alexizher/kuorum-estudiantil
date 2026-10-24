@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { elegirVista } from "../../src/vistas/proyeccion/elegir-vista";
+import { elegirVista } from "@/vistas/proyeccion/elegir-vista";
 import { conLaPalabra, preguntaAbierta, preguntaConResultado, salaVacia } from "./estados";
 
 describe("elegirVista", () => {

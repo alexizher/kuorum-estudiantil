@@ -5,9 +5,9 @@ import { userEvent } from "@testing-library/user-event";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { Participante } from "../../src/vistas/participante/participante";
-import type { PropiedadesDeParticipante } from "../../src/vistas/participante/participante";
-import type { Turno } from "../../src/vistas/participante/use-palabra";
+import { Participante } from "@/vistas/participante/participante";
+import type { PropiedadesDeParticipante } from "@/vistas/participante/participante";
+import type { Turno } from "@/vistas/participante/use-palabra";
 import { violacionesDeAxe } from "../proyeccion/axe";
 import { preguntaAbierta, salaVacia } from "../proyeccion/estados";
 

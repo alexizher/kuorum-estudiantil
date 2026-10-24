@@ -4,9 +4,9 @@ import { cleanup, fireEvent, render as renderizar, screen, waitFor } from "@test
 import { userEvent } from "@testing-library/user-event";
 import type { ReactElement } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { FormularioDeSesion } from "../../src/vistas/mesa/formulario-de-sesion";
-import type { DatosDelFormulario } from "../../src/vistas/mesa/use-sesiones";
-import { puntosDeTexto } from "../../src/vistas/mesa/orden-del-dia";
+import { FormularioDeSesion } from "@/vistas/mesa/formulario-de-sesion";
+import type { DatosDelFormulario } from "@/vistas/mesa/use-sesiones";
+import { puntosDeTexto } from "@/vistas/mesa/orden-del-dia";
 import { INSTITUCION, clienteDeMesaFalso } from "./falsos";
 
 const render = (ui: ReactElement) => renderizar(ui, { wrapper: TemaProvider });

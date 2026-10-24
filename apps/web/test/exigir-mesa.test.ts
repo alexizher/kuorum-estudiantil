@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
-import { contenedor } from "../src/composicion";
-import { exigirMesa } from "../src/http/exigir-mesa";
+import { contenedor } from "@/composicion";
+import { exigirMesa } from "@/http/exigir-mesa";
 
-vi.mock("../src/composicion", () => ({ contenedor: vi.fn() }));
+vi.mock("@/composicion", () => ({ contenedor: vi.fn() }));
 
 let membresias: { usuarioId: string; cuerpoId: string; rol: string }[] = [];
 

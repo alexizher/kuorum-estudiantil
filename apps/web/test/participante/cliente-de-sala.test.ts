@@ -1,8 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import {
-  ClienteDeSalaPorFetch,
-  ErrorDeAccion,
-} from "../../src/vistas/participante/cliente-de-sala";
+import { ClienteDeSalaPorFetch, ErrorDeAccion } from "@/vistas/participante/cliente-de-sala";
 
 function respuesta(estado: number, cuerpo?: unknown): Response {
   return estado === 204

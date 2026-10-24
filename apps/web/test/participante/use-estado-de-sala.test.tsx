@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { act, cleanup, renderHook } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
-import { useEstadoDeSala } from "../../src/vistas/participante/use-estado-de-sala";
+import { useEstadoDeSala } from "@/vistas/participante/use-estado-de-sala";
 import { salaVacia } from "../proyeccion/estados";
 import { FuenteFalsa } from "./falsos";
 

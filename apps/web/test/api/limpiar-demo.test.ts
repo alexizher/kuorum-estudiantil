@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { GET, dynamic } from "../../src/app/api/tareas/limpiar-demo/route";
-import { contenedor } from "../../src/composicion";
+import { GET, dynamic } from "@/app/api/tareas/limpiar-demo/route";
+import { contenedor } from "@/composicion";
 
-vi.mock("../../src/composicion", () => ({ contenedor: vi.fn() }));
+vi.mock("@/composicion", () => ({ contenedor: vi.fn() }));
 
 const SECRETO = "secreto-de-cron-de-prueba-0123456789";
 const ejecutar = vi.fn();
