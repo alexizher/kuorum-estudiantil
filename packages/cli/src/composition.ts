@@ -11,7 +11,10 @@ import { ClackPrompter } from "./io/prompter.js";
 import { AdminStep } from "./steps/admin-step.js";
 import { DatabaseStep } from "./steps/database-step.js";
 import { DeployStep } from "./steps/deploy-step.js";
-import { ProjectStep } from "./steps/project-step.js";
+import { CreateProjectStep } from "./steps/create-project-step.js";
+import { GitConnectStep } from "./steps/git-connect-step.js";
+import { LinkProjectStep } from "./steps/link-project-step.js";
+import { RootDirectoryStep } from "./steps/root-directory-step.js";
 import { RequirementsStep } from "./steps/requirements-step.js";
 import { SecretsStep } from "./steps/secrets-step.js";
 import { SummaryStep } from "./steps/summary-step.js";
@@ -27,7 +30,10 @@ export function buildSteps(token: TokenReader): Step[] {
   return [
     new RequirementsStep(),
     new VercelSessionStep(),
-    new ProjectStep(token),
+    new CreateProjectStep(),
+    new LinkProjectStep(),
+    new RootDirectoryStep(token),
+    new GitConnectStep(),
     new DatabaseStep(),
     new VariablesStep(),
     new SecretsStep(),

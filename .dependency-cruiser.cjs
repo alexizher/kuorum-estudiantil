@@ -48,6 +48,17 @@ module.exports = {
       },
     },
     {
+      name: "web-infraestructura-solo-en-composicion",
+      comment:
+        "Dentro de apps/web solo src/composicion.ts y src/auth/ importan infrastructure; las rutas y páginas pasan por la composición.",
+      severity: "error",
+      from: {
+        path: "^apps/web/src/",
+        pathNot: ["^apps/web/src/composicion\\.ts$", "^apps/web/src/auth/"],
+      },
+      to: { path: "^(packages/infrastructure/|@kuorum/infrastructure(/|$))" },
+    },
+    {
       name: "nadie-importa-cli",
       comment: "Nada fuera de packages/cli importa packages/cli.",
       severity: "error",

@@ -177,6 +177,49 @@ describe("regla de dependencias entre capas", () => {
     expect(codigo).toBe(0);
   });
 
+  // apps/web con un archivo que importa @kuorum/infrastructure por nombre.
+  function webImportaInfraestructura(archivo: string) {
+    const dir = mkdtempSync(join(tmpdir(), "capas-"));
+    temporales.push(dir);
+    const infraestructura = join(dir, "packages/infrastructure");
+    mkdirSync(join(infraestructura, "dist"), { recursive: true });
+    writeFileSync(
+      join(infraestructura, "package.json"),
+      JSON.stringify({
+        name: "@kuorum/infrastructure",
+        type: "module",
+        exports: { ".": "./dist/index.js" },
+      }),
+    );
+    writeFileSync(join(infraestructura, "dist/index.js"), "export const x = 1;\n");
+    const origen = join(dir, "apps/web/src", archivo);
+    mkdirSync(dirname(origen), { recursive: true });
+    writeFileSync(origen, 'import { x } from "@kuorum/infrastructure";\nexport const y = x;\n');
+    mkdirSync(join(dir, "apps/web/node_modules/@kuorum"), { recursive: true });
+    symlinkSync(infraestructura, join(dir, "apps/web/node_modules/@kuorum/infrastructure"));
+    return cruzar(dir, ["apps"]);
+  }
+
+  it.each(["app/api/sesiones/route.ts", "app/mesa/page.tsx", "lib/algo.ts"])(
+    "apps/web/src/%s importando infrastructure rompe web-infraestructura-solo-en-composicion",
+    (archivo) => {
+      const { codigo, violaciones } = webImportaInfraestructura(archivo);
+      expect(codigo).not.toBe(0);
+      expect(violaciones.map((v) => v.rule.name)).toContain(
+        "web-infraestructura-solo-en-composicion",
+      );
+    },
+  );
+
+  it.each(["composicion.ts", "auth/crear-auth.ts"])(
+    "apps/web/src/%s puede importar infrastructure",
+    (archivo) => {
+      const { codigo, violaciones } = webImportaInfraestructura(archivo);
+      expect(violaciones).toEqual([]);
+      expect(codigo).toBe(0);
+    },
+  );
+
   it("el repositorio real no tiene violaciones", () => {
     const { codigo, violaciones } = cruzar(raiz, ["packages", "apps"]);
 

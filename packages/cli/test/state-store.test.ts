@@ -20,7 +20,7 @@ async function loadWith(content: unknown) {
 describe("StateStore, validación del archivo", () => {
   it("acepta un estado completo", async () => {
     const state = {
-      completedSteps: ["requisitos", "proyecto"],
+      completedSteps: ["requisitos", "crear-proyecto"],
       projectId: "prj_123",
       productionUrl: "https://ejemplo.vercel.app",
       databaseName: "ejemplo-db",
@@ -47,5 +47,31 @@ describe("StateStore, validación del archivo", () => {
 
   it("el error nombra la ruta del archivo", async () => {
     await expect(loadWith({ completedSteps: "no" })).rejects.toThrow(path);
+  });
+});
+
+describe("StateStore, avance guardado antes de partir el paso del proyecto", () => {
+  it('cambia "proyecto" por los cuatro pasos que lo reemplazan, en su lugar', async () => {
+    const state = await loadWith({
+      completedSteps: ["requisitos", "sesion-vercel", "proyecto", "base-de-datos"],
+      projectId: "prj_1",
+    });
+    expect(state).toEqual({
+      completedSteps: [
+        "requisitos",
+        "sesion-vercel",
+        "crear-proyecto",
+        "enlazar-proyecto",
+        "directorio-raiz",
+        "conectar-repositorio",
+        "base-de-datos",
+      ],
+      projectId: "prj_1",
+    });
+  });
+
+  it("deja igual un avance que ya usa los pasos nuevos", async () => {
+    const completedSteps = ["requisitos", "crear-proyecto", "enlazar-proyecto"];
+    expect(await loadWith({ completedSteps })).toEqual({ completedSteps });
   });
 });

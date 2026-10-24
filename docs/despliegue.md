@@ -21,14 +21,19 @@ Antes de cada paso que crea algo en tu cuenta, el asistente dice qué va a crear
 
 1. `requisitos`: revisa node, pnpm, git y vercel.
 2. `sesion-vercel`: comprueba la sesión con `vercel whoami` y abre `vercel login` si hace falta.
-3. `proyecto`: crea el proyecto, lo enlaza y fija `apps/web` como directorio raíz con el framework Next.js (y activa el acceso a archivos fuera de ese directorio, que el build necesita). Si en tu cuenta ya existe un proyecto con ese nombre, pregunta antes de reutilizarlo. Si el remoto `origin` es de GitHub, conecta el repositorio.
-4. `base-de-datos`: instala la integración de Neon con el nombre `<nombre-corto>-db` y plan gratuito en production, preview y development, y comprueba que production tenga `DATABASE_URL` y `DATABASE_URL_UNPOOLED`. Si ya las tiene (por ejemplo, tras un corte a mitad del paso), no crea otra base.
-5. `variables`: carga `KUORUM_INSTITUCION_NOMBRE` en production y preview.
-6. `secretos`: genera `KUORUM_SECRETO` y `BETTER_AUTH_SECRET` (32 bytes aleatorios en hexadecimal cada uno) en production y preview, solo si no existen. Los valores viajan por stdin y no se guardan en ningún archivo.
-7. `despliegue`: corre `vercel deploy --prod --yes` y guarda la URL.
-8. `verificacion`: pide `/api/salud` hasta recibir 200 (12 intentos, uno cada 5 segundos, por si Neon arranca en frío).
-9. `administrador`: pregunta correo y nombre de la primera cuenta de la mesa, trae las variables de producción a un archivo temporal (permisos 0600), crea la cuenta con una contraseña generada, la muestra una sola vez y borra el archivo. Si la cuenta ya existe, lo avisa y sigue.
-10. `resumen`: muestra la URL.
+3. `crear-proyecto`: crea el proyecto. Si en tu cuenta ya existe uno con ese nombre, pregunta antes de reutilizarlo.
+4. `enlazar-proyecto`: enlaza esta carpeta al proyecto con `vercel link`.
+5. `directorio-raiz`: fija `apps/web` como directorio raíz con el framework Next.js y activa el acceso a archivos fuera de ese directorio, que el build necesita.
+6. `conectar-repositorio`: si el remoto `origin` es de GitHub (se compara el host, así que sirven HTTPS, SSH y alias como `github.com-personal`), conecta el repositorio.
+7. `base-de-datos`: instala la integración de Neon con el nombre `<nombre-corto>-db` y plan gratuito en production, preview y development, y comprueba que production tenga `DATABASE_URL` y `DATABASE_URL_UNPOOLED`. Si ya las tiene (por ejemplo, tras un corte a mitad del paso), no crea otra base.
+8. `variables`: carga `KUORUM_INSTITUCION_NOMBRE` en production y preview.
+9. `secretos`: genera `KUORUM_SECRETO` y `BETTER_AUTH_SECRET` (32 bytes aleatorios en hexadecimal cada uno) en production y preview, solo si no existen. Los valores viajan por stdin y no se guardan en ningún archivo.
+10. `despliegue`: corre `vercel deploy --prod --yes` y guarda la URL.
+11. `verificacion`: pide `/api/salud` hasta recibir 200 (12 intentos, uno cada 5 segundos, por si Neon arranca en frío).
+12. `administrador`: pregunta correo y nombre de la primera cuenta de la mesa, trae las variables de producción a un archivo temporal (permisos 0600), crea la cuenta con una contraseña generada, la muestra una sola vez y borra el archivo. Si la cuenta ya existe, lo avisa y sigue.
+13. `resumen`: muestra la URL.
+
+Los pasos 3 a 6 antes eran uno solo, `proyecto`. Un `.kuorum/despliegue.json` que lo tenga como completado se lee como si tuviera completados los cuatro.
 
 El registro público está desactivado: las cuentas de la mesa solo se crean con este paso o con `pnpm --filter @kuorum/web crear-admin --correo <correo> --nombre <nombre>`, que lee la contraseña por stdin (mínimo 12 caracteres) o, con `--generar`, imprime una contraseña nueva una sola vez. El script necesita `DATABASE_URL` y `BETTER_AUTH_SECRET` en el entorno.
 
