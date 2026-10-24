@@ -3,23 +3,6 @@
   display: grid;
   grid-template-rows: auto 1fr auto;
 }
-.cabecera {
-  padding: 20px 16px 12px;
-  border-bottom: 2px solid var(--tinta);
-  display: grid;
-  gap: 4px;
-}
-.cabecera h1 {
-  margin: 0;
-  font-size: var(--t-4);
-}
-.volver {
-  font-size: var(--t-0);
-  min-height: 44px;
-  display: inline-flex;
-  align-items: center;
-  width: fit-content;
-}
 .tablero {
   display: grid;
   gap: 32px;

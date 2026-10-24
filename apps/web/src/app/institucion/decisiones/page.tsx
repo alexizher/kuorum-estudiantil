@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { rangoAlrededorDeHoy } from "@/calendario/consulta-publica";
+import { BarraPublica } from "@/components/barra-publica";
 import { contenedor } from "@/composicion";
 import type { DecisionesPorCuerpo } from "@kuorum/application";
 import { DecisionesInstitucion } from "./decisiones-institucion";
@@ -53,11 +54,14 @@ export default async function PaginaDecisionesInstitucion({
   }));
 
   return (
-    <DecisionesInstitucion
-      institucion={{ zonaHoraria }}
-      cuerpos={cuerpos}
-      desde={desde}
-      hasta={hasta}
-    />
+    <>
+      <BarraPublica actual="decisiones" />
+      <DecisionesInstitucion
+        institucion={{ zonaHoraria }}
+        cuerpos={cuerpos}
+        desde={desde}
+        hasta={hasta}
+      />
+    </>
   );
 }

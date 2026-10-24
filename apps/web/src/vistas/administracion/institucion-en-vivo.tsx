@@ -1,8 +1,8 @@
 "use client";
 
 import { Boton } from "@kuorum/ui";
-import Link from "next/link";
 import { useMemo } from "react";
+import { CabeceraDeMesa } from "../mesa/cabecera-de-mesa";
 import { PieDeMesa } from "../mesa/pie-de-mesa";
 import estilos from "./administracion.module.css";
 import { ClienteDeAdministracionPorFetch } from "./cliente-de-administracion";
@@ -28,12 +28,7 @@ export function InstitucionEnVivo({ dependencias }: Propiedades) {
 
   return (
     <div className={estilos.pagina}>
-      <header role="banner" className={estilos.cabecera}>
-        <Link href="/mesa" className={estilos.volver}>
-          Sesiones
-        </Link>
-        <h1 className="titular">Institución</h1>
-      </header>
+      <CabeceraDeMesa titulo="Institución" actual="institucion" esAdministrador />
       <main className={estilos.tablero}>
         {panel.error ? (
           <div role="alert" className={estilos.error}>

@@ -1,6 +1,5 @@
 import { aHoraLocal } from "@kuorum/domain";
 import Link from "next/link";
-import { SelectorDeTema } from "@kuorum/ui";
 import estilos from "./decisiones-institucion.module.css";
 
 export interface DecisionVisible {
@@ -39,7 +38,7 @@ function porcentual(valor: number): string {
 
 function etiquetaAprobada(aprobada: boolean | null, indicativa: boolean): string {
   if (indicativa) return "Indicativa";
-  return aprobada === true ? "Aprobada" : aprobada === false ? "Rechazada" : "—";
+  return aprobada === true ? "Aprobada" : aprobada === false ? "Rechazada" : "Sin resultado";
 }
 
 function claseAprobada(aprobada: boolean | null, indicativa: boolean): string {
@@ -59,9 +58,6 @@ export function DecisionesInstitucion({
   return (
     <main className={estilos.pagina}>
       <header className={estilos.cabecera}>
-        <Link href="/" className={estilos.volver}>
-          Inicio
-        </Link>
         <h1 className="titular">Decisiones de la institución</h1>
         <p className="suave">Todas las decisiones de la asamblea general y de cada facultad</p>
         <p className={estilos.periodo}>
@@ -186,10 +182,6 @@ export function DecisionesInstitucion({
           No hay decisiones publicadas en el periodo seleccionado.
         </p>
       )}
-
-      <footer className={estilos.pie}>
-        <SelectorDeTema />
-      </footer>
     </main>
   );
 }

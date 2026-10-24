@@ -53,15 +53,28 @@
   gap: 4px 10px;
   font-size: var(--t-0);
 }
-.navegacion {
+/* Cabecera de las secciones de la mesa (sesiones, institución, personal, mi cuenta) */
+.cabeceraDeMesa {
+  background: var(--papel);
+  border-bottom: 2px solid var(--tinta);
+  padding: 12px 16px 0;
+  display: grid;
+  gap: 4px;
+}
+.filaDeMesa {
   display: flex;
   flex-wrap: wrap;
-  gap: 0 16px;
-}
-.navegacion a {
-  min-height: 44px;
-  display: inline-flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  min-height: 44px;
+}
+.tituloDeMesa {
+  font-size: var(--t-4);
+}
+.seccionesDeMesa {
+  margin-inline: -16px;
+  padding-inline: 6px;
 }
 .programacion {
   margin: 4px 0 0;
@@ -782,6 +795,11 @@
 @media (max-width: 520px) {
   .cabecera {
     padding-block: 8px;
+  }
+  /* En las secciones de la mesa, Salir se queda junto al título */
+  .filaDeMesa .accionesDeCabecera {
+    display: flex;
+    width: auto;
   }
   .accionesDeCabecera {
     display: grid;

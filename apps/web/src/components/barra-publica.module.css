@@ -1,0 +1,13 @@
+.barra {
+  border-bottom: 1px solid var(--linea);
+  background: var(--papel);
+}
+.interior {
+  max-width: 1200px;
+  margin-inline: auto;
+  padding: 4px 6px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}

@@ -1,5 +1,6 @@
 import { aHoraLocal } from "@kuorum/domain";
 import Link from "next/link";
+import { Navegacion } from "@/components/navegacion";
 import { agruparPorDia, mesDesplazado, semanasDelMes } from "@/calendario/vista-de-calendario";
 import estilos from "./calendario.module.css";
 import { diaLargo, diaYMes, etiquetaDeModalidad, nombreDelMes } from "./textos";
@@ -168,33 +169,22 @@ export function Calendario({
   return (
     <main className={estilos.pagina}>
       <header className={estilos.cabecera}>
-        <Link href="/" className={estilos.volver}>
-          Inicio
-        </Link>
         <h1 className="titular">Calendario</h1>
         <p className="suave">
           {institucion.nombre}
           {filtrado ? ` · ${filtrado.nombre}` : ""} · horas de {zona}
         </p>
-        <Link href="/institucion/decisiones" className={estilos.verDecisiones}>
-          Ver decisiones de la institución
-        </Link>
       </header>
 
-      <nav aria-label="Vista" className={estilos.vistas}>
-        <Link
-          href={enlace("mes", mes, cuerpoSlug)}
-          aria-current={vista === "mes" ? "page" : undefined}
-        >
-          Mes
-        </Link>
-        <Link
-          href={enlace("lista", mes, cuerpoSlug)}
-          aria-current={vista === "lista" ? "page" : undefined}
-        >
-          Próximas
-        </Link>
-      </nav>
+      <Navegacion
+        etiqueta="Vista"
+        enlaces={[
+          { id: "mes", href: enlace("mes", mes, cuerpoSlug), etiqueta: "Mes" },
+          { id: "lista", href: enlace("lista", mes, cuerpoSlug), etiqueta: "Próximas" },
+        ]}
+        actual={vista}
+        className={estilos.vistas}
+      />
 
       <nav aria-label="Filtrar por cuerpo" className={estilos.filtro}>
         <Link
