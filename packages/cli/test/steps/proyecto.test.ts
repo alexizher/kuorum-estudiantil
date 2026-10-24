@@ -145,6 +145,18 @@ describe("proyecto", () => {
     expect(runner.lines).not.toContain("vercel git connect --yes");
   });
 
+  it("no conecta git si el host del remoto solo empieza por github.com", async () => {
+    const runner = new FakeRunner((command, args) =>
+      command === "git"
+        ? { stdout: "https://github.com.otro.dominio/alguien/repo.git\n" }
+        : script(command, args),
+    );
+    await new ProjectStep(token).run(
+      makeContext({ runner, fetch: okFetch() as unknown as typeof fetch, cwd: dir }),
+    );
+    expect(runner.lines).not.toContain("vercel git connect --yes");
+  });
+
   describe("si vercel git connect falla", () => {
     const LOGIN_ERROR =
       "Error: Failed to link alexizher/kuorum-estudiantil. You need to add a Login Connection to your GitHub account first. (400)";
