@@ -36,3 +36,10 @@ export function aplicarTema(tema: Tema): void {
 export const SCRIPT_DE_TEMA = `(function(){try{var t=localStorage.getItem(${JSON.stringify(
   CLAVE_DE_TEMA,
 )});if(t==="claro"||t==="oscuro")document.documentElement.setAttribute("data-tema",t)}catch(e){}})()`;
+
+// El interruptor alterna claro y oscuro. Si lo elegido coincide con el sistema se guarda "sistema",
+// así la página vuelve a seguir al sistema operativo sin un tercer botón.
+export function siguienteTema(actual: TemaEfectivo, delSistema: TemaEfectivo): Tema {
+  const otro: TemaEfectivo = actual === "oscuro" ? "claro" : "oscuro";
+  return otro === delSistema ? "sistema" : otro;
+}

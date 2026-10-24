@@ -82,42 +82,81 @@
   stroke-linejoin: round;
 }
 
-/* Selector de tema */
+/* Interruptor de tema: la perilla va a la derecha en oscuro. La posición la decide el CSS,
+   no el estado de React, para que el primer pintado ya muestre el tema correcto. */
 
 .tema {
+  appearance: none;
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  font-size: var(--t-0);
-  color: var(--tinta-suave);
-}
-.tema__grupo {
-  display: inline-flex;
-  border: 1px solid var(--borde-control);
-  border-radius: var(--r-control);
-  overflow: hidden;
-}
-.tema button {
-  appearance: none;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 4px;
   border: 0;
   background: transparent;
-  color: var(--tinta-suave);
-  font: inherit;
-  min-height: 44px;
-  min-width: 44px;
-  padding: 0.3rem 0.55rem;
+  color: var(--tinta);
   cursor: pointer;
+  flex-shrink: 0;
+}
+.tema__riel {
+  display: block;
   position: relative;
+  width: 50px;
+  height: 28px;
+  border: 1.5px solid var(--borde-control);
+  border-radius: 999px;
+  background: var(--superficie);
+  transition: border-color var(--dur) var(--curva);
 }
-.tema button + button {
-  border-left: 1px solid var(--borde-control);
+.tema:hover .tema__riel {
+  border-color: var(--tinta);
 }
-.tema button[aria-pressed="true"] {
+.tema__perilla {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 21px;
+  height: 21px;
+  border-radius: 50%;
   background: var(--tinta);
   color: var(--sobre-tinta);
+  display: grid;
+  place-items: center;
+  transition: transform var(--dur) var(--curva);
 }
-.tema button:focus-visible {
-  outline-offset: -3px;
+.tema__perilla svg {
+  grid-area: 1 / 1;
+  width: 13px;
+  height: 13px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.tema__luna {
+  display: none;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-tema="claro"]) .tema__perilla {
+    transform: translateX(22px);
+  }
+  :root:not([data-tema="claro"]) .tema__sol {
+    display: none;
+  }
+  :root:not([data-tema="claro"]) .tema__luna {
+    display: block;
+  }
+}
+:root[data-tema="oscuro"] .tema__perilla {
+  transform: translateX(22px);
+}
+:root[data-tema="oscuro"] .tema__sol {
+  display: none;
+}
+:root[data-tema="oscuro"] .tema__luna {
+  display: block;
 }
 
 /* Etiqueta de moción */

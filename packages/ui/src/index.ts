@@ -10,6 +10,6 @@ export { Pestanas } from "./pestanas.js";
 export type { ElementoDePestana } from "./pestanas.js";
 export { Qr } from "./qr.js";
 export { SelectorDeTema } from "./selector-de-tema.js";
-export { CLAVE_DE_TEMA, SCRIPT_DE_TEMA, TEMAS, esTema } from "./tema.js";
+export { CLAVE_DE_TEMA, SCRIPT_DE_TEMA, TEMAS, esTema, siguienteTema } from "./tema.js";
 export type { Tema, TemaEfectivo } from "./tema.js";
 export { TemaProvider, useTema } from "./tema-provider.js";

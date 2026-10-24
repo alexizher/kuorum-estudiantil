@@ -308,7 +308,7 @@ describe("ControlesDeProyeccion", () => {
       </TemaProvider>,
     );
     const controles = screen.getByRole("group", { name: "Controles de la proyección" });
-    act(() => screen.getByRole("button", { name: "Claro" }).focus());
+    act(() => screen.getByRole("switch", { name: "Tema oscuro" }).focus());
     act(() => vi.advanceTimersByTime(10_000));
     expect(controles.getAttribute("data-visible")).toBe("true");
   });
