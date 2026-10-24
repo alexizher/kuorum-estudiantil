@@ -1,6 +1,6 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { exigirMesa, type Actor } from "../http/exigir-mesa";
+import { exigirMesa, type Actor } from "@/http/exigir-mesa";
 
 /** Para las páginas de la mesa: sin sesión, al ingreso. */
 export async function exigirSesionDeMesa(): Promise<Actor> {

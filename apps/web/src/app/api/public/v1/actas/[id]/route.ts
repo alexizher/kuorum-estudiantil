@@ -1,7 +1,7 @@
-import { generarPdfDelActa } from "../../../../../../actas/pdf-del-acta";
-import { contenedor } from "../../../../../../composicion";
-import { respuestaDeError } from "../../../../../../http/respuesta-de-error";
-import { CACHE_DEL_CALENDARIO, CACHE_DEL_PDF } from "../../../../../../publico/consulta";
+import { generarPdfDelActa } from "@/actas/pdf-del-acta";
+import { contenedor } from "@/composicion";
+import { respuestaDeError } from "@/http/respuesta-de-error";
+import { CACHE_DEL_CALENDARIO, CACHE_DEL_PDF } from "@/publico/consulta";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";

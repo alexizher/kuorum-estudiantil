@@ -1,7 +1,7 @@
 import { CodigoDeSala } from "@kuorum/domain";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { ProyeccionEnVivo } from "../../../vistas/proyeccion/proyeccion-en-vivo";
+import { ProyeccionEnVivo } from "@/vistas/proyeccion/proyeccion-en-vivo";
 
 export const metadata: Metadata = {
   title: "Proyección",

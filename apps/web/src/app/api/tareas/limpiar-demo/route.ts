@@ -1,6 +1,6 @@
-import { contenedor } from "../../../../composicion";
-import { esTareaAutorizada } from "../../../../http/autorizacion-de-tareas";
-import { respuestaDeError } from "../../../../http/respuesta-de-error";
+import { contenedor } from "@/composicion";
+import { esTareaAutorizada } from "@/http/autorizacion-de-tareas";
+import { respuestaDeError } from "@/http/respuesta-de-error";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";

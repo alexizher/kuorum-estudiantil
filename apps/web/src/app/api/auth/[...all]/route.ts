@@ -1,4 +1,4 @@
-import { contenedor } from "../../../../composicion";
+import { contenedor } from "@/composicion";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";

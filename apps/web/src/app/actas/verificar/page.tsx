@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { contenedor } from "../../../composicion";
-import { VerificacionDeActa } from "../../../vistas/actas/verificacion-de-acta";
+import { contenedor } from "@/composicion";
+import { VerificacionDeActa } from "@/vistas/actas/verificacion-de-acta";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Verificar un acta" };

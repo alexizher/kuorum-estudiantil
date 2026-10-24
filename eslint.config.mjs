@@ -3,7 +3,14 @@ import tseslint from "typescript-eslint";
 
 export default tseslint.config(
   {
-    ignores: ["**/dist/**", "**/.next/**", "**/node_modules/**", "**/.turbo/**", "**/generated/**"],
+    ignores: [
+      "**/dist/**",
+      "**/.next/**",
+      "**/node_modules/**",
+      "**/.turbo/**",
+      "**/generated/**",
+      ".dependency-cruiser.cjs",
+    ],
   },
   js.configs.recommended,
   ...tseslint.configs.strict,

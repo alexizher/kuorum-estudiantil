@@ -2,7 +2,7 @@
 
 import type { EstadoDeSala } from "@kuorum/contracts";
 import { useEffect, useState } from "react";
-import type { FuenteDeEstado } from "../../tiempo-real/fuente-de-estado";
+import type { FuenteDeEstado } from "@/tiempo-real/fuente-de-estado";
 
 const FALLOS_PARA_AVISAR = 3;
 const ESTADOS_TERMINADOS: readonly EstadoDeSala["sala"]["estado"][] = [

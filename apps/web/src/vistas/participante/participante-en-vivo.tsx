@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useRef } from "react";
-import { FuenteDeEstadoPorConsulta } from "../../tiempo-real/fuente-por-consulta";
+import { FuenteDeEstadoPorConsulta } from "@/tiempo-real/fuente-por-consulta";
 import {
   CONTEXTO_EN_REPOSO,
   PoliticaAdaptativa,
   PoliticaConArranque,
   type ContextoDeIntervalo,
-} from "../../tiempo-real/intervalo-adaptativo";
+} from "@/tiempo-real/intervalo-adaptativo";
 import { almacenDelNavegador, type Almacen } from "./almacen";
 import { ClienteDeSalaPorFetch } from "./cliente-de-sala";
 import { contextoDeIntervalo } from "./contexto-de-intervalo";

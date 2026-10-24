@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation";
-import { contenedor } from "../../composicion";
-import type { Actor } from "../../http/exigir-mesa";
+import { contenedor } from "@/composicion";
+import type { Actor } from "@/http/exigir-mesa";
 import { ErrorDeDominio } from "@kuorum/domain";
-import { horaLocal, vistaDeSesion } from "../../http/vista-de-sesion";
-import type { SesionDelPanel } from "../../vistas/mesa/panel-de-sesion";
+import { horaLocal, vistaDeSesion } from "@/http/vista-de-sesion";
+import type { SesionDelPanel } from "@/vistas/mesa/panel-de-sesion";
 
 export type SesionParaLaMesa = SesionDelPanel;
 

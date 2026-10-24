@@ -1,7 +1,7 @@
-import { contenedor } from "../../../../../composicion";
-import { accionDeMesa } from "../../../../../http/accion-de-mesa";
-import { accion, solicitudInvalida } from "../../../../../http/respuestas";
-import { horaLocal } from "../../../../../http/vista-de-sesion";
+import { contenedor } from "@/composicion";
+import { accionDeMesa } from "@/http/accion-de-mesa";
+import { accion, solicitudInvalida } from "@/http/respuestas";
+import { horaLocal } from "@/http/vista-de-sesion";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";

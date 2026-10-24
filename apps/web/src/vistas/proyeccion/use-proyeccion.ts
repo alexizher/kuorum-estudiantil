@@ -2,7 +2,7 @@
 
 import type { EstadoDeSala } from "@kuorum/contracts";
 import { useEffect, useState } from "react";
-import type { FuenteDeEstado } from "../../tiempo-real/fuente-de-estado";
+import type { FuenteDeEstado } from "@/tiempo-real/fuente-de-estado";
 import { elegirVista, type VistaDeProyeccion } from "./elegir-vista";
 
 export type VistaConCarga = "cargando" | "no-disponible" | VistaDeProyeccion;

@@ -2,8 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
-import { FuenteDeEstadoPorConsulta } from "../../tiempo-real/fuente-por-consulta";
-import { PoliticaFija } from "../../tiempo-real/intervalo-adaptativo";
+import { FuenteDeEstadoPorConsulta } from "@/tiempo-real/fuente-por-consulta";
+import { PoliticaFija } from "@/tiempo-real/intervalo-adaptativo";
 import { ClienteDeMesaPorFetch } from "./cliente-de-mesa";
 import { PanelDeSesion, type SesionDelPanel } from "./panel-de-sesion";
 import { useGestionDeSesion } from "./use-gestion-de-sesion";

@@ -2,7 +2,7 @@
 
 import type { EstadoDeSala } from "@kuorum/contracts";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { FuenteRefrescable } from "../../tiempo-real/fuente-de-estado";
+import type { FuenteRefrescable } from "@/tiempo-real/fuente-de-estado";
 import { hayMasVotosQueCodigos } from "./alerta";
 import {
   comoErrorDeMesa,

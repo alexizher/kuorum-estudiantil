@@ -1,9 +1,9 @@
 import { esquemaCrearSesion } from "@kuorum/contracts";
-import { contenedor } from "../../../../../composicion";
-import { accionDeMesa } from "../../../../../http/accion-de-mesa";
-import { leerCuerpo } from "../../../../../http/cuerpo";
-import { accion, solicitudInvalida } from "../../../../../http/respuestas";
-import { vistaDeSesion } from "../../../../../http/vista-de-sesion";
+import { contenedor } from "@/composicion";
+import { accionDeMesa } from "@/http/accion-de-mesa";
+import { leerCuerpo } from "@/http/cuerpo";
+import { accion, solicitudInvalida } from "@/http/respuestas";
+import { vistaDeSesion } from "@/http/vista-de-sesion";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";

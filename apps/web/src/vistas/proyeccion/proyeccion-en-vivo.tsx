@@ -1,9 +1,9 @@
 "use client";
 
 import { useMemo, useSyncExternalStore } from "react";
-import { FuenteDeEstadoPorConsulta } from "../../tiempo-real/fuente-por-consulta";
-import { PoliticaFija } from "../../tiempo-real/intervalo-adaptativo";
-import { rutaDeSala } from "../../portada/codigo-de-sala";
+import { FuenteDeEstadoPorConsulta } from "@/tiempo-real/fuente-por-consulta";
+import { PoliticaFija } from "@/tiempo-real/intervalo-adaptativo";
+import { rutaDeSala } from "@/portada/codigo-de-sala";
 import { ControlesDeProyeccion } from "./controles-de-proyeccion";
 import { Proyeccion } from "./proyeccion";
 import estilos from "./proyeccion.module.css";

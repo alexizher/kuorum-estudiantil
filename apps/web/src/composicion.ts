@@ -73,7 +73,12 @@ import {
   createPrismaClient,
   verificarConexion,
 } from "@kuorum/infrastructure";
-import { crearAuth, urlBaseDesdeEntorno, type Autenticacion, type ConfigOAuth } from "./auth/crear-auth";
+import {
+  crearAuth,
+  urlBaseDesdeEntorno,
+  type Autenticacion,
+  type ConfigOAuth,
+} from "./auth/crear-auth";
 import { CuentasDePersonalConBetterAuth, generadorDeContrasenas } from "./auth/cuentas-de-personal";
 
 export interface Contenedor {

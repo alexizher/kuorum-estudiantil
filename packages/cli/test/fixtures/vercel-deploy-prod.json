@@ -15,9 +15,7 @@
       "selectionType": "fixed",
       "selectionSource": "plan-default"
     },
-    "deploymentProtection": [
-      "vercel_authentication"
-    ]
+    "deploymentProtection": ["vercel_authentication"]
   },
   "message": "Deployment kuorum-estudiantil-demo-msnipu532.vercel.app ready. Production URL: https://kuorum-estudiantil-demo.vercel.app",
   "next": [

@@ -4,7 +4,7 @@ import { Boton } from "@kuorum/ui";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import { clienteDeAuth } from "../../auth/cliente-de-auth";
+import { clienteDeAuth } from "@/auth/cliente-de-auth";
 import { ClienteDeMesaPorFetch } from "./cliente-de-mesa";
 import { FormularioDeSesion } from "./formulario-de-sesion";
 import { InsigniaDeCuentaDePrueba } from "./insignia-de-cuenta-de-prueba";

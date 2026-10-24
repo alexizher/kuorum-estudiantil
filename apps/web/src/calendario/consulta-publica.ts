@@ -1,6 +1,6 @@
 import type { Calendario } from "@kuorum/application";
-import { contenedor } from "../composicion";
-import { respuestaDeError } from "../http/respuesta-de-error";
+import { contenedor } from "@/composicion";
+import { respuestaDeError } from "@/http/respuesta-de-error";
 
 const DIA_MS = 86_400_000;
 

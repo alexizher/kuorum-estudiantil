@@ -1,5 +1,5 @@
 import { CodigoDeSala, ErrorDeDominio } from "@kuorum/domain";
-import { contenedor } from "../composicion";
+import { contenedor } from "@/composicion";
 import { excedeElLimiteDeVotos } from "./limite-de-tasa";
 import { respuestaDeError } from "./respuesta-de-error";
 import { demasiadasSolicitudes } from "./respuestas";

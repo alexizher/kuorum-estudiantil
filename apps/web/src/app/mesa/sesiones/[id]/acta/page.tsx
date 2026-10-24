@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { exigirSesionDeMesa } from "../../../../../auth/exigir-sesion-de-mesa";
-import { EditorDeActa } from "../../../../../vistas/mesa/editor-de-acta";
+import { exigirSesionDeMesa } from "@/auth/exigir-sesion-de-mesa";
+import { EditorDeActa } from "@/vistas/mesa/editor-de-acta";
 import { cargarSesionDeMesa } from "../../../cargar-sesion";
 
 export const dynamic = "force-dynamic";
