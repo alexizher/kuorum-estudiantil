@@ -3,6 +3,7 @@
 // Uso: CARGA_DATABASE_URL=... node tools/load/avanzar.mjs <sesion>
 import { setTimeout as esperar } from "node:timers/promises";
 import pg from "pg";
+import { normalizarSslmode } from "./conexion.mjs";
 
 const url = process.env.CARGA_DATABASE_URL;
 const sesion = process.argv[2] ?? process.env.SESION;
@@ -13,7 +14,7 @@ if (!url || !sesion) {
   process.exit(1);
 }
 
-const cliente = new pg.Client({ connectionString: url });
+const cliente = new pg.Client({ connectionString: normalizarSslmode(url) });
 await cliente.connect();
 const controlador = new AbortController();
 for (const senal of ["SIGINT", "SIGTERM"]) process.on(senal, () => controlador.abort());
