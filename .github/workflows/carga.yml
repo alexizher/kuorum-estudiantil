@@ -63,6 +63,11 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - uses: grafana/setup-k6-action@43b9fc21641a76002687994433dd586f56e791b1 # v1.2.2
+      - name: Versión inicial de la sesión
+        # El parámetro r salta la caché del borde.
+        run: |
+          inicial=$(curl -fsS "$URL/api/public/v1/salas/$SALA/estado?r=inicio-$GITHUB_RUN_ID" | jq -er .version)
+          echo "VERSION_INICIAL=$inicial" >> "$GITHUB_ENV"
       - name: Avanzar la versión cada 10 s
         run: |
           node tools/load/avanzar.mjs "$SESION" > avanzar.log 2>&1 &
@@ -78,6 +83,16 @@ jobs:
       - name: Consulta con k6
         if: inputs.transporte == 'consulta'
         run: k6 run -e URL="$URL" -e SALA="$SALA" -e VUS="$VUS" -e DURACION="$DURACION" -e INTERVALO_S=3 tools/load/consulta.k6.js
+      - name: Comprobar que la versión siguió subiendo
+        # avanzar.mjs sube una versión cada 10 s durante DURACION_S. Se exige al menos la mitad
+        # de las esperadas: si se detuvo a mitad de la corrida, la medición no vale.
+        run: |
+          final=$(curl -fsS "$URL/api/public/v1/salas/$SALA/estado?r=final-$GITHUB_RUN_ID" | jq -er .version)
+          minimo=$(( DURACION_S / 20 > 0 ? DURACION_S / 20 : 1 ))
+          echo "versión inicial $VERSION_INICIAL, final $final, mínimo esperado +$minimo"
+          if [ $(( final - VERSION_INICIAL )) -lt "$minimo" ]; then
+            echo "La versión no subió lo esperado durante la carga" >&2; exit 1
+          fi
       - name: Versiones publicadas
         if: always()
         run: cat avanzar.log || true
