@@ -8,7 +8,8 @@
   },
   "scripts": {
     "build": "turbo run build",
-    "lint": "turbo run lint",
+    "lint": "turbo run lint lint:raiz",
+    "lint:raiz": "eslint eslint.config.mjs vitest.config.ts .dependency-cruiser.cjs",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test && vitest run",
     "test:int": "turbo run test:int --concurrency=1",
