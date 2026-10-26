@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { fechaYHora, finLocal, inicioPorDefecto, separar } from "../../src/vistas/mesa/horario";
+import { fechaYHora, finLocal, inicioPorDefecto, separar } from "@/vistas/mesa/horario";
 
 describe("horario del formulario", () => {
   it("el fin queda el mismo día si la hora es posterior", () => {

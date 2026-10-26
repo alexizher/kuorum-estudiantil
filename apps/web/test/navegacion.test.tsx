@@ -2,8 +2,8 @@
 import { TemaProvider } from "@kuorum/ui";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
-import { BarraPublica } from "../src/components/barra-publica";
-import { CabeceraDeMesa } from "../src/vistas/mesa/cabecera-de-mesa";
+import { BarraPublica } from "@/components/barra-publica";
+import { CabeceraDeMesa } from "@/vistas/mesa/cabecera-de-mesa";
 
 afterEach(() => {
   cleanup();

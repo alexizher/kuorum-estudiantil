@@ -8,7 +8,7 @@ import { StateStore } from "../../src/wizard/state-store.js";
 import { FakePrompter, FakeRunner } from "../doubles.js";
 
 describe("asistente completo con dobles", () => {
-  it("corre los 10 pasos y el archivo de estado no guarda ningún valor de input ni el token", async () => {
+  it("corre los 13 pasos y el archivo de estado no guarda ningún valor de input ni el token", async () => {
     const dir = await mkdtemp(join(tmpdir(), "kuorum-full-"));
     try {
       await mkdir(join(dir, ".vercel"));
@@ -49,7 +49,10 @@ describe("asistente completo con dobles", () => {
       expect(state.completedSteps).toEqual([
         "requisitos",
         "sesion-vercel",
-        "proyecto",
+        "crear-proyecto",
+        "enlazar-proyecto",
+        "directorio-raiz",
+        "conectar-repositorio",
         "base-de-datos",
         "variables",
         "secretos",

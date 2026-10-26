@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { escribirCodigo, rutaDeSala } from "../src/portada/codigo-de-sala";
+import { escribirCodigo, rutaDeSala } from "@/portada/codigo-de-sala";
 
 describe("escribirCodigo", () => {
   it("pasa a mayúsculas", () => {

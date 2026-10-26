@@ -116,12 +116,14 @@ CI comprueba en cada cambio que las capas no se mezclen: el dominio no puede imp
 pnpm install
 podman compose up -d   # o docker compose up -d: Postgres en el puerto 54329
 pnpm test              # pruebas unitarias
+set -a; source .env; set +a   # después de cp .env.example .env
+pnpm --filter @kuorum/infrastructure db:deploy
 pnpm test:int          # pruebas contra Postgres
 pnpm e2e               # Playwright; instala el navegador con: pnpm --filter @kuorum/web exec playwright install chromium
 pnpm lint && pnpm typecheck && pnpm depcheck && pnpm build
 ```
 
-Para contribuir, lee [CONTRIBUTING.md](CONTRIBUTING.md). Las tareas abiertas están en las [issues](https://github.com/alexizher/kuorum-estudiantil/issues), y las marcadas _good first issue_ sirven para empezar.
+La guía completa, con la app web en local y los problemas comunes, está en [CONTRIBUTING.md](CONTRIBUTING.md). Las tareas abiertas están en las [issues](https://github.com/alexizher/kuorum-estudiantil/issues), y las marcadas _good first issue_ sirven para empezar.
 
 ## Licencia
 

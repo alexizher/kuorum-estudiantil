@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { aWinAnsi, partirEnLineas, textoDeAsistencia } from "../../src/actas/texto-del-pdf";
+import { aWinAnsi, partirEnLineas, textoDeAsistencia } from "@/actas/texto-del-pdf";
 
 const medir = (t: string) => t.length * 5;
 

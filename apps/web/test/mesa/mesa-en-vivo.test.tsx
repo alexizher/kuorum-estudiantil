@@ -4,11 +4,11 @@ import { cleanup, fireEvent, render as renderizar, screen, waitFor } from "@test
 import { userEvent } from "@testing-library/user-event";
 import type { ReactElement } from "react";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
-import { MesaEnVivo } from "../../src/vistas/mesa/mesa-en-vivo";
-import { SesionEnVivo } from "../../src/vistas/mesa/sesion-en-vivo";
+import { MesaEnVivo } from "@/vistas/mesa/mesa-en-vivo";
+import { SesionEnVivo } from "@/vistas/mesa/sesion-en-vivo";
 import { violacionesDeAxe } from "../proyeccion/axe";
 import { salaVacia } from "../proyeccion/estados";
-import type { InstitucionDeMesa } from "../../src/vistas/mesa/cliente-de-mesa";
+import type { InstitucionDeMesa } from "@/vistas/mesa/cliente-de-mesa";
 import { INSTITUCION, sesionDeLista } from "./falsos";
 
 const empujar = vi.fn();

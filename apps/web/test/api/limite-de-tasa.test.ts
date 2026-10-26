@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { LimiteDeTasa, ipDe } from "../../src/http/limite-de-tasa";
+import { LimiteDeTasa, ipDe } from "@/http/limite-de-tasa";
 
 describe("LimiteDeTasa", () => {
   it("deja pasar el máximo por minuto y corta el siguiente", () => {

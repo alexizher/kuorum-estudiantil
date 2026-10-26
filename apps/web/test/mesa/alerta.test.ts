@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { hayMasVotosQueCodigos } from "../../src/vistas/mesa/alerta";
+import { hayMasVotosQueCodigos } from "@/vistas/mesa/alerta";
 import { preguntaAbierta, preguntaConResultado, salaVacia } from "../proyeccion/estados";
 
 function conVotos(

@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
 
-import { FormularioDeCodigo } from "../src/portada/formulario-de-codigo";
+import { FormularioDeCodigo } from "@/portada/formulario-de-codigo";
 
 afterEach(cleanup);
 

@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
-import { ErrorDeAccion } from "../../src/vistas/participante/cliente-de-sala";
-import { useIngreso } from "../../src/vistas/participante/use-ingreso";
+import { ErrorDeAccion } from "@/vistas/participante/cliente-de-sala";
+import { useIngreso } from "@/vistas/participante/use-ingreso";
 import { AlmacenEnMemoria, clienteFalso } from "./falsos";
 
 const TOKEN = "3f2b8c1e-6d4a-4b7e-9a1c-0d5e7f8a9b2c";

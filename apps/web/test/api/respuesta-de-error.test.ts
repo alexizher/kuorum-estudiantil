@@ -1,6 +1,6 @@
 import { ErrorDeDominio, SesionNoEncontrada } from "@kuorum/domain";
 import { describe, expect, it, vi } from "vitest";
-import { respuestaDeError } from "../../src/http/respuesta-de-error";
+import { respuestaDeError } from "@/http/respuesta-de-error";
 
 describe("respuestaDeError", () => {
   it.each([
