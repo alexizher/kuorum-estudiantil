@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 import { act, cleanup, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { CruceDeSesion } from "../../src/vistas/mesa/cliente-de-mesa";
-import { useCruces } from "../../src/vistas/mesa/use-cruces";
+import type { CruceDeSesion } from "@/vistas/mesa/cliente-de-mesa";
+import { useCruces } from "@/vistas/mesa/use-cruces";
 import { clienteDeMesaFalso } from "./falsos";
 
 const cruce = (id: string): CruceDeSesion => ({

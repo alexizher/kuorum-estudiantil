@@ -1,26 +1,26 @@
 import { ErrorDeDominio } from "@kuorum/domain";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { POST as anular } from "../../src/app/api/mesa/v1/preguntas/[id]/anular/route";
-import { POST as abrir } from "../../src/app/api/mesa/v1/preguntas/[id]/abrir/route";
-import { POST as cerrar } from "../../src/app/api/mesa/v1/preguntas/[id]/cerrar/route";
-import { POST as proyectar } from "../../src/app/api/mesa/v1/preguntas/[id]/proyectar/route";
-import { GET as listar, POST as crear } from "../../src/app/api/mesa/v1/sesiones/route";
-import { POST as codigos } from "../../src/app/api/mesa/v1/sesiones/[id]/codigos/route";
-import { POST as iniciar } from "../../src/app/api/mesa/v1/sesiones/[id]/iniciar/route";
-import { POST as rechazar } from "../../src/app/api/mesa/v1/sesiones/[id]/mociones/[solicitudId]/rechazar/route";
-import { POST as minuto } from "../../src/app/api/mesa/v1/sesiones/[id]/palabra/minuto/route";
-import { POST as dar } from "../../src/app/api/mesa/v1/sesiones/[id]/palabra/dar/route";
-import { POST as terminarIntervencion } from "../../src/app/api/mesa/v1/sesiones/[id]/palabra/terminar/route";
+import { POST as anular } from "@/app/api/mesa/v1/preguntas/[id]/anular/route";
+import { POST as abrir } from "@/app/api/mesa/v1/preguntas/[id]/abrir/route";
+import { POST as cerrar } from "@/app/api/mesa/v1/preguntas/[id]/cerrar/route";
+import { POST as proyectar } from "@/app/api/mesa/v1/preguntas/[id]/proyectar/route";
+import { GET as listar, POST as crear } from "@/app/api/mesa/v1/sesiones/route";
+import { POST as codigos } from "@/app/api/mesa/v1/sesiones/[id]/codigos/route";
+import { POST as iniciar } from "@/app/api/mesa/v1/sesiones/[id]/iniciar/route";
+import { POST as rechazar } from "@/app/api/mesa/v1/sesiones/[id]/mociones/[solicitudId]/rechazar/route";
+import { POST as minuto } from "@/app/api/mesa/v1/sesiones/[id]/palabra/minuto/route";
+import { POST as dar } from "@/app/api/mesa/v1/sesiones/[id]/palabra/dar/route";
+import { POST as terminarIntervencion } from "@/app/api/mesa/v1/sesiones/[id]/palabra/terminar/route";
 import {
   GET as listarPreguntas,
   POST as crearPregunta,
-} from "../../src/app/api/mesa/v1/sesiones/[id]/preguntas/route";
-import { POST as terminar } from "../../src/app/api/mesa/v1/sesiones/[id]/terminar/route";
-import { POST as reprogramar } from "../../src/app/api/mesa/v1/sesiones/[id]/reprogramar/route";
-import { POST as cancelar } from "../../src/app/api/mesa/v1/sesiones/[id]/cancelar/route";
-import { contenedor } from "../../src/composicion";
+} from "@/app/api/mesa/v1/sesiones/[id]/preguntas/route";
+import { POST as terminar } from "@/app/api/mesa/v1/sesiones/[id]/terminar/route";
+import { POST as reprogramar } from "@/app/api/mesa/v1/sesiones/[id]/reprogramar/route";
+import { POST as cancelar } from "@/app/api/mesa/v1/sesiones/[id]/cancelar/route";
+import { contenedor } from "@/composicion";
 
-vi.mock("../../src/composicion", () => ({ contenedor: vi.fn() }));
+vi.mock("@/composicion", () => ({ contenedor: vi.fn() }));
 
 const creada = new Date("2026-10-20T10:00:00.000Z");
 const sesion = {

@@ -7,6 +7,7 @@ import {
   RetirarSolicitud,
   SumarMinuto,
   TerminarIntervencion,
+  TerminarSesion,
 } from "../../src/index.js";
 import { crearEscenario, sembrarSesion } from "../dobles/escenario.js";
 import { superadmin } from "../dobles/actores.js";
@@ -149,6 +150,25 @@ describe("RetirarSolicitud", () => {
     await expect(retirar.ejecutar("ajeno", id)).rejects.toMatchObject({
       codigo: "PARTICIPANTE_AJENO",
     });
+  });
+
+  it("falla con SESION_NO_EN_CURSO si la sesión terminó y la solicitud no cambia", async () => {
+    const { e, sesion, pedir, retirar } = await montar();
+    const id = await pedir.ejecutar("ana", sesion.id, "Ana");
+    await new TerminarSesion(e.sesiones, e.preguntas, e.unidad, e.actas).ejecutar(
+      superadmin,
+      sesion.id,
+    );
+    const antes = { ...(await e.solicitudes.porId(id)) };
+    const versionAntes = sesion.version;
+
+    await expect(retirar.ejecutar("ana", id)).rejects.toMatchObject({
+      codigo: "SESION_NO_EN_CURSO",
+    });
+
+    expect(await e.solicitudes.porId(id)).toEqual(antes);
+    expect((await e.solicitudes.porId(id))?.estado).toBe("ESPERANDO");
+    expect(sesion.version).toBe(versionAntes);
   });
 
   it("falla con SOLICITUD_NO_DISPONIBLE si no existe", async () => {

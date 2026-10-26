@@ -5,7 +5,7 @@ import {
   mesDesplazado,
   rangoDelMes,
   semanasDelMes,
-} from "../../src/calendario/vista-de-calendario";
+} from "@/calendario/vista-de-calendario";
 
 const ZONA = "America/Bogota";
 const sesion = (id: string, inicio: string) => ({ id, inicio: new Date(inicio) });

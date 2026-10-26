@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { generarIcs, type SesionDelCalendario } from "../../src/calendario/ics";
+import { generarIcs, type SesionDelCalendario } from "@/calendario/ics";
 
 const base: SesionDelCalendario = {
   id: "s1",

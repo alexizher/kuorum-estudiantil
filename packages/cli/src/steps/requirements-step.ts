@@ -33,7 +33,21 @@ export class RequirementsStep implements Step {
     if (result.exitCode !== 0) {
       throw new Error(`No se pudo instalar vercel: ${result.stderr.trim() || "error desconocido"}`);
     }
+    if ((await tryRun(runner, "vercel", ["--version"]))?.exitCode !== 0) {
+      throw new Error(await pathHint(runner));
+    }
   }
+}
+
+/** pnpm instala los binarios globales en un directorio que puede no estar en el PATH. */
+async function pathHint(runner: CommandRunner): Promise<string> {
+  const bin = await tryRun(runner, "pnpm", ["bin", "-g"]);
+  const dir = bin?.exitCode === 0 ? bin.stdout.trim() : "";
+  const where = dir ? `el directorio ${dir}` : 'el directorio que muestra "pnpm bin -g"';
+  return (
+    'Se instaló la CLI de Vercel, pero el comando "vercel" no aparece en el PATH. ' +
+    `Agrega ${where} a tu PATH (o corre "pnpm setup" y abre una terminal nueva) y vuelve a correr pnpm desplegar.`
+  );
 }
 
 async function tryRun(

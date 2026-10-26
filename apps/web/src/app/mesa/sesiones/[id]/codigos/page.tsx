@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { exigirSesionDeMesa } from "@/auth/exigir-sesion-de-mesa";
 import { CodigosEnVivo } from "@/vistas/mesa/codigos-en-vivo";
-import { cargarSesionDeMesa } from "../../../cargar-sesion";
+import { cargarSesionDeMesa } from "@/app/mesa/cargar-sesion";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Generar códigos", robots: { index: false } };

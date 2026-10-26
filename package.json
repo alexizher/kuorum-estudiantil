@@ -8,7 +8,8 @@
   },
   "scripts": {
     "build": "turbo run build",
-    "lint": "turbo run lint",
+    "lint": "turbo run lint lint:raiz",
+    "lint:raiz": "eslint eslint.config.mjs vitest.config.ts .dependency-cruiser.cjs",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test && vitest run",
     "test:int": "turbo run test:int --concurrency=1",
@@ -21,6 +22,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@types/node": "catalog:",
     "dependency-cruiser": "^18.6.0",
     "eslint": "^10.13.0",
     "pg": "^8.23.1",

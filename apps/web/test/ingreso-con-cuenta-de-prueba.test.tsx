@@ -7,9 +7,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
 
-import PaginaDeIngreso from "../src/app/mesa/ingresar/page";
-import { cuentaDePruebaDesdeEntorno } from "../src/auth/cuenta-de-prueba";
-import { FormularioDeIngreso } from "../src/auth/formulario-de-ingreso";
+import PaginaDeIngreso from "@/app/mesa/ingresar/page";
+import { cuentaDePruebaDesdeEntorno } from "@/auth/cuenta-de-prueba";
+import { FormularioDeIngreso } from "@/auth/formulario-de-ingreso";
 import { violacionesDeAxe } from "./proyeccion/axe";
 
 const render = (ui: ReactElement) => renderizar(ui, { wrapper: TemaProvider });

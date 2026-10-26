@@ -2,8 +2,8 @@
 import type { EstadoDeSala } from "@kuorum/contracts";
 import { act, cleanup, renderHook } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { ErrorDeAccion } from "../../src/vistas/participante/cliente-de-sala";
-import { usePalabra } from "../../src/vistas/participante/use-palabra";
+import { ErrorDeAccion } from "@/vistas/participante/cliente-de-sala";
+import { usePalabra } from "@/vistas/participante/use-palabra";
 import { conLaPalabra, salaVacia } from "../proyeccion/estados";
 import { AlmacenEnMemoria, clienteFalso, enFila, mocionEnFila } from "./falsos";
 

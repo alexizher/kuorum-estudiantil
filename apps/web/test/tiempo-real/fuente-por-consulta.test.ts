@@ -1,8 +1,8 @@
 import type { EstadoDeSala } from "@kuorum/contracts";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { FuenteDeEstadoPorConsulta } from "../../src/tiempo-real/fuente-por-consulta";
-import type { Temporizador } from "../../src/tiempo-real/fuente-de-estado";
-import { PoliticaAdaptativa, PoliticaFija } from "../../src/tiempo-real/intervalo-adaptativo";
+import { FuenteDeEstadoPorConsulta } from "@/tiempo-real/fuente-por-consulta";
+import type { Temporizador } from "@/tiempo-real/fuente-de-estado";
+import { PoliticaAdaptativa, PoliticaFija } from "@/tiempo-real/intervalo-adaptativo";
 
 function estado(version: number): EstadoDeSala {
   return {

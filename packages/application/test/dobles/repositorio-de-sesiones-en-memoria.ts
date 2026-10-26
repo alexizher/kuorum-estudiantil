@@ -7,9 +7,15 @@ import type {
 
 export class RepositorioDeSesionesEnMemoria implements RepositorioDeSesiones {
   readonly sesiones = new Map<string, Sesion>();
+  /**
+   * Con true, cada lectura y cada guardado pasan por una copia, como con una base de verdad: lo
+   * que un caso de uso cambie sin guardar no se ve al recargar. Por defecto se comparte el objeto.
+   */
+  copiar = false;
 
   async porId(id: string): Promise<Sesion | null> {
-    return this.sesiones.get(id) ?? null;
+    const sesion = this.sesiones.get(id);
+    return sesion === undefined ? null : this.aislar(sesion);
   }
 
   porIdBloqueando(id: string): Promise<Sesion | null> {
@@ -18,13 +24,13 @@ export class RepositorioDeSesionesEnMemoria implements RepositorioDeSesiones {
 
   async porCodigoDeSala(codigo: CodigoDeSala): Promise<Sesion | null> {
     for (const sesion of this.sesiones.values()) {
-      if (sesion.codigoDeSala.valor === codigo.valor) return sesion;
+      if (sesion.codigoDeSala.valor === codigo.valor) return this.aislar(sesion);
     }
     return null;
   }
 
   async guardar(sesion: Sesion): Promise<void> {
-    this.sesiones.set(sesion.id, sesion);
+    this.sesiones.set(sesion.id, this.aislar(sesion));
   }
 
   async listar(filtro: FiltroDeSesiones = {}): Promise<Sesion[]> {
@@ -54,8 +60,16 @@ export class RepositorioDeSesionesEnMemoria implements RepositorioDeSesiones {
     return [...this.sesiones.values()].filter((s) => s.creadaPorId === creadaPorId).length;
   }
 
+  private aislar(sesion: Sesion): Sesion {
+    return this.copiar ? copia(sesion) : sesion;
+  }
+
   async contarActivasDe(creadaPorId: string): Promise<number> {
     return [...this.sesiones.values()].filter((s) => s.creadaPorId === creadaPorId && s.activa)
       .length;
   }
+}
+
+function copia(sesion: Sesion): Sesion {
+  return Object.assign(Object.create(Object.getPrototypeOf(sesion) as object) as Sesion, sesion);
 }

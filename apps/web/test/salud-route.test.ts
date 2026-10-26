@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { GET } from "../src/app/api/salud/route";
-import { contenedor } from "../src/composicion";
+import { GET } from "@/app/api/salud/route";
+import { contenedor } from "@/composicion";
 
-vi.mock("../src/composicion", () => ({ contenedor: vi.fn() }));
+vi.mock("@/composicion", () => ({ contenedor: vi.fn() }));
 
 function conBaseDeDatos(verificarBaseDeDatos: () => Promise<boolean>) {
   vi.mocked(contenedor).mockReturnValue({
