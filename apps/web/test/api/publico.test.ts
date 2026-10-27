@@ -12,11 +12,7 @@ import {
   limitesDeVotos,
   limitesPublicos,
 } from "@/http/limite-de-tasa";
-import {
-  cookieDeParticipante,
-  firmar,
-  nombreDeCookie,
-} from "@/http/sesion-de-participante";
+import { cookieDeParticipante, firmar, nombreDeCookie } from "@/http/sesion-de-participante";
 
 vi.mock("@/composicion", () => ({ contenedor: vi.fn() }));
 
