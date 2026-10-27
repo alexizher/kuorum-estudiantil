@@ -25,7 +25,7 @@ Antes de cada paso que crea algo en tu cuenta, el asistente dice qué va a crear
 4. `enlazar-proyecto`: enlaza esta carpeta al proyecto con `vercel link`.
 5. `directorio-raiz`: fija `apps/web` como directorio raíz con el framework Next.js y activa el acceso a archivos fuera de ese directorio, que el build necesita.
 6. `conectar-repositorio`: si el remoto `origin` es de GitHub (se compara el host, así que sirven HTTPS, SSH y alias como `github.com-personal`), conecta el repositorio.
-7. `base-de-datos`: instala la integración de Neon con el nombre `<nombre-corto>-db` y plan gratuito en production, preview y development, y comprueba que production tenga `DATABASE_URL` y `DATABASE_URL_UNPOOLED`. Si ya las tiene (por ejemplo, tras un corte a mitad del paso), no crea otra base.
+7. `base-de-datos`: instala la integración de Neon con el nombre `<nombre-corto>-db` y plan gratuito en production, preview y development, y comprueba que production tenga `DATABASE_URL` y `DATABASE_URL_UNPOOLED`. Si ya las tiene (por ejemplo, tras un corte a mitad del paso), no crea otra base. Al instalar Neon, la CLI de Vercel deja en la carpeta unas skills para agentes (`.agents/`, `.claude/` y `skills-lock.json`) y no tiene una bandera para evitarlo. El paso las borra al terminar, pero solo las que no existían antes, así que no toca un `.claude/` tuyo.
 8. `variables`: carga `KUORUM_INSTITUCION_NOMBRE` en production y preview.
 9. `secretos`: genera `KUORUM_SECRETO` y `BETTER_AUTH_SECRET` (32 bytes aleatorios en hexadecimal cada uno) en production y preview, solo si no existen. Los valores viajan por stdin y no se guardan en ningún archivo.
 10. `despliegue`: corre `vercel deploy --prod --yes` y guarda la URL.
@@ -87,7 +87,7 @@ Si falta un campo o es inválido, el asistente dice cuál y termina con código 
 
 El archivo `.vercelignore` deja fuera del despliegue `.env*`, `.kuorum`, `node_modules` y los artefactos de build. La integración se instala con `--no-env-pull`, así que las credenciales de la base no se escriben en tu copia local.
 
-En tu máquina deja `.vercel/` (el enlace al proyecto) y `.kuorum/despliegue.json` (el avance del asistente, sin secretos). Ambos están en `.gitignore`.
+En tu máquina deja `.vercel/` (el enlace al proyecto) y `.kuorum/despliegue.json` (el avance del asistente, sin secretos). Ambos están en `.gitignore`. Si ya tenías `.agents/`, `.claude/` o `skills-lock.json` antes de correr el asistente, la CLI de Vercel pudo agregar ahí las skills de Neon: revisa `git status` antes de hacer commit.
 
 ## Cuenta de prueba (opcional)
 
