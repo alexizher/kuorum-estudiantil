@@ -140,6 +140,10 @@ Entra a `/mesa` con la cuenta de administración y abre **Institución**: pon el
 
 El build de Vercel aplica las migraciones de Prisma solo cuando `VERCEL_ENV` es `production`. Las vistas previas (ramas y pull requests) nunca migran, así que un PR con una migración no toca la base de producción antes de fusionarse; su vista previa corre contra el esquema que ya tiene la base que le toque. El script es `scripts/migrar-si-produccion.mjs`.
 
+Una migración que ya se aplicó en producción no se edita: Prisma guarda su suma de verificación y `migrate deploy` falla si cambia. Las correcciones van en una migración nueva.
+
+`20261020160000_conteos_sin_fragmentos` suma los fragmentos de `conteos` en la fila del fragmento 0 y borra los demás, así que supone que esa fila existe para cada opción. Con las dos migraciones de fragmentos se cumple: llegaron en el mismo cambio (#17), `20261020140000_conteos_por_fragmento` deja en el fragmento 0 las filas que ya había y crea los otros 15 a partir de ellas, y ninguna versión de la aplicación escribió conteos por fragmento entre una y otra. Por eso se dejó como está. Para juntar filas en otra tabla conviene no depender de una fila concreta: borrar y volver a insertar con `INSERT ... SELECT sum(...) GROUP BY ... ON CONFLICT DO UPDATE`.
+
 ## Reanudar
 
 El asistente guarda cada paso terminado en `.kuorum/despliegue.json`. Si se corta o falla un paso, vuelve a correr `pnpm desplegar`: salta lo ya hecho y reintenta desde el paso que falló, sin crear un segundo proyecto ni una segunda base. Si el archivo se daña, el asistente avisa y basta con borrarlo; el proyecto se reutiliza por nombre.
