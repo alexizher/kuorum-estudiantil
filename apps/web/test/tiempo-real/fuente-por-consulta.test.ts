@@ -50,6 +50,18 @@ class TemporizadorFalso implements Temporizador {
 
 const vaciar = () => new Promise((resolver) => setTimeout(resolver, 0));
 
+/** Documento mínimo con la visibilidad que lee la fuente y sus eventos. */
+function pestana(visibilityState: DocumentVisibilityState) {
+  const documento = Object.assign(new EventTarget(), { visibilityState });
+  vi.stubGlobal("document", documento);
+  return documento;
+}
+
+function mostrar(documento: ReturnType<typeof pestana>): void {
+  documento.visibilityState = "visible";
+  documento.dispatchEvent(new Event("visibilitychange"));
+}
+
 describe("FuenteDeEstadoPorConsulta", () => {
   afterEach(() => vi.unstubAllGlobals());
 
@@ -161,7 +173,7 @@ describe("FuenteDeEstadoPorConsulta", () => {
   });
 
   it("no consulta mientras la pestaña está oculta", async () => {
-    vi.stubGlobal("document", { visibilityState: "hidden" });
+    const documento = pestana("hidden");
     const fetchFalso = vi.fn().mockResolvedValue(ok(1));
     const temporizador = new TemporizadorFalso();
     new FuenteDeEstadoPorConsulta(fetchFalso, new PoliticaFija(3000), { temporizador }).suscribir(
@@ -172,15 +184,53 @@ describe("FuenteDeEstadoPorConsulta", () => {
     expect(fetchFalso).not.toHaveBeenCalled();
     expect(temporizador.pendientes).toHaveLength(1);
 
-    vi.stubGlobal("document", { visibilityState: "visible" });
+    documento.visibilityState = "visible";
     temporizador.disparar();
     await vaciar();
 
     expect(fetchFalso).toHaveBeenCalledOnce();
   });
 
+  it("al volver a la pestaña consulta de inmediato sin esperar el turno", async () => {
+    const documento = pestana("hidden");
+    const fetchFalso = vi.fn().mockResolvedValue(new Response(null, { status: 304 }));
+    const temporizador = new TemporizadorFalso();
+    new FuenteDeEstadoPorConsulta(fetchFalso, new PoliticaAdaptativa(), { temporizador }).suscribir(
+      "K7F2",
+      vi.fn(),
+    );
+    await vaciar();
+    expect(fetchFalso).not.toHaveBeenCalled();
+
+    mostrar(documento);
+    await vaciar();
+
+    expect(fetchFalso).toHaveBeenCalledOnce();
+    // la espera de 12 s se canceló y queda una sola, nueva
+    expect(temporizador.cancelados).toBe(1);
+    expect(temporizador.pendientes).toHaveLength(1);
+  });
+
+  it("cancelar deja de escuchar la visibilidad de la pestaña", async () => {
+    const documento = pestana("hidden");
+    const agregar = vi.spyOn(documento, "addEventListener");
+    const quitar = vi.spyOn(documento, "removeEventListener");
+    const fetchFalso = vi.fn().mockResolvedValue(ok(1));
+    const cancelar = new FuenteDeEstadoPorConsulta(fetchFalso, new PoliticaFija(3000), {
+      temporizador: new TemporizadorFalso(),
+    }).suscribir("K7F2", vi.fn());
+    await vaciar();
+
+    cancelar();
+    mostrar(documento);
+    await vaciar();
+
+    expect(quitar).toHaveBeenCalledWith("visibilitychange", agregar.mock.calls[0]?.[1]);
+    expect(fetchFalso).not.toHaveBeenCalled();
+  });
+
   it("con la pestaña oculta no consulta aunque haya una votación abierta y al volver sigue al ritmo activo", async () => {
-    vi.stubGlobal("document", { visibilityState: "hidden" });
+    const documento = pestana("hidden");
     const fetchFalso = vi.fn().mockResolvedValue(new Response(null, { status: 304 }));
     const temporizador = new TemporizadorFalso();
     new FuenteDeEstadoPorConsulta(fetchFalso, new PoliticaAdaptativa(), {
@@ -194,7 +244,7 @@ describe("FuenteDeEstadoPorConsulta", () => {
     expect(fetchFalso).not.toHaveBeenCalled();
     expect(temporizador.esperas).toEqual([INTERVALO_ACTIVO_MS, INTERVALO_ACTIVO_MS]);
 
-    vi.stubGlobal("document", { visibilityState: "visible" });
+    documento.visibilityState = "visible";
     temporizador.disparar();
     await vaciar();
 
