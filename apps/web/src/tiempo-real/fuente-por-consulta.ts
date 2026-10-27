@@ -11,17 +11,30 @@ import {
   type PoliticaDeIntervalo,
 } from "./intervalo-adaptativo";
 
+export interface OpcionesDeConsulta {
+  temporizador?: Temporizador;
+  /** Cada fallo de una consulta; la fuente reintenta en el siguiente turno. */
+  alFallar?: (error: unknown) => void;
+  /** Lo que la política necesita para elegir el intervalo. Por defecto, en reposo. */
+  contexto?: () => ContextoDeIntervalo;
+}
+
 export class FuenteDeEstadoPorConsulta implements FuenteDeEstado {
   private readonly reprogramadores = new Set<() => void>();
   private readonly refrescadores = new Set<() => void>();
+  private readonly temporizador: Temporizador;
+  private readonly alFallar: ((error: unknown) => void) | undefined;
+  private readonly contexto: () => ContextoDeIntervalo;
 
   constructor(
     private readonly fetch: typeof globalThis.fetch,
     private readonly politica: PoliticaDeIntervalo,
-    private readonly temporizador: Temporizador = temporizadorPorDefecto,
-    private readonly alFallar?: (error: unknown) => void,
-    private readonly contexto: () => ContextoDeIntervalo = () => CONTEXTO_EN_REPOSO,
-  ) {}
+    opciones: OpcionesDeConsulta = {},
+  ) {
+    this.temporizador = opciones.temporizador ?? temporizadorPorDefecto;
+    this.alFallar = opciones.alFallar;
+    this.contexto = opciones.contexto ?? (() => CONTEXTO_EN_REPOSO);
+  }
 
   suscribir(
     codigo: string,
