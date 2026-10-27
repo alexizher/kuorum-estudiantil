@@ -10,6 +10,8 @@
         "DATABASE_URL_UNPOOLED",
         "VERCEL_ENV",
         "VERCEL_PROJECT_PRODUCTION_URL",
+        "VERCEL_URL",
+        "VERCEL_BRANCH_URL",
         "KUORUM_SECRETO",
         "BETTER_AUTH_SECRET",
         "BETTER_AUTH_URL",

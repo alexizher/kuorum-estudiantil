@@ -7,8 +7,12 @@ import { POST as palabra } from "@/app/api/public/v1/salas/[codigo]/palabra/rout
 import { DELETE as retirar } from "@/app/api/public/v1/salas/[codigo]/solicitudes/[id]/route";
 import { POST as votos } from "@/app/api/public/v1/salas/[codigo]/votos/route";
 import { contenedor } from "@/composicion";
-import { limitesDeVotos, limitesPublicos } from "@/http/limite-de-tasa";
-import { firmar, nombreDeCookie } from "@/http/sesion-de-participante";
+import {
+  limitesDeIngresoPorNavegador,
+  limitesDeVotos,
+  limitesPublicos,
+} from "@/http/limite-de-tasa";
+import { cookieDeParticipante, firmar, nombreDeCookie } from "@/http/sesion-de-participante";
 
 vi.mock("@/composicion", () => ({ contenedor: vi.fn() }));
 
@@ -53,10 +57,16 @@ function estadoDeSala(version = 7, votos = 2) {
 function peticion(
   metodo: string,
   cuerpo?: unknown,
-  opciones: { cookie?: string; ip?: string; crudo?: string } = {},
+  opciones: {
+    cookie?: string;
+    ip?: string;
+    crudo?: string;
+    cabeceras?: Record<string, string>;
+  } = {},
 ): Request {
   const cabeceras: Record<string, string> = {
     "x-forwarded-for": opciones.ip ?? `10.0.0.${(ip += 1)}`,
+    ...opciones.cabeceras,
   };
   if (opciones.cookie !== undefined) cabeceras["cookie"] = opciones.cookie;
   if (cuerpo !== undefined || opciones.crudo !== undefined)
@@ -83,6 +93,7 @@ beforeEach(() => {
   vi.mocked(contenedor).mockReturnValue(casos as unknown as ReturnType<typeof contenedor>);
   limitesPublicos.reiniciar();
   limitesDeVotos.reiniciar();
+  limitesDeIngresoPorNavegador.reiniciar();
 });
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -179,6 +190,58 @@ describe("POST ingresar", () => {
     expect(r.status).toBe(200);
     expect(await r.json()).toEqual({ ok: true });
     expect(casos.ingresarASala.ejecutar).not.toHaveBeenCalled();
+  });
+
+  it("con cookie válida la renueva: vuelve a mandarla con Max-Age completo", async () => {
+    const r = await ingresar(
+      peticion("POST", { tokenNavegador: "t-1" }, { cookie: cookieValida("p7") }),
+      sala(),
+    );
+    expect(r.headers.get("set-cookie")).toBe(cookieDeParticipante("p7", "ABCD"));
+    expect(r.headers.get("set-cookie")).toMatch(/Max-Age=43200/);
+  });
+
+  describe("techo de ingresos con token de navegador por IP", () => {
+    const mismaIp = { ip: "203.0.113.9" };
+
+    it("429 al pasar del techo; no crea el participante", async () => {
+      limitesDeIngresoPorNavegador.reiniciar(2);
+      for (const token of ["t-1", "t-2"]) {
+        expect(
+          (await ingresar(peticion("POST", { tokenNavegador: token }, mismaIp), sala())).status,
+        ).toBe(200);
+      }
+      const r = await ingresar(peticion("POST", { tokenNavegador: "t-3" }, mismaIp), sala());
+      expect(r.status).toBe(429);
+      expect(await r.json()).toEqual({ error: "DEMASIADAS_SOLICITUDES" });
+      expect(casos.ingresarASala.ejecutar).toHaveBeenCalledTimes(2);
+    });
+
+    it("no cuenta los ingresos con código ni las renovaciones con cookie", async () => {
+      limitesDeIngresoPorNavegador.reiniciar(1);
+      await ingresar(peticion("POST", { tokenNavegador: "t-1" }, mismaIp), sala());
+      expect(
+        (await ingresar(peticion("POST", { codigo: "ABCD-2345" }, mismaIp), sala())).status,
+      ).toBe(200);
+      expect(
+        (
+          await ingresar(
+            peticion("POST", { tokenNavegador: "t-1" }, { ...mismaIp, cookie: cookieValida() }),
+            sala(),
+          )
+        ).status,
+      ).toBe(200);
+    });
+
+    it("otra IP tiene su propio cupo", async () => {
+      limitesDeIngresoPorNavegador.reiniciar(1);
+      await ingresar(peticion("POST", { tokenNavegador: "t-1" }, mismaIp), sala());
+      const otra = await ingresar(
+        peticion("POST", { tokenNavegador: "t-2" }, { ip: "203.0.113.10" }),
+        sala(),
+      );
+      expect(otra.status).toBe(200);
+    });
   });
 
   it("si manda otro código, ingresa aunque haya cookie", async () => {
@@ -381,5 +444,66 @@ describe("palabra, mociones y solicitudes", () => {
       (await retirar(peticion("DELETE", undefined, { cookie: cookieValida() }), params)).status,
     ).toBe(403);
     expect((await retirar(peticion("DELETE"), params)).status).toBe(401);
+  });
+});
+
+describe("peticiones de otro sitio en las rutas con cookie que cambian estado", () => {
+  const ajeno = { "sec-fetch-site": "cross-site", origin: "https://malo.test" };
+  const params = { params: Promise.resolve({ codigo: "ABCD", id: "sol-1" }) };
+
+  beforeEach(() => {
+    casos.ingresarASala.ejecutar.mockResolvedValue({ participanteId: "p1", sesionId: "s1" });
+    casos.pedirLaPalabra.ejecutar.mockResolvedValue("sol-1");
+    casos.presentarMocion.ejecutar.mockResolvedValue("sol-2");
+  });
+
+  it.each([
+    ["Sec-Fetch-Site: cross-site", { "sec-fetch-site": "cross-site" }],
+    ["un Origin ajeno", { origin: "https://malo.test" }],
+  ])("votos: 403 ORIGEN_NO_PERMITIDO con %s, sin votar", async (_, cabeceras) => {
+    const r = await votos(
+      peticion("POST", { preguntaId: "p1", opcionId: "o1" }, { cookie: cookieValida(), cabeceras }),
+      sala(),
+    );
+    expect(r.status).toBe(403);
+    expect(r.headers.get("Cache-Control")).toBe("no-store");
+    expect(await r.json()).toEqual({ error: "ORIGEN_NO_PERMITIDO" });
+    expect(casos.emitirVoto.ejecutar).not.toHaveBeenCalled();
+  });
+
+  it("ingresar, palabra, mociones y DELETE solicitudes también lo rechazan", async () => {
+    const o = { cookie: cookieValida(), cabeceras: ajeno };
+    const respuestas = [
+      await ingresar(peticion("POST", { tokenNavegador: "t-1" }, o), sala()),
+      await palabra(peticion("POST", { nombreVisible: "Ana" }, o), sala()),
+      await mociones(peticion("POST", { nombreVisible: "Ana", tipo: "ORDEN" }, o), sala()),
+      await retirar(peticion("DELETE", undefined, o), params),
+    ];
+    expect(respuestas.map((r) => r.status)).toEqual([403, 403, 403, 403]);
+    expect(casos.ingresarASala.ejecutar).not.toHaveBeenCalled();
+    expect(casos.pedirLaPalabra.ejecutar).not.toHaveBeenCalled();
+    expect(casos.presentarMocion.ejecutar).not.toHaveBeenCalled();
+    expect(casos.retirarSolicitud.ejecutar).not.toHaveBeenCalled();
+  });
+
+  it("deja pasar al navegador en el propio sitio", async () => {
+    const r = await votos(
+      peticion(
+        "POST",
+        { preguntaId: "p1", opcionId: "o1" },
+        {
+          cookie: cookieValida(),
+          cabeceras: { "sec-fetch-site": "same-origin", origin: "http://localhost" },
+        },
+      ),
+      sala(),
+    );
+    expect(r.status).toBe(201);
+  });
+
+  it("la consulta de estado (GET, sin cookie) no se filtra", async () => {
+    casos.consultarEstadoDeSala.ejecutar.mockResolvedValue(estadoDeSala());
+    const r = await estado(peticion("GET", undefined, { cabeceras: ajeno }), sala());
+    expect(r.status).toBe(200);
   });
 });
