@@ -4,7 +4,7 @@ import {
   MAXIMO_DE_CLAVES,
   MAXIMO_DE_INGRESOS_POR_NAVEGADOR,
   ipDe,
-} from "../../src/http/limite-de-tasa";
+} from "@/http/limite-de-tasa";
 
 describe("tope de claves del mapa", () => {
   it("es de 10.000 claves", () => {

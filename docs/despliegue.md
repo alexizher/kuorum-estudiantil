@@ -21,14 +21,19 @@ Antes de cada paso que crea algo en tu cuenta, el asistente dice qué va a crear
 
 1. `requisitos`: revisa node, pnpm, git y vercel.
 2. `sesion-vercel`: comprueba la sesión con `vercel whoami` y abre `vercel login` si hace falta.
-3. `proyecto`: crea el proyecto, lo enlaza y fija `apps/web` como directorio raíz con el framework Next.js (y activa el acceso a archivos fuera de ese directorio, que el build necesita). Si en tu cuenta ya existe un proyecto con ese nombre, pregunta antes de reutilizarlo. Si el remoto `origin` es de GitHub, conecta el repositorio.
-4. `base-de-datos`: instala la integración de Neon con el nombre `<nombre-corto>-db` y plan gratuito en production, preview y development, y comprueba que production tenga `DATABASE_URL` y `DATABASE_URL_UNPOOLED`. Si ya las tiene (por ejemplo, tras un corte a mitad del paso), no crea otra base.
-5. `variables`: carga `KUORUM_INSTITUCION_NOMBRE` en production y preview.
-6. `secretos`: genera `KUORUM_SECRETO` y `BETTER_AUTH_SECRET` (32 bytes aleatorios en hexadecimal cada uno) en production y preview, solo si no existen. Los valores viajan por stdin y no se guardan en ningún archivo.
-7. `despliegue`: corre `vercel deploy --prod --yes` y guarda la URL.
-8. `verificacion`: pide `/api/salud` hasta recibir 200 (12 intentos, uno cada 5 segundos, por si Neon arranca en frío).
-9. `administrador`: pregunta correo y nombre de la primera cuenta de la mesa, trae las variables de producción a un archivo temporal (permisos 0600), crea la cuenta con una contraseña generada, la muestra una sola vez y borra el archivo. Si la cuenta ya existe, lo avisa y sigue.
-10. `resumen`: muestra la URL.
+3. `crear-proyecto`: crea el proyecto. Si en tu cuenta ya existe uno con ese nombre, pregunta antes de reutilizarlo.
+4. `enlazar-proyecto`: enlaza esta carpeta al proyecto con `vercel link`.
+5. `directorio-raiz`: fija `apps/web` como directorio raíz con el framework Next.js y activa el acceso a archivos fuera de ese directorio, que el build necesita.
+6. `conectar-repositorio`: si el remoto `origin` es de GitHub (se compara el host, así que sirven HTTPS, SSH y alias como `github.com-personal`), conecta el repositorio.
+7. `base-de-datos`: instala la integración de Neon con el nombre `<nombre-corto>-db` y plan gratuito en production, preview y development, y comprueba que production tenga `DATABASE_URL` y `DATABASE_URL_UNPOOLED`. Si ya las tiene (por ejemplo, tras un corte a mitad del paso), no crea otra base. Al instalar Neon, la CLI de Vercel deja en la carpeta unas skills para agentes (`.agents/`, `.claude/` y `skills-lock.json`) y no tiene una bandera para evitarlo. El paso las borra al terminar, pero solo las que no existían antes, así que no toca un `.claude/` tuyo.
+8. `variables`: carga `KUORUM_INSTITUCION_NOMBRE` en production y preview.
+9. `secretos`: genera `KUORUM_SECRETO` y `BETTER_AUTH_SECRET` (32 bytes aleatorios en hexadecimal cada uno) en production y preview, solo si no existen. Los valores viajan por stdin y no se guardan en ningún archivo.
+10. `despliegue`: corre `vercel deploy --prod --yes` y guarda la URL.
+11. `verificacion`: pide `/api/salud` hasta recibir 200 (12 intentos, uno cada 5 segundos, por si Neon arranca en frío).
+12. `administrador`: pregunta correo y nombre de la primera cuenta de la mesa, trae las variables de producción a un archivo temporal (permisos 0600), crea la cuenta con una contraseña generada, la muestra una sola vez y borra el archivo. Si la cuenta ya existe, lo avisa y sigue.
+13. `resumen`: muestra la URL.
+
+Los pasos 3 a 6 antes eran uno solo, `proyecto`. Un `.kuorum/despliegue.json` que lo tenga como completado se lee como si tuviera completados los cuatro.
 
 El registro público está desactivado: las cuentas de la mesa solo se crean con este paso o con `pnpm --filter @kuorum/web crear-admin --correo <correo> --nombre <nombre>`, que en una terminal pide la contraseña dos veces sin mostrarla (mínimo 12 caracteres). Si stdin viene de una tubería o de un archivo, la lee completa de ahí. Con `--generar` imprime una contraseña nueva una sola vez. El script necesita `DATABASE_URL` y `BETTER_AUTH_SECRET` en el entorno.
 
@@ -82,7 +87,7 @@ Si falta un campo o es inválido, el asistente dice cuál y termina con código 
 
 El archivo `.vercelignore` deja fuera del despliegue `.env*`, `.kuorum`, `node_modules` y los artefactos de build. La integración se instala con `--no-env-pull`, así que las credenciales de la base no se escriben en tu copia local.
 
-En tu máquina deja `.vercel/` (el enlace al proyecto) y `.kuorum/despliegue.json` (el avance del asistente, sin secretos). Ambos están en `.gitignore`.
+En tu máquina deja `.vercel/` (el enlace al proyecto) y `.kuorum/despliegue.json` (el avance del asistente, sin secretos). Ambos están en `.gitignore`. Si ya tenías `.agents/`, `.claude/` o `skills-lock.json` antes de correr el asistente, la CLI de Vercel pudo agregar ahí las skills de Neon: revisa `git status` antes de hacer commit.
 
 ## Cuenta de prueba (opcional)
 
@@ -134,6 +139,10 @@ Entra a `/mesa` con la cuenta de administración y abre **Institución**: pon el
 ## Migraciones de base de datos
 
 El build de Vercel aplica las migraciones de Prisma solo cuando `VERCEL_ENV` es `production`. Las vistas previas (ramas y pull requests) nunca migran, así que un PR con una migración no toca la base de producción antes de fusionarse; su vista previa corre contra el esquema que ya tiene la base que le toque. El script es `scripts/migrar-si-produccion.mjs`.
+
+Una migración que ya se aplicó en producción no se edita: Prisma guarda su suma de verificación y `migrate deploy` falla si cambia. Las correcciones van en una migración nueva.
+
+`20261020160000_conteos_sin_fragmentos` suma los fragmentos de `conteos` en la fila del fragmento 0 y borra los demás, así que supone que esa fila existe para cada opción. Con las dos migraciones de fragmentos se cumple: llegaron en el mismo cambio (#17), `20261020140000_conteos_por_fragmento` deja en el fragmento 0 las filas que ya había y crea los otros 15 a partir de ellas, y ninguna versión de la aplicación escribió conteos por fragmento entre una y otra. Por eso se dejó como está. Para juntar filas en otra tabla conviene no depender de una fila concreta: borrar y volver a insertar con `INSERT ... SELECT sum(...) GROUP BY ... ON CONFLICT DO UPDATE`.
 
 ## Reanudar
 

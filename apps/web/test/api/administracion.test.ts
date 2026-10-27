@@ -1,24 +1,15 @@
 import { ErrorDeDominio } from "@kuorum/domain";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { GET as cruces } from "../../src/app/api/mesa/v1/cruces/route";
-import { POST as crearCuerpo } from "../../src/app/api/mesa/v1/cuerpos/route";
-import { PATCH as cambiarCuerpo } from "../../src/app/api/mesa/v1/cuerpos/[id]/route";
-import {
-  GET as leerInstitucion,
-  PATCH as configurar,
-} from "../../src/app/api/mesa/v1/institucion/route";
-import {
-  GET as listarPersonal,
-  POST as crearPersona,
-} from "../../src/app/api/mesa/v1/personal/route";
-import { POST as restablecer } from "../../src/app/api/mesa/v1/personal/[id]/contrasena/route";
-import {
-  DELETE as quitar,
-  PUT as asignar,
-} from "../../src/app/api/mesa/v1/personal/[id]/membresias/route";
-import { contenedor } from "../../src/composicion";
+import { GET as cruces } from "@/app/api/mesa/v1/cruces/route";
+import { POST as crearCuerpo } from "@/app/api/mesa/v1/cuerpos/route";
+import { PATCH as cambiarCuerpo } from "@/app/api/mesa/v1/cuerpos/[id]/route";
+import { GET as leerInstitucion, PATCH as configurar } from "@/app/api/mesa/v1/institucion/route";
+import { GET as listarPersonal, POST as crearPersona } from "@/app/api/mesa/v1/personal/route";
+import { POST as restablecer } from "@/app/api/mesa/v1/personal/[id]/contrasena/route";
+import { DELETE as quitar, PUT as asignar } from "@/app/api/mesa/v1/personal/[id]/membresias/route";
+import { contenedor } from "@/composicion";
 
-vi.mock("../../src/composicion", () => ({ contenedor: vi.fn() }));
+vi.mock("@/composicion", () => ({ contenedor: vi.fn() }));
 
 const ejecutar = () => ({ ejecutar: vi.fn(async (): Promise<unknown> => undefined) });
 const casos = {

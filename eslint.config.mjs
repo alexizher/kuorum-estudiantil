@@ -3,17 +3,19 @@ import tseslint from "typescript-eslint";
 
 export default tseslint.config(
   {
-    ignores: [
-      "**/dist/**",
-      "**/.next/**",
-      "**/node_modules/**",
-      "**/.turbo/**",
-      "**/generated/**",
-      ".dependency-cruiser.cjs",
-    ],
+    ignores: ["**/dist/**", "**/.next/**", "**/node_modules/**", "**/.turbo/**", "**/generated/**"],
   },
   js.configs.recommended,
   ...tseslint.configs.strict,
+  {
+    // Archivos CommonJS de configuración, como .dependency-cruiser.cjs.
+    files: ["**/*.cjs"],
+    languageOptions: {
+      sourceType: "commonjs",
+      globals: { module: "readonly", require: "readonly", __dirname: "readonly" },
+    },
+    rules: { "@typescript-eslint/no-require-imports": "off" },
+  },
   {
     // Guion de capturas y pruebas e2e: datos sembrados por el propio guion, la aserción es segura.
     files: ["apps/web/scripts/capturas.ts", "apps/web/e2e/**/*.ts"],

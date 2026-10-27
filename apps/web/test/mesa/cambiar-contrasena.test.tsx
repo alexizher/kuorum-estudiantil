@@ -4,7 +4,7 @@ import { cleanup, render as renderizar, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import type { ReactElement } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { CambiarContrasena } from "../../src/vistas/mesa/cambiar-contrasena";
+import { CambiarContrasena } from "@/vistas/mesa/cambiar-contrasena";
 
 const render = (ui: ReactElement) => renderizar(ui, { wrapper: TemaProvider });
 afterEach(cleanup);

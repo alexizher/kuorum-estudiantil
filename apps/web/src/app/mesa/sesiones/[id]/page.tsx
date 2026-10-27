@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { exigirSesionDeMesa } from "@/auth/exigir-sesion-de-mesa";
-import { cargarSesionDeMesa } from "../../cargar-sesion";
+import { cargarSesionDeMesa } from "@/app/mesa/cargar-sesion";
 import { SesionEnVivo } from "@/vistas/mesa/sesion-en-vivo";
 
 export const dynamic = "force-dynamic";

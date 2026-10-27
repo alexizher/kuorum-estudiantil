@@ -1,8 +1,12 @@
 import type { EstadoDeSala } from "@kuorum/contracts";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { FuenteDeEstadoPorConsulta } from "../../src/tiempo-real/fuente-por-consulta";
-import type { Temporizador } from "../../src/tiempo-real/fuente-de-estado";
-import { PoliticaAdaptativa, PoliticaFija } from "../../src/tiempo-real/intervalo-adaptativo";
+import { FuenteDeEstadoPorConsulta } from "@/tiempo-real/fuente-por-consulta";
+import type { Temporizador } from "@/tiempo-real/fuente-de-estado";
+import {
+  INTERVALO_ACTIVO_MS,
+  PoliticaAdaptativa,
+  PoliticaFija,
+} from "@/tiempo-real/intervalo-adaptativo";
 
 function estado(version: number): EstadoDeSala {
   return {
@@ -27,9 +31,11 @@ function ok(version: number): Response {
 
 class TemporizadorFalso implements Temporizador {
   pendientes: Array<() => void> = [];
+  esperas: number[] = [];
   cancelados = 0;
-  programar(accion: () => void): () => void {
+  programar(accion: () => void, ms: number): () => void {
     this.pendientes.push(accion);
+    this.esperas.push(ms);
     return () => {
       this.pendientes = this.pendientes.filter((p) => p !== accion);
       this.cancelados++;
@@ -44,6 +50,18 @@ class TemporizadorFalso implements Temporizador {
 
 const vaciar = () => new Promise((resolver) => setTimeout(resolver, 0));
 
+/** Documento mínimo con la visibilidad que lee la fuente y sus eventos. */
+function pestana(visibilityState: DocumentVisibilityState) {
+  const documento = Object.assign(new EventTarget(), { visibilityState });
+  vi.stubGlobal("document", documento);
+  return documento;
+}
+
+function mostrar(documento: ReturnType<typeof pestana>): void {
+  documento.visibilityState = "visible";
+  documento.dispatchEvent(new Event("visibilitychange"));
+}
+
 describe("FuenteDeEstadoPorConsulta", () => {
   afterEach(() => vi.unstubAllGlobals());
 
@@ -51,7 +69,7 @@ describe("FuenteDeEstadoPorConsulta", () => {
     const fetchFalso = vi.fn().mockResolvedValueOnce(ok(1)).mockResolvedValueOnce(ok(2));
     const temporizador = new TemporizadorFalso();
     const alCambiar = vi.fn();
-    new FuenteDeEstadoPorConsulta(fetchFalso, new PoliticaFija(3000), temporizador).suscribir(
+    new FuenteDeEstadoPorConsulta(fetchFalso, new PoliticaFija(3000), { temporizador }).suscribir(
       "K7F2",
       alCambiar,
     );
@@ -71,7 +89,7 @@ describe("FuenteDeEstadoPorConsulta", () => {
       .mockResolvedValueOnce(new Response(null, { status: 304 }));
     const temporizador = new TemporizadorFalso();
     const alCambiar = vi.fn();
-    new FuenteDeEstadoPorConsulta(fetchFalso, new PoliticaFija(3000), temporizador).suscribir(
+    new FuenteDeEstadoPorConsulta(fetchFalso, new PoliticaFija(3000), { temporizador }).suscribir(
       "K7F2",
       alCambiar,
     );
@@ -95,7 +113,7 @@ describe("FuenteDeEstadoPorConsulta", () => {
       .mockResolvedValueOnce(ok(2));
     const temporizador = new TemporizadorFalso();
     const alCambiar = vi.fn();
-    new FuenteDeEstadoPorConsulta(fetchFalso, new PoliticaFija(3000), temporizador).suscribir(
+    new FuenteDeEstadoPorConsulta(fetchFalso, new PoliticaFija(3000), { temporizador }).suscribir(
       "K7F2",
       alCambiar,
     );
@@ -111,7 +129,7 @@ describe("FuenteDeEstadoPorConsulta", () => {
     const fetchFalso = vi.fn().mockRejectedValueOnce(new Error("red")).mockResolvedValueOnce(ok(1));
     const temporizador = new TemporizadorFalso();
     const alCambiar = vi.fn();
-    new FuenteDeEstadoPorConsulta(fetchFalso, new PoliticaFija(3000), temporizador).suscribir(
+    new FuenteDeEstadoPorConsulta(fetchFalso, new PoliticaFija(3000), { temporizador }).suscribir(
       "K7F2",
       alCambiar,
     );
@@ -126,11 +144,9 @@ describe("FuenteDeEstadoPorConsulta", () => {
   it("cancelar detiene las peticiones", async () => {
     const fetchFalso = vi.fn().mockResolvedValue(ok(1));
     const temporizador = new TemporizadorFalso();
-    const cancelar = new FuenteDeEstadoPorConsulta(
-      fetchFalso,
-      new PoliticaFija(3000),
+    const cancelar = new FuenteDeEstadoPorConsulta(fetchFalso, new PoliticaFija(3000), {
       temporizador,
-    ).suscribir("K7F2", vi.fn());
+    }).suscribir("K7F2", vi.fn());
     await vaciar();
 
     cancelar();
@@ -145,11 +161,9 @@ describe("FuenteDeEstadoPorConsulta", () => {
     let resolver!: (r: Response) => void;
     const fetchFalso = vi.fn().mockReturnValue(new Promise<Response>((r) => (resolver = r)));
     const alCambiar = vi.fn();
-    const cancelar = new FuenteDeEstadoPorConsulta(
-      fetchFalso,
-      new PoliticaFija(3000),
-      new TemporizadorFalso(),
-    ).suscribir("K7F2", alCambiar);
+    const cancelar = new FuenteDeEstadoPorConsulta(fetchFalso, new PoliticaFija(3000), {
+      temporizador: new TemporizadorFalso(),
+    }).suscribir("K7F2", alCambiar);
 
     cancelar();
     resolver(ok(1));
@@ -159,10 +173,10 @@ describe("FuenteDeEstadoPorConsulta", () => {
   });
 
   it("no consulta mientras la pestaña está oculta", async () => {
-    vi.stubGlobal("document", { visibilityState: "hidden" });
+    const documento = pestana("hidden");
     const fetchFalso = vi.fn().mockResolvedValue(ok(1));
     const temporizador = new TemporizadorFalso();
-    new FuenteDeEstadoPorConsulta(fetchFalso, new PoliticaFija(3000), temporizador).suscribir(
+    new FuenteDeEstadoPorConsulta(fetchFalso, new PoliticaFija(3000), { temporizador }).suscribir(
       "K7F2",
       vi.fn(),
     );
@@ -170,11 +184,76 @@ describe("FuenteDeEstadoPorConsulta", () => {
     expect(fetchFalso).not.toHaveBeenCalled();
     expect(temporizador.pendientes).toHaveLength(1);
 
-    vi.stubGlobal("document", { visibilityState: "visible" });
+    documento.visibilityState = "visible";
     temporizador.disparar();
     await vaciar();
 
     expect(fetchFalso).toHaveBeenCalledOnce();
+  });
+
+  it("al volver a la pestaña consulta de inmediato sin esperar el turno", async () => {
+    const documento = pestana("hidden");
+    const fetchFalso = vi.fn().mockResolvedValue(new Response(null, { status: 304 }));
+    const temporizador = new TemporizadorFalso();
+    new FuenteDeEstadoPorConsulta(fetchFalso, new PoliticaAdaptativa(), { temporizador }).suscribir(
+      "K7F2",
+      vi.fn(),
+    );
+    await vaciar();
+    expect(fetchFalso).not.toHaveBeenCalled();
+
+    mostrar(documento);
+    await vaciar();
+
+    expect(fetchFalso).toHaveBeenCalledOnce();
+    // la espera de 12 s se canceló y queda una sola, nueva
+    expect(temporizador.cancelados).toBe(1);
+    expect(temporizador.pendientes).toHaveLength(1);
+  });
+
+  it("cancelar deja de escuchar la visibilidad de la pestaña", async () => {
+    const documento = pestana("hidden");
+    const agregar = vi.spyOn(documento, "addEventListener");
+    const quitar = vi.spyOn(documento, "removeEventListener");
+    const fetchFalso = vi.fn().mockResolvedValue(ok(1));
+    const cancelar = new FuenteDeEstadoPorConsulta(fetchFalso, new PoliticaFija(3000), {
+      temporizador: new TemporizadorFalso(),
+    }).suscribir("K7F2", vi.fn());
+    await vaciar();
+
+    cancelar();
+    mostrar(documento);
+    await vaciar();
+
+    expect(quitar).toHaveBeenCalledWith("visibilitychange", agregar.mock.calls[0]?.[1]);
+    expect(fetchFalso).not.toHaveBeenCalled();
+  });
+
+  it("con la pestaña oculta no consulta aunque haya una votación abierta y al volver sigue al ritmo activo", async () => {
+    const documento = pestana("hidden");
+    const fetchFalso = vi.fn().mockResolvedValue(new Response(null, { status: 304 }));
+    const temporizador = new TemporizadorFalso();
+    new FuenteDeEstadoPorConsulta(fetchFalso, new PoliticaAdaptativa(), {
+      temporizador,
+      contexto: () => ({ votacionAbierta: true, enFilaDePalabra: false }),
+    }).suscribir("K7F2", vi.fn());
+    await vaciar();
+    temporizador.disparar();
+    await vaciar();
+
+    expect(fetchFalso).not.toHaveBeenCalled();
+    expect(temporizador.esperas).toEqual([INTERVALO_ACTIVO_MS, INTERVALO_ACTIVO_MS]);
+
+    documento.visibilityState = "visible";
+    temporizador.disparar();
+    await vaciar();
+
+    expect(fetchFalso).toHaveBeenCalledOnce();
+    expect(temporizador.esperas).toEqual([
+      INTERVALO_ACTIVO_MS,
+      INTERVALO_ACTIVO_MS,
+      INTERVALO_ACTIVO_MS,
+    ]);
   });
 
   it("reprograma con el intervalo que da la política según el contexto", async () => {
@@ -189,13 +268,10 @@ describe("FuenteDeEstadoPorConsulta", () => {
       },
     };
     let contexto = { votacionAbierta: false, enFilaDePalabra: false };
-    new FuenteDeEstadoPorConsulta(
-      fetchFalso,
-      new PoliticaAdaptativa(),
+    new FuenteDeEstadoPorConsulta(fetchFalso, new PoliticaAdaptativa(), {
       temporizador,
-      undefined,
-      () => contexto,
-    ).suscribir("K7F2", vi.fn());
+      contexto: () => contexto,
+    }).suscribir("K7F2", vi.fn());
     await vaciar();
     contexto = { votacionAbierta: true, enFilaDePalabra: false };
     accion?.();
@@ -206,11 +282,9 @@ describe("FuenteDeEstadoPorConsulta", () => {
 
   it("llama a fetch sin la instancia como this", async () => {
     const fetchFalso = vi.fn().mockResolvedValue(ok(1));
-    const fuente = new FuenteDeEstadoPorConsulta(
-      fetchFalso,
-      new PoliticaFija(3000),
-      new TemporizadorFalso(),
-    );
+    const fuente = new FuenteDeEstadoPorConsulta(fetchFalso, new PoliticaFija(3000), {
+      temporizador: new TemporizadorFalso(),
+    });
     fuente.suscribir("K7F2", vi.fn());
     await vaciar();
 
@@ -225,12 +299,10 @@ describe("FuenteDeEstadoPorConsulta", () => {
       .mockResolvedValueOnce(new Response("x", { status: 500 }));
     const temporizador = new TemporizadorFalso();
     const alFallar = vi.fn();
-    new FuenteDeEstadoPorConsulta(
-      fetchFalso,
-      new PoliticaFija(3000),
+    new FuenteDeEstadoPorConsulta(fetchFalso, new PoliticaFija(3000), {
       temporizador,
       alFallar,
-    ).suscribir("K7F2", vi.fn());
+    }).suscribir("K7F2", vi.fn());
 
     await vaciar();
     temporizador.disparar();
@@ -246,12 +318,10 @@ describe("FuenteDeEstadoPorConsulta", () => {
     const temporizador = new TemporizadorFalso();
     const alFallar = vi.fn();
     const alCambiar = vi.fn();
-    new FuenteDeEstadoPorConsulta(
-      fetchFalso,
-      new PoliticaFija(3000),
+    new FuenteDeEstadoPorConsulta(fetchFalso, new PoliticaFija(3000), {
       temporizador,
       alFallar,
-    ).suscribir("K7F2", alCambiar);
+    }).suscribir("K7F2", alCambiar);
 
     await vaciar();
 
@@ -265,12 +335,10 @@ describe("FuenteDeEstadoPorConsulta", () => {
     const temporizador = new TemporizadorFalso();
     const alNoExistir = vi.fn();
     const alFallar = vi.fn();
-    new FuenteDeEstadoPorConsulta(
-      fetchFalso,
-      new PoliticaFija(3000),
+    new FuenteDeEstadoPorConsulta(fetchFalso, new PoliticaFija(3000), {
       temporizador,
       alFallar,
-    ).suscribir("K7F2", vi.fn(), alNoExistir);
+    }).suscribir("K7F2", vi.fn(), alNoExistir);
 
     await vaciar();
 
@@ -282,11 +350,9 @@ describe("FuenteDeEstadoPorConsulta", () => {
 
   it("codifica el código en la URL", async () => {
     const fetchFalso = vi.fn().mockResolvedValue(new Response(null, { status: 304 }));
-    new FuenteDeEstadoPorConsulta(
-      fetchFalso,
-      new PoliticaFija(3000),
-      new TemporizadorFalso(),
-    ).suscribir("a/b", vi.fn());
+    new FuenteDeEstadoPorConsulta(fetchFalso, new PoliticaFija(3000), {
+      temporizador: new TemporizadorFalso(),
+    }).suscribir("a/b", vi.fn());
     await vaciar();
     expect(fetchFalso.mock.calls[0]?.[0]).toBe("/api/public/v1/salas/a%2Fb/estado");
   });
@@ -299,7 +365,7 @@ describe("FuenteDeEstadoPorConsulta", () => {
       .mockResolvedValueOnce(new Response(null, { status: 304 }));
     const temporizador = new TemporizadorFalso();
     const alIntentar = vi.fn();
-    new FuenteDeEstadoPorConsulta(fetchFalso, new PoliticaFija(3000), temporizador).suscribir(
+    new FuenteDeEstadoPorConsulta(fetchFalso, new PoliticaFija(3000), { temporizador }).suscribir(
       "K7F2",
       vi.fn(),
       undefined,
@@ -325,9 +391,10 @@ describe("FuenteDeEstadoPorConsulta", () => {
     const fuente = new FuenteDeEstadoPorConsulta(
       vi.fn().mockResolvedValue(ok(1)),
       new PoliticaAdaptativa(),
-      temporizador,
-      undefined,
-      () => ({ votacionAbierta: activo, enFilaDePalabra: false }),
+      {
+        temporizador,
+        contexto: () => ({ votacionAbierta: activo, enFilaDePalabra: false }),
+      },
     );
     const cancelar = fuente.suscribir("K7F2", vi.fn());
     await vaciar();
@@ -348,7 +415,9 @@ describe("FuenteDeEstadoPorConsulta", () => {
       .mockResolvedValueOnce(ok(3));
     const temporizador = new TemporizadorFalso();
     const alCambiar = vi.fn();
-    const fuente = new FuenteDeEstadoPorConsulta(fetchFalso, new PoliticaFija(3000), temporizador);
+    const fuente = new FuenteDeEstadoPorConsulta(fetchFalso, new PoliticaFija(3000), {
+      temporizador,
+    });
     fuente.suscribir("K7F2", alCambiar);
     await vaciar();
 
@@ -373,7 +442,9 @@ describe("FuenteDeEstadoPorConsulta", () => {
       .mockImplementationOnce(() => new Promise<Response>((r) => (resolver = r)))
       .mockResolvedValueOnce(ok(2));
     const temporizador = new TemporizadorFalso();
-    const fuente = new FuenteDeEstadoPorConsulta(fetchFalso, new PoliticaFija(3000), temporizador);
+    const fuente = new FuenteDeEstadoPorConsulta(fetchFalso, new PoliticaFija(3000), {
+      temporizador,
+    });
     fuente.suscribir("K7F2", vi.fn());
 
     fuente.refrescar();
@@ -387,11 +458,9 @@ describe("FuenteDeEstadoPorConsulta", () => {
 
   it("refrescar tras cancelar la suscripción no consulta", async () => {
     const fetchFalso = vi.fn().mockResolvedValue(ok(1));
-    const fuente = new FuenteDeEstadoPorConsulta(
-      fetchFalso,
-      new PoliticaFija(3000),
-      new TemporizadorFalso(),
-    );
+    const fuente = new FuenteDeEstadoPorConsulta(fetchFalso, new PoliticaFija(3000), {
+      temporizador: new TemporizadorFalso(),
+    });
     const cancelar = fuente.suscribir("K7F2", vi.fn());
     await vaciar();
     cancelar();

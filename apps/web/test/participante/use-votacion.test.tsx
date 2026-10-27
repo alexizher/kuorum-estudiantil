@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 import { act, cleanup, renderHook } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { ErrorDeAccion } from "../../src/vistas/participante/cliente-de-sala";
-import { useVotacion } from "../../src/vistas/participante/use-votacion";
+import { ErrorDeAccion } from "@/vistas/participante/cliente-de-sala";
+import { useVotacion } from "@/vistas/participante/use-votacion";
 import { preguntaAbierta, preguntaConResultado } from "../proyeccion/estados";
 import { AlmacenEnMemoria, clienteFalso } from "./falsos";
 

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { act, cleanup, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { useSegundosRestantes } from "../../src/vistas/mesa/use-segundos-restantes";
+import { useSegundosRestantes } from "@/vistas/mesa/use-segundos-restantes";
 import { HORA, conLaPalabra, salaVacia } from "../proyeccion/estados";
 
 beforeEach(() => vi.useFakeTimers());

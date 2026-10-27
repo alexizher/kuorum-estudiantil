@@ -1,14 +1,17 @@
-import type { DeployConfig } from "../config/deploy-config.js";
+import { z } from "zod";
+import { DeployConfigSchema, type DeployConfig } from "../config/deploy-config.js";
 import type { CommandRunner } from "../io/command-runner.js";
 import type { Prompter } from "../io/prompter.js";
 
-export type DeployState = {
-  completedSteps: string[];
-  projectId?: string;
-  productionUrl?: string;
-  databaseName?: string;
-  config?: DeployConfig;
-};
+export const DeployStateSchema = z.object({
+  completedSteps: z.array(z.string()),
+  projectId: z.string().optional(),
+  productionUrl: z.string().optional(),
+  databaseName: z.string().optional(),
+  config: DeployConfigSchema.optional(),
+});
+
+export type DeployState = z.infer<typeof DeployStateSchema>;
 
 export type DeployContext = {
   config: DeployConfig;

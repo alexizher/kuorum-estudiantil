@@ -1,24 +1,24 @@
 import { ErrorDeDominio } from "@kuorum/domain";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { GET as estado } from "../../src/app/api/public/v1/salas/[codigo]/estado/route";
-import { POST as ingresar } from "../../src/app/api/public/v1/salas/[codigo]/ingresar/route";
-import { POST as mociones } from "../../src/app/api/public/v1/salas/[codigo]/mociones/route";
-import { POST as palabra } from "../../src/app/api/public/v1/salas/[codigo]/palabra/route";
-import { DELETE as retirar } from "../../src/app/api/public/v1/salas/[codigo]/solicitudes/[id]/route";
-import { POST as votos } from "../../src/app/api/public/v1/salas/[codigo]/votos/route";
-import { contenedor } from "../../src/composicion";
+import { GET as estado } from "@/app/api/public/v1/salas/[codigo]/estado/route";
+import { POST as ingresar } from "@/app/api/public/v1/salas/[codigo]/ingresar/route";
+import { POST as mociones } from "@/app/api/public/v1/salas/[codigo]/mociones/route";
+import { POST as palabra } from "@/app/api/public/v1/salas/[codigo]/palabra/route";
+import { DELETE as retirar } from "@/app/api/public/v1/salas/[codigo]/solicitudes/[id]/route";
+import { POST as votos } from "@/app/api/public/v1/salas/[codigo]/votos/route";
+import { contenedor } from "@/composicion";
 import {
   limitesDeIngresoPorNavegador,
   limitesDeVotos,
   limitesPublicos,
-} from "../../src/http/limite-de-tasa";
+} from "@/http/limite-de-tasa";
 import {
   cookieDeParticipante,
   firmar,
   nombreDeCookie,
-} from "../../src/http/sesion-de-participante";
+} from "@/http/sesion-de-participante";
 
-vi.mock("../../src/composicion", () => ({ contenedor: vi.fn() }));
+vi.mock("@/composicion", () => ({ contenedor: vi.fn() }));
 
 const CACHE_ESTADO = "public, max-age=0, s-maxage=2, stale-while-revalidate=2";
 let ip = 0;

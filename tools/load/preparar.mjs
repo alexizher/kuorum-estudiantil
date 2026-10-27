@@ -2,6 +2,7 @@
 // Uso: CARGA_DATABASE_URL=... node tools/load/preparar.mjs
 import { randomBytes, randomInt } from "node:crypto";
 import pg from "pg";
+import { normalizarSslmode } from "./conexion.mjs";
 
 const url = process.env.CARGA_DATABASE_URL;
 if (!url) {
@@ -17,7 +18,7 @@ const codigoNuevo = () =>
   Array.from({ length: 4 }, () => ALFABETO[randomInt(ALFABETO.length)]).join("");
 let codigoUsado;
 
-const cliente = new pg.Client({ connectionString: url });
+const cliente = new pg.Client({ connectionString: normalizarSslmode(url) });
 await cliente.connect();
 try {
   for (let intento = 1; ; intento += 1) {

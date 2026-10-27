@@ -1,6 +1,52 @@
-import { describe, expect, it } from "vitest";
+import { access, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { DatabaseStep } from "../../src/steps/database-step.js";
-import { FakePrompter, FakeRunner, makeContext } from "../doubles.js";
+import type { DeployContext } from "../../src/wizard/step.js";
+import { FakePrompter, FakeRunner, makeContext as baseContext } from "../doubles.js";
+
+let dir: string;
+beforeEach(async () => {
+  dir = await mkdtemp(join(tmpdir(), "kuorum-base-"));
+});
+afterEach(() => rm(dir, { recursive: true }));
+
+/** Cada prueba corre en su propia carpeta: el paso borra archivos que aparecen en cwd. */
+function makeContext(overrides: Partial<DeployContext> = {}): DeployContext {
+  return baseContext({ cwd: dir, ...overrides });
+}
+
+const exists = (path: string) =>
+  access(join(dir, path)).then(
+    () => true,
+    () => false,
+  );
+
+/** Imita a vercel integration add, que instala skills de Neon para agentes en la carpeta. */
+async function installSkills(): Promise<void> {
+  await mkdir(join(dir, ".agents", "skills", "neon"), { recursive: true });
+  await mkdir(join(dir, ".claude", "skills", "neon"), { recursive: true });
+  await writeFile(join(dir, "skills-lock.json"), "{}");
+}
+
+/** Como afterAdd, pero el add también deja los archivos de las skills. */
+function addWithSkills(addResult: { exitCode?: number; stderr?: string } = {}) {
+  let added = false;
+  return {
+    async run(command: string, args: string[]) {
+      if (args[1] === "add") {
+        added = true;
+        await installSkills();
+        return { exitCode: 0, stdout: "", stderr: "", ...addResult };
+      }
+      if (command === "vercel" && args[0] === "env") {
+        return { exitCode: 0, stdout: added ? ENV_OK : "", stderr: "" };
+      }
+      return { exitCode: 0, stdout: "", stderr: "" };
+    },
+  };
+}
 
 const ENV_OK =
   "DATABASE_URL  Encrypted  Production\nDATABASE_URL_UNPOOLED  Encrypted  Production\n";
@@ -171,5 +217,60 @@ describe("base-de-datos", () => {
       new DatabaseStep().run(makeContext({ runner, prompter, interactive: false })),
     ).rejects.toThrow(/https:\/\/vercel\.com\/marketplace\/neon/);
     expect(prompter.confirmations).toEqual([]);
+  });
+
+  describe("archivos de skills que deja la CLI de Vercel", () => {
+    it("borra .agents, .claude y skills-lock.json si no existían antes del paso", async () => {
+      await new DatabaseStep().run(makeContext({ runner: addWithSkills() }));
+      expect(await exists(".agents")).toBe(false);
+      expect(await exists(".claude")).toBe(false);
+      expect(await exists("skills-lock.json")).toBe(false);
+    });
+
+    it("no toca los que ya existían", async () => {
+      await mkdir(join(dir, ".claude"));
+      await writeFile(join(dir, ".claude", "settings.json"), "{}");
+      await new DatabaseStep().run(makeContext({ runner: addWithSkills() }));
+      expect(await exists(".claude/settings.json")).toBe(true);
+      expect(await exists(".agents")).toBe(false);
+      expect(await exists("skills-lock.json")).toBe(false);
+    });
+
+    it("también los borra si la CLI no pudo crear la base", async () => {
+      const runner = addWithSkills({ exitCode: 1, stderr: "requires browser" });
+      await new DatabaseStep().run(makeContext({ runner }));
+      expect(await exists(".agents")).toBe(false);
+      expect(await exists("skills-lock.json")).toBe(false);
+    });
+  });
+
+  it("detecta los términos pendientes aunque la CLI imprima una línea antes del JSON", async () => {
+    let adds = 0;
+    const runner = new FakeRunner((_, args) => {
+      if (args[1] === "add") {
+        adds += 1;
+        if (adds === 1) {
+          return {
+            exitCode: 1,
+            stdout: `Instalando neon...\n${JSON.stringify(
+              {
+                userActionRequired: true,
+                verification_uri: "https://vercel.com/aceptar",
+                policy_links: {},
+              },
+              null,
+              2,
+            )}\n`,
+          };
+        }
+        return undefined;
+      }
+      if (args[0] === "env") return { stdout: adds > 1 ? ENV_OK : "" };
+      return undefined;
+    });
+    const prompter = new FakePrompter();
+    await new DatabaseStep().run(makeContext({ runner, prompter }));
+    expect(prompter.infos.join("\n")).toContain("https://vercel.com/aceptar");
+    expect(prompter.confirmations).toEqual(["¿Ya aceptaste los términos?"]);
   });
 });

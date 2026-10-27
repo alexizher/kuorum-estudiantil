@@ -1,10 +1,11 @@
 # Solo desarrollo y pruebas locales. Las credenciales son de juguete: no las uses en otro lado.
 # Uso: podman compose up -d   (o podman-compose up -d)
+# Otro puerto: KUORUM_PUERTO_POSTGRES=54330 podman compose up -d
 services:
   postgres:
     image: docker.io/library/postgres:17
     ports:
-      - "54329:5432"
+      - "${KUORUM_PUERTO_POSTGRES:-54329}:5432"
     environment:
       POSTGRES_USER: kuorum
       POSTGRES_PASSWORD: kuorum
