@@ -1,3 +1,5 @@
+const path = require("node:path");
+
 /** @type {import('dependency-cruiser').IConfiguration} */
 module.exports = {
   forbidden: [
@@ -48,6 +50,17 @@ module.exports = {
       },
     },
     {
+      name: "web-infraestructura-solo-en-composicion",
+      comment:
+        "Dentro de apps/web solo src/composicion.ts y src/auth/ importan infrastructure; las rutas y páginas pasan por la composición.",
+      severity: "error",
+      from: {
+        path: "^apps/web/src/",
+        pathNot: ["^apps/web/src/composicion\\.ts$", "^apps/web/src/auth/"],
+      },
+      to: { path: "^(packages/infrastructure/|@kuorum/infrastructure(/|$))" },
+    },
+    {
       name: "nadie-importa-cli",
       comment: "Nada fuera de packages/cli importa packages/cli.",
       severity: "error",
@@ -61,6 +74,9 @@ module.exports = {
     // y excluirlo borraría la arista. Si dist no existe, la regla casa el nombre @kuorum/*.
     exclude: { path: "(^|/)(\\.next|\\.turbo)/" },
     tsPreCompilationDeps: true,
+    // Resuelve el alias @/* de apps/web; sin esto esos imports quedan sin arista.
+    // Ruta absoluta: con una relativa, TypeScript no encuentra los archivos del include.
+    tsConfig: { fileName: path.join(__dirname, "apps/web/tsconfig.json") },
     enhancedResolveOptions: {
       exportsFields: ["exports"],
       conditionNames: ["import", "require", "node", "default", "types"],

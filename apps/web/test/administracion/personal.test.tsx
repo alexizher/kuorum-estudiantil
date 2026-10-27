@@ -4,7 +4,7 @@ import { cleanup, render as renderizar, screen, waitFor, within } from "@testing
 import { userEvent } from "@testing-library/user-event";
 import type { ReactElement } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { PersonalEnVivo } from "../../src/vistas/administracion/personal-en-vivo";
+import { PersonalEnVivo } from "@/vistas/administracion/personal-en-vivo";
 import { violacionesDeAxe } from "../proyeccion/axe";
 
 const render = (ui: ReactElement) => renderizar(ui, { wrapper: TemaProvider });

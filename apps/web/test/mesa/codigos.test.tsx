@@ -6,11 +6,11 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { ReactElement } from "react";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
-import { CodigosEnVivo } from "../../src/vistas/mesa/codigos-en-vivo";
-import { EntregarEnVivo } from "../../src/vistas/mesa/entregar-en-vivo";
-import { HojaDeCodigos } from "../../src/vistas/mesa/hoja-de-codigos";
-import { CODIGOS_POR_HOJA, dividirEnHojas } from "../../src/vistas/mesa/hojas-de-codigos";
-import { enlaceDeCodigo } from "../../src/vistas/mesa/textos";
+import { CodigosEnVivo } from "@/vistas/mesa/codigos-en-vivo";
+import { EntregarEnVivo } from "@/vistas/mesa/entregar-en-vivo";
+import { HojaDeCodigos } from "@/vistas/mesa/hoja-de-codigos";
+import { CODIGOS_POR_HOJA, dividirEnHojas } from "@/vistas/mesa/hojas-de-codigos";
+import { enlaceDeCodigo } from "@/vistas/mesa/textos";
 import { violacionesDeAxe } from "../proyeccion/axe";
 
 const render = (ui: ReactElement) => renderizar(ui, { wrapper: TemaProvider });

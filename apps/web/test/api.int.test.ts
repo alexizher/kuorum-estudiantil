@@ -1,9 +1,9 @@
 import { createPrismaClient } from "@kuorum/infrastructure";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { GET as estado } from "../src/app/api/public/v1/salas/[codigo]/estado/route";
-import { POST as ingresar } from "../src/app/api/public/v1/salas/[codigo]/ingresar/route";
-import { POST as votar } from "../src/app/api/public/v1/salas/[codigo]/votos/route";
-import { contenedor } from "../src/composicion";
+import { GET as estado } from "@/app/api/public/v1/salas/[codigo]/estado/route";
+import { POST as ingresar } from "@/app/api/public/v1/salas/[codigo]/ingresar/route";
+import { POST as votar } from "@/app/api/public/v1/salas/[codigo]/votos/route";
+import { contenedor } from "@/composicion";
 
 const URL_DE_PRUEBAS =
   process.env["DATABASE_URL"] ?? "postgresql://kuorum:kuorum@localhost:54329/kuorum";

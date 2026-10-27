@@ -5,6 +5,17 @@ import { superadmin } from "../dobles/actores.js";
 
 const TOKEN = "3f2b8c1e-5d4a-4b7e-9c0a-1d2e3f4a5b6c";
 
+/** Las sesiones se copian al leer y al guardar: las aserciones ven solo lo que se guardó. */
+function escenarioQueCopia(): Escenario {
+  const e = crearEscenario();
+  e.sesiones.copiar = true;
+  return e;
+}
+
+async function versionGuardada(e: Escenario, id: string): Promise<number | undefined> {
+  return (await e.sesiones.porId(id))?.version;
+}
+
 function ingresar(e: Escenario) {
   return new IngresarASala(e.sesiones, e.participantes, e.unidad, e.hasheador, e.ids, e.reloj);
 }
@@ -24,7 +35,7 @@ async function salaConCodigos(e: Escenario, estado: "PROGRAMADA" | "EN_CURSO" = 
 
 describe("IngresarASala con código", () => {
   it("activa el código, crea al participante y sube la versión", async () => {
-    const e = crearEscenario();
+    const e = escenarioQueCopia();
     const { sesion, codigos } = await salaConCodigos(e);
     const versionAntes = sesion.version;
 
@@ -35,22 +46,23 @@ describe("IngresarASala con código", () => {
 
     expect(resultado.sesionId).toBe(sesion.id);
     expect(await e.participantes.contarActivos(sesion.id)).toBe(1);
-    expect(sesion.version).toBe(versionAntes + 1);
+    expect(await versionGuardada(e, sesion.id)).toBe(versionAntes + 1);
     expect(e.participantes.volcado()).not.toContain(codigos[0]);
   });
 
   it("el mismo código da el mismo participante y la asistencia cuenta 1", async () => {
-    const e = crearEscenario();
+    const e = escenarioQueCopia();
     const { sesion, codigos } = await salaConCodigos(e);
     const credencial = { tipo: "CODIGO", codigo: codigos[0] } as const;
 
     const primero = await ingresar(e).ejecutar(sesion.codigoDeSala.valor, credencial);
-    const versionTrasPrimero = sesion.version;
+    const versionTrasPrimero = await versionGuardada(e, sesion.id);
     const segundo = await ingresar(e).ejecutar(sesion.codigoDeSala.valor, credencial);
 
     expect(segundo.participanteId).toBe(primero.participanteId);
     expect(await e.participantes.contarActivos(sesion.id)).toBe(1);
-    expect(sesion.version).toBe(versionTrasPrimero);
+    expect(versionTrasPrimero).toBe(sesion.version + 1);
+    expect(await versionGuardada(e, sesion.id)).toBe(versionTrasPrimero);
   });
 
   it("acepta el código en minúsculas y sin guion", async () => {
@@ -126,7 +138,7 @@ describe("IngresarASala con navegador", () => {
   });
 
   it("crea un participante y el mismo token lo recupera sin cambiar la versión", async () => {
-    const e = crearEscenario();
+    const e = escenarioQueCopia();
     const sesion = await sembrarSesion(e, { estado: "ABIERTA" });
     const credencial = { tipo: "NAVEGADOR", token: TOKEN } as const;
 
@@ -136,7 +148,7 @@ describe("IngresarASala con navegador", () => {
     expect(segundo.participanteId).toBe(primero.participanteId);
     expect(primero.sesionId).toBe(sesion.id);
     expect(e.participantes.participantes).toHaveLength(1);
-    expect(sesion.version).toBe(0);
+    expect(await versionGuardada(e, sesion.id)).toBe(0);
     expect(e.participantes.volcado()).not.toContain(TOKEN);
   });
 

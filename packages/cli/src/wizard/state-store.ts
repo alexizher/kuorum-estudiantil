@@ -1,6 +1,6 @@
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
-import type { DeployState } from "./step.js";
+import { DeployStateSchema, type DeployState } from "./step.js";
 
 export interface StateRepository {
   load(): Promise<DeployState>;
@@ -27,13 +27,9 @@ export class StateStore implements StateRepository {
       if ((error as NodeJS.ErrnoException).code === "ENOENT") return { completedSteps: [] };
       throw error;
     }
-    try {
-      const parsed: unknown = JSON.parse(text);
-      if (!isState(parsed)) throw new CorruptStateError(this.path);
-      return parsed;
-    } catch {
-      throw new CorruptStateError(this.path);
-    }
+    const result = DeployStateSchema.safeParse(parseJson(text));
+    if (!result.success) throw new CorruptStateError(this.path);
+    return migrateSteps(result.data);
   }
 
   async save(state: DeployState): Promise<void> {
@@ -44,10 +40,27 @@ export class StateStore implements StateRepository {
   }
 }
 
-function isState(value: unknown): value is DeployState {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    Array.isArray((value as { completedSteps?: unknown }).completedSteps)
-  );
+/** Pasos que reemplazaron a "proyecto", que antes creaba, enlazaba, fijaba la raíz y conectaba Git. */
+const STEPS_REPLACING_PROJECT = [
+  "crear-proyecto",
+  "enlazar-proyecto",
+  "directorio-raiz",
+  "conectar-repositorio",
+];
+
+function migrateSteps(state: DeployState): DeployState {
+  return {
+    ...state,
+    completedSteps: state.completedSteps.flatMap((id) =>
+      id === "proyecto" ? STEPS_REPLACING_PROJECT : [id],
+    ),
+  };
+}
+
+function parseJson(text: string): unknown {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return undefined;
+  }
 }

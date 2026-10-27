@@ -1,11 +1,11 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { createPrismaClient, crearAdaptadorDeAutenticacion } from "@kuorum/infrastructure";
-import { crearAuth, type Autenticacion } from "../src/auth/crear-auth";
-import { actualizarCuentaDeMesa, crearCuentaDeMesa } from "../src/auth/crear-cuenta";
-import { contenedor } from "../src/composicion";
-import { exigirMesa } from "../src/http/exigir-mesa";
+import { crearAuth, type Autenticacion } from "@/auth/crear-auth";
+import { actualizarCuentaDeMesa, crearCuentaDeMesa } from "@/auth/crear-cuenta";
+import { contenedor } from "@/composicion";
+import { exigirMesa } from "@/http/exigir-mesa";
 
-vi.mock("../src/composicion", () => ({ contenedor: vi.fn() }));
+vi.mock("@/composicion", () => ({ contenedor: vi.fn() }));
 
 const sinMembresias = { deUsuario: async () => [] };
 

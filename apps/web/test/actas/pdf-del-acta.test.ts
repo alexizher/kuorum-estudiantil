@@ -1,7 +1,7 @@
 import { PDFDocument } from "pdf-lib";
 import { describe, expect, it } from "vitest";
 import type { ContenidoDeActa } from "@kuorum/domain";
-import { generarPdfDelActa } from "../../src/actas/pdf-del-acta";
+import { generarPdfDelActa } from "@/actas/pdf-del-acta";
 
 function contenido(desarrollo: string, extra: Partial<ContenidoDeActa> = {}): ContenidoDeActa {
   return {

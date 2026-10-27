@@ -5,7 +5,7 @@ import { cleanup, render as renderizar, screen, waitFor, within } from "@testing
 import { userEvent } from "@testing-library/user-event";
 import type { ReactElement } from "react";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
-import { SesionEnVivo } from "../../src/vistas/mesa/sesion-en-vivo";
+import { SesionEnVivo } from "@/vistas/mesa/sesion-en-vivo";
 import { salaVacia } from "../proyeccion/estados";
 import { RESULTADO } from "./falsos";
 
