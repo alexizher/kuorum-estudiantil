@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { vieneDeOtroSitio } from "../../src/http/origen";
+import { vieneDeOtroSitio } from "@/http/origen";
 
 const URL_PROPIA = "https://kuorum.ejemplo.edu/api/public/v1/salas/ABCD/votos";
 
