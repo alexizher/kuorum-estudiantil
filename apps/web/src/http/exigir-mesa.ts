@@ -38,7 +38,10 @@ export async function exigirMesa(solicitud: Request): Promise<Actor | Response> 
       membresias: membresias.map(({ cuerpoId, rol }) => ({ cuerpoId, rol })),
     };
   } catch (error) {
-    console.error(error);
+    // Solo el mensaje: el objeto de un error de la base puede traer los parámetros de la consulta.
+    console.error(
+      `exigirMesa: ${error instanceof Error ? error.message : "error desconocido al leer la sesión"}`,
+    );
     return noAutenticado();
   }
 }

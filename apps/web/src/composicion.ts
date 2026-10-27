@@ -75,6 +75,7 @@ import {
 } from "@kuorum/infrastructure";
 import {
   crearAuth,
+  origenesConfiablesDesdeEntorno,
   urlBaseDesdeEntorno,
   type Autenticacion,
   type ConfigOAuth,
@@ -311,6 +312,7 @@ export function contenedor(): Contenedor {
               adaptador: crearAdaptadorDeAutenticacion(prisma),
               secreto,
               urlBase: urlBaseDesdeEntorno(process.env),
+              origenesConfiables: origenesConfiablesDesdeEntorno(process.env),
               oauth,
             });
           })();

@@ -82,4 +82,27 @@ describe("exigirMesa", () => {
     const respuesta = (await exigirMesa(new Request("http://x.test/api/mesa"))) as Response;
     expect(respuesta.status).toBe(401);
   });
+
+  it("registra solo el mensaje del error, sin el objeto con sus parámetros", async () => {
+    const error = Object.assign(new Error("consulta fallida"), {
+      meta: { parametros: ["token-de-sesion-secreto"] },
+    });
+    vi.mocked(contenedor).mockReturnValue({
+      autenticacion: () => ({
+        api: {
+          getSession: vi.fn(async () => {
+            throw error;
+          }),
+        },
+      }),
+    } as unknown as ReturnType<typeof contenedor>);
+    const registro = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    await exigirMesa(new Request("http://x.test/api/mesa"));
+    const argumentos: unknown[] = registro.mock.calls.flat();
+    expect(argumentos).not.toContain(error);
+    expect(argumentos.every((a) => typeof a === "string")).toBe(true);
+    expect(argumentos.join(" ")).toContain("consulta fallida");
+    expect(argumentos.join(" ")).not.toContain("token-de-sesion-secreto");
+    registro.mockRestore();
+  });
 });

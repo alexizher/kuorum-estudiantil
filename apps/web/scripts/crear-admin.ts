@@ -2,9 +2,17 @@ import { randomBytes } from "node:crypto";
 import { parseArgs } from "node:util";
 import type { RolDeMesa } from "@kuorum/application";
 import { LARGO_MINIMO_DE_CONTRASENA, type DatosDeCuenta } from "../src/auth/crear-cuenta";
+import { leerSinEco } from "./leer-sin-eco";
+
+export interface TerminalInteractiva {
+  /** Muestra la pregunta y lee una línea sin repetir lo que se teclea. */
+  pedirSinEco: (pregunta: string) => Promise<string>;
+}
 
 export interface DependenciasDeCrearAdmin {
   leerStdin: () => Promise<string>;
+  /** Solo cuando stdin es una terminal; sin ella la contraseña sale de stdin completo. */
+  terminal?: TerminalInteractiva | undefined;
   stdout: (texto: string) => void;
   stderr: (texto: string) => void;
   crearCuenta: (datos: DatosDeCuenta) => Promise<void>;
@@ -21,12 +29,21 @@ const USO = `Uso: pnpm --filter @kuorum/web crear-admin --correo <correo> --nomb
 
   --actualizar: la cuenta ya existe; cambia su contraseña y su rol y cierra sus sesiones.
 
-  Sin --generar, lee la contraseña de stdin (mínimo ${LARGO_MINIMO_DE_CONTRASENA} caracteres).
+  Sin --generar, en una terminal pide la contraseña dos veces sin mostrarla; si stdin viene de
+  una tubería o un archivo, la lee completa de ahí (mínimo ${LARGO_MINIMO_DE_CONTRASENA} caracteres).
   Con --generar, crea una contraseña fuerte y la imprime una sola vez por stdout.
 `;
 
 function esRol(valor: string): valor is RolDeMesa {
   return ROLES.some((rol) => rol === valor);
+}
+
+/** En una terminal la pide dos veces sin eco; devuelve null si las dos no coinciden. */
+async function leerContrasena(deps: DependenciasDeCrearAdmin): Promise<string | null> {
+  if (deps.terminal === undefined) return (await deps.leerStdin()).replace(/\r?\n$/, "");
+  const primera = await deps.terminal.pedirSinEco("Contraseña: ");
+  const segunda = await deps.terminal.pedirSinEco("Repite la contraseña: ");
+  return primera === segunda ? primera : null;
 }
 
 // Nunca escribe la contraseña recibida por stdin; la generada va solo a stdout y solo si la cuenta se creó.
@@ -62,9 +79,11 @@ export async function ejecutarCrearAdmin(
     deps.stderr(USO);
     return 2;
   }
-  const contrasena = generar
-    ? randomBytes(18).toString("base64url")
-    : (await deps.leerStdin()).replace(/\r?\n$/, "");
+  const contrasena = generar ? randomBytes(18).toString("base64url") : await leerContrasena(deps);
+  if (contrasena === null) {
+    deps.stderr("Las contraseñas no coinciden.\n");
+    return 1;
+  }
   if (contrasena.length < LARGO_MINIMO_DE_CONTRASENA) {
     deps.stderr(`La contraseña debe tener al menos ${LARGO_MINIMO_DE_CONTRASENA} caracteres.\n`);
     return 1;
@@ -93,10 +112,15 @@ async function principal(): Promise<number> {
   const { contenedor } = await import("../src/composicion");
   const { actualizarCuentaDeMesa, crearCuentaDeMesa } = await import("../src/auth/crear-cuenta");
   const auth = await contenedor().autenticacion();
+  const stderr = (texto: string) => process.stderr.write(texto);
   return ejecutarCrearAdmin(process.argv.slice(2), {
     leerStdin,
+    // Las preguntas van a stderr para que stdout quede solo con la contraseña generada.
+    terminal: process.stdin.isTTY
+      ? { pedirSinEco: (pregunta) => leerSinEco(process.stdin, stderr, pregunta) }
+      : undefined,
     stdout: (texto) => process.stdout.write(texto),
-    stderr: (texto) => process.stderr.write(texto),
+    stderr,
     crearCuenta: async (datos) => {
       await crearCuentaDeMesa(auth, datos);
     },

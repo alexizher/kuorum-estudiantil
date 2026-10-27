@@ -35,7 +35,7 @@ Antes de cada paso que crea algo en tu cuenta, el asistente dice qué va a crear
 
 Los pasos 3 a 6 antes eran uno solo, `proyecto`. Un `.kuorum/despliegue.json` que lo tenga como completado se lee como si tuviera completados los cuatro.
 
-El registro público está desactivado: las cuentas de la mesa solo se crean con este paso o con `pnpm --filter @kuorum/web crear-admin --correo <correo> --nombre <nombre>`, que lee la contraseña por stdin (mínimo 12 caracteres) o, con `--generar`, imprime una contraseña nueva una sola vez. El script necesita `DATABASE_URL` y `BETTER_AUTH_SECRET` en el entorno.
+El registro público está desactivado: las cuentas de la mesa solo se crean con este paso o con `pnpm --filter @kuorum/web crear-admin --correo <correo> --nombre <nombre>`, que en una terminal pide la contraseña dos veces sin mostrarla (mínimo 12 caracteres). Si stdin viene de una tubería o de un archivo, la lee completa de ahí. Con `--generar` imprime una contraseña nueva una sola vez. El script necesita `DATABASE_URL` y `BETTER_AUTH_SECRET` en el entorno.
 
 Cada cuenta tiene un rol. `--rol` acepta `SUPERADMIN` (el valor por defecto, y el que crea el asistente), `MESA` y `DEMO`. `SUPERADMIN` y `MESA` ven y operan todas las sesiones. `DEMO` es la cuenta de prueba pública y solo ve las que ella misma creó (ver la sección siguiente). Al actualizar una instalación que ya existía, la migración deja como `SUPERADMIN` a todas las cuentas que había y le asigna al primero de ellos las sesiones existentes.
 
@@ -175,6 +175,13 @@ Pon Cloudflare delante en cuanto planees asambleas generales de más de unas 300
 - Votos: tope de 1.000 por minuto por participante (la identidad de la cookie firmada), solo contra inundaciones. Nunca se limitan por IP: un auditorio entero comparte la misma.
 - Ingreso a la sala: tope por IP. Por defecto la IP sale del primer valor de `x-forwarded-for` o de `x-real-ip`. Con `KUORUM_DETRAS_DE_CLOUDFLARE=1` se lee `cf-connecting-ip`, para que con Cloudflare delante los usuarios no queden en un solo cupo. No pongas esa variable si Cloudflare no está delante: Vercel deja pasar cabeceras ajenas y un cliente podría inventar `cf-connecting-ip` para esquivar el tope. Con la variable activa, Vercel debe ser alcanzable solo a través de Cloudflare.
 - Los contadores viven en la memoria de cada instancia: se pierden al reiniciar y no se comparten entre instancias.
+- Ingreso de la mesa (`/mesa/ingresar`): 5 intentos por minuto por IP, contados en la base por Better Auth. Better Auth usa `x-forwarded-for` solo si trae una única IP; si trae una cadena (`cliente, proxy`) la descarta y prueba `x-real-ip`. En Vercel `x-forwarded-for` llega con una sola IP y funciona sin configurar nada.
+
+### Instalar fuera de Vercel
+
+Si el proveedor no pone delante un proxy que reescriba `x-forwarded-for` (o `x-real-ip`) con la IP real del cliente, el ingreso de la mesa no puede saber de dónde viene cada intento y todos caen en un solo cupo: cinco intentos fallidos de cualquiera bloquean el ingreso de toda la mesa durante un minuto. Pon un proxy inverso (nginx, Caddy, el balanceador del proveedor) que sobrescriba `x-real-ip` con la IP de la conexión y deje `x-forwarded-for` con un solo valor, o que lo borre.
+
+Define también `BETTER_AUTH_URL` con la URL pública del sitio (con `https://`). Sin ella y fuera de Vercel, Better Auth toma el origen de cada solicitud. En Vercel no hace falta: producción usa su dominio y cada vista previa usa el suyo (`VERCEL_URL`) y acepta también el origen de su rama (`VERCEL_BRANCH_URL`).
 
 ## Dominio propio con Cloudflare (recomendado para asambleas grandes)
 
